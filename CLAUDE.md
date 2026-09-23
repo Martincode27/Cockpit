@@ -124,3 +124,5 @@ Den API-Key sollte der Nutzer vorsorglich erneuern.
   Montag, dieser Monat, letzte 5). Mit simulierter Supabase-API im Browser getestet (Login falsch/richtig,
   Neuladen, Abmelden, HTML-Escaping). Gegen die echte Datenbank **noch nicht** getestet — die
   Cloud-Session hat keinen Netzwerkzugriff auf Supabase.
+- Nutzer hat in Supabase sein Konto angelegt und die Registrierung abgeschaltet. Code auf `main`
+  übernommen (mit Freigabe des Nutzers); GitHub Pages schaltet der Nutzer ein.

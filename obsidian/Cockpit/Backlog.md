@@ -7,8 +7,9 @@
 - [x] Hosting: Repo öffentlich + GitHub Pages
 - [x] Grundgerüst: Login (Supabase Auth) + Linkleiste
 - [x] Rezept-Kachel mit echten Zahlen aus Supabase
-- [ ] In Supabase: eigenen Nutzer anlegen + Registrierung abschalten
-- [ ] Auf `main` übernehmen + GitHub Pages einschalten
+- [x] In Supabase: eigenen Nutzer anlegen + Registrierung abschalten
+- [x] Auf `main` übernehmen
+- [ ] GitHub Pages einschalten
 - [ ] Mit echter Datenbank testen
 
 ## Trading-Bots
