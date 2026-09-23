@@ -184,28 +184,30 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   </header>
 
   <section class="strip" aria-label="Überblick">
-    <div><div class="lbl">Bots aktiv · Beispiel</div><div class="big num" id="s-bots"></div><div class="sub" id="s-bots-sub"></div></div>
-    <div><div class="lbl">Bots · G/V 30 Tage · Beispiel</div><div class="big num" id="s-pnl"></div><div class="sub" id="s-pnl-sub"></div></div>
+    <div><div class="lbl">Bots melden sich</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div></div>
+    <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div></div>
     <div><div class="lbl">Eigenes Trading · 30 T · Beispiel</div><div class="big num" id="s-own"></div><div class="sub" id="s-own-sub"></div></div>
     <div><div class="lbl">Neue Rezepte · diese Woche</div><div class="big num" id="s-rec"></div><div class="sub" id="s-rec-sub"></div></div>
   </section>
 
   <section class="sec" aria-labelledby="h-bots">
     <div class="sec-h">
-      <h2 id="h-bots">Trading-Bots <span class="sample">Beispieldaten</span> <span class="tag">Zeile anklicken für Details</span></h2>
-      <div class="seg" role="group" aria-label="Zeitraum" id="range">
-        <button type="button" data-d="7">7 T</button><button type="button" data-d="30" aria-pressed="true">30 T</button><button type="button" data-d="90">90 T</button><button type="button" data-d="365">Gesamt</button>
-      </div>
+      <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2>
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Bot</th><th>Status</th><th>Kontostand</th><th>G/V</th><th>Trades</th><th>Winrate</th><th>Ø CRV</th><th>Profit-Faktor</th><th>Max. DD</th></tr></thead>
-        <tbody id="bots"></tbody>
+        <thead><tr><th>Bot</th><th>Status</th><th>Kontostand</th><th>G/V gesamt</th><th>Trades</th><th>Winrate</th><th>Ø CRV</th><th>Profit-Faktor</th><th>Max. DD</th></tr></thead>
+        <tbody id="bots"><tr><td colspan="9" class="muted">Wird geladen …</td></tr></tbody>
       </table>
     </div>
     <div class="chart-grid">
       <div class="chart-box" id="eq-box">
-        <div class="legend" id="eq-legend"></div>
+        <div class="sec-h" style="padding:0 0 10px;border:0">
+          <div class="legend" id="eq-legend" style="margin:0"></div>
+          <div class="seg" role="group" aria-label="Zeitraum des Verlaufs" id="range">
+            <button type="button" data-d="7">7 T</button><button type="button" data-d="30" aria-pressed="true">30 T</button><button type="button" data-d="90">90 T</button><button type="button" data-d="100000">Gesamt</button>
+          </div>
+        </div>
         <svg id="eq" role="img" aria-label="Kontoverlauf aller Bots"></svg>
         <div class="tip" id="eq-tip" hidden></div>
       </div>
@@ -252,7 +254,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </section>
   </div>
 
-  <p class="foot">Rezeptbuch: echte Daten. Bots und eigenes Trading: noch Beispieldaten, werden als Nächstes angebunden.</p>
+  <p class="foot">Rezeptbuch und Bots: echte Daten (Bots melden sich stündlich). Eigenes Trading: noch Beispieldaten.</p>
 </div>
 
 <script>
@@ -266,139 +268,148 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const now = new Date();
   document.getElementById("today").textContent = now.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
 
-  // deterministic pseudo-random
+  // deterministic pseudo-random (nur noch für die Beispieldaten "Eigenes Trading")
   function rng(seed){ let s = seed; return () => (s = (s*16807) % 2147483647) / 2147483647; }
 
-  // sample bots
-  const BOTS = [
-    {id:"b1", name:"Bot EURUSD Trend", meta:"MT5 · Demo", color:"--s1", status:"run", start:10000, edge:0.62, crv:1.8, seed:7},
-    {id:"b2", name:"Bot Gold Breakout", meta:"MT5 · Live", color:"--s2", status:"run", start:5000, edge:0.44, crv:2.4, seed:19},
-    {id:"b3", name:"Bot DAX Scalper", meta:"MT5 · Demo", color:"--s3", status:"pause", start:10000, edge:0.55, crv:1.1, seed:33},
-    {id:"b4", name:"Bot BTC Swing", meta:"Krypto · Test", color:"--s4", status:"stop", start:2000, edge:0.38, crv:2.0, seed:51},
-  ];
-  const DAYS = 365;
-  BOTS.forEach(b => {
-    const r = rng(b.seed); let eq = b.start; const trades = [];
-    b.equity = [];
-    for(let d=DAYS-1; d>=0; d--){
-      const n = r() < 0.55 ? Math.floor(r()*3)+1 : 0;
-      for(let k=0;k<n;k++){
-        const risk = b.start*0.005;
-        const win = r() < b.edge;
-        const pnl = win ? risk*b.crv*(0.6+r()*0.8) : -risk*(0.7+r()*0.5);
-        eq += pnl; trades.push({d, pnl, win, crv: win ? b.crv*(0.6+r()*0.8) : b.crv*(0.7+r()*0.6)});
-      }
-      b.equity.push({d, v:eq});
-    }
-    b.trades = trades;
-  });
-  const STATUS = {run:["run","läuft"], pause:["pause","pausiert"], stop:["stop","gestoppt"]};
-  const statusSub = {run:"letzte Meldung vor 2 Min.", pause:"seit 3 Tagen pausiert", stop:"keine Meldung seit 26 Std."};
-
-  function stats(b, days){
-    const tr = b.trades.filter(t => t.d < days);
-    const eqS = b.equity.filter(p => p.d < days);
-    const startV = (b.equity.find(p => p.d === days) || b.equity[0]).v;
-    const pnl = eqS[eqS.length-1].v - (days>=DAYS ? b.start : startV);
-    const wins = tr.filter(t=>t.win), losses = tr.filter(t=>!t.win);
-    const gw = wins.reduce((a,t)=>a+t.pnl,0), gl = -losses.reduce((a,t)=>a+t.pnl,0);
-    let peak = -Infinity, dd = 0;
-    eqS.forEach(p => { peak = Math.max(peak,p.v); dd = Math.max(dd,(peak-p.v)/peak); });
-    return {
-      balance: eqS[eqS.length-1].v, pnl, n: tr.length,
-      winrate: tr.length ? wins.length/tr.length*100 : 0,
-      crv: tr.length ? tr.reduce((a,t)=>a+t.crv,0)/tr.length : 0,
-      pf: gl ? gw/gl : 0, dd: dd*100,
-      avgWin: wins.length ? gw/wins.length : 0, avgLoss: losses.length ? gl/losses.length : 0,
-    };
+  // ---------- Trading-Bots (echte Daten aus bot_status / bot_trades / bot_equity) ----------
+  // Die Kennzahlen rechnet das Melde-Skript (D:\TradingBot\report_cockpit.py), hier wird nur angezeigt.
+  let BOTS = [], TRADES = [], EQUITY = [];
+  const COLORS = ["--s1","--s2","--s3","--s4"];
+  const STALE_HOURS = 3; // Skript meldet stündlich -> ab 3 Std. ohne Meldung warnen
+  const CUR = {USD:"$", EUR:"€", GBP:"£", CHF:"CHF"};
+  const money = (v, cur, signed) => v == null ? "–" :
+    (signed ? (v>0?"+":v<0?"−":"") : (v<0?"−":"")) + Math.abs(v).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " " + (CUR[cur] || cur || "");
+  const dec = (v, d=2) => v == null ? "–" : v.toFixed(d).replace(".",",");
+  const hoursSince = ts => (Date.now() - new Date(ts)) / 36e5;
+  function ago(ts){
+    const m = Math.max(0, Math.round((Date.now() - new Date(ts)) / 6e4));
+    return m < 60 ? `vor ${m} Min.` : m < 2880 ? `vor ${Math.round(m/60)} Std.` : `vor ${Math.round(m/1440)} Tagen`;
   }
+  const botState = b => hoursSince(b.zuletzt_gemeldet) < STALE_HOURS ? ["run","meldet sich"] : ["stop","keine Meldung"];
 
-  let range = 30, selected = "b1";
+  let range = 30, selected = null;
   const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
+  async function loadBots(){
+    try{
+      const [st, tr, eq] = await Promise.all([
+        sb("bot_status?select=*&order=bot_id"),
+        sb("bot_trades?select=bot_id,symbol,richtung,geschlossen,gv,risiko&order=geschlossen.desc&limit=500"),
+        sb("bot_equity?select=bot_id,tag,kontostand&order=tag"),
+      ]);
+      BOTS = st.map((b,i) => ({...b, color: COLORS[i % COLORS.length]}));
+      TRADES = tr; EQUITY = eq;
+      if(!BOTS.some(b => b.bot_id === selected)) selected = BOTS.length ? BOTS[0].bot_id : null;
+      renderBots();
+    }catch(e){
+      document.getElementById("bots").innerHTML = `<tr><td colspan="9" class="err">Bots konnten nicht geladen werden (${esc(e.message)}).</td></tr>`;
+      document.getElementById("s-bots").textContent = "–";
+      document.getElementById("s-pnl").textContent = "–";
+    }
+  }
+
+  function renderBots(){ renderTable(); renderDetail(); renderChart(); renderBotSummary(); }
+
   function renderTable(){
-    document.getElementById("bots").innerHTML = BOTS.map(b => {
-      const s = stats(b, range); const [c,l] = STATUS[b.status];
-      return `<tr data-id="${b.id}" tabindex="0" aria-selected="${b.id===selected}">
-        <td><div class="bot-name"><span class="sw" style="background:var(${b.color})"></span><div>${esc(b.name)}<div class="bot-meta">${esc(b.meta)}</div></div></div></td>
+    const body = document.getElementById("bots");
+    if(!BOTS.length){ body.innerHTML = `<tr><td colspan="9" class="muted">Noch keine Bot-Meldung.</td></tr>`; return; }
+    body.innerHTML = BOTS.map(b => {
+      const [c,l] = botState(b);
+      return `<tr data-id="${esc(b.bot_id)}" tabindex="0" aria-selected="${b.bot_id===selected}">
+        <td><div class="bot-name"><span class="sw" style="background:var(${b.color})"></span><div>${esc(b.name)}<div class="bot-meta">${esc(b.broker||"")} · ${b.is_demo ? "Demo" : "Live"} · ${esc(b.konto||"")}</div></div></div></td>
         <td><span class="pill ${c}">${l}</span></td>
-        <td class="num">${fmtEUR(s.balance)}</td>
-        <td class="num ${cls(s.pnl)}">${fmtSigned(s.pnl)}</td>
-        <td class="num">${s.n}</td>
-        <td class="num">${pct(s.winrate)}</td>
-        <td class="num">1 : ${s.crv.toFixed(2).replace(".",",")}</td>
-        <td class="num">${s.pf.toFixed(2).replace(".",",")}</td>
-        <td class="num neg">−${pct(s.dd)}</td>
+        <td class="num">${money(b.kontostand, b.waehrung)}</td>
+        <td class="num ${cls(b.gv_gesamt||0)}">${money(b.gv_gesamt, b.waehrung, true)}</td>
+        <td class="num">${b.trades ?? 0}</td>
+        <td class="num">${b.winrate == null ? "–" : pct(b.winrate)}</td>
+        <td class="num ${b.avg_crv == null ? "" : cls(b.avg_crv)}" title="Ø Ergebnis je Trade in Vielfachen des Risikos (G/V ÷ Risiko)">${b.avg_crv == null ? "–" : (b.avg_crv>0?"+":b.avg_crv<0?"−":"") + dec(Math.abs(b.avg_crv)) + " R"}</td>
+        <td class="num">${dec(b.profit_faktor)}</td>
+        <td class="num ${b.max_dd_pct ? "neg" : ""}">${b.max_dd_pct ? "−" + pct(b.max_dd_pct) : "0 %"}</td>
       </tr>`;
     }).join("");
   }
 
   function renderDetail(){
-    const b = BOTS.find(x=>x.id===selected); const s = stats(b, range); const [c,l] = STATUS[b.status];
-    document.getElementById("detail").innerHTML = `
+    const el = document.getElementById("detail");
+    const b = BOTS.find(x => x.bot_id === selected);
+    if(!b){ el.innerHTML = `<div class="muted">Kein Bot ausgewählt.</div>`; return; }
+    const [c,l] = botState(b);
+    const rendite = b.startkapital ? (b.kontostand - b.startkapital) / b.startkapital * 100 : null;
+    const last = TRADES.filter(t => t.bot_id === b.bot_id).slice(0,5);
+    el.innerHTML = `
       <div><div class="lbl">Ausgewählt</div><div style="font-weight:650;margin-top:3px">${esc(b.name)}</div>
-      <div style="margin-top:6px"><span class="pill ${c}">${l}</span> <span class="bot-meta">${statusSub[b.status]}</span></div></div>
-      <div class="kv"><span>Startkapital</span><span class="num">${fmtEUR(b.start)}</span></div>
-      <div class="kv"><span>Rendite (Zeitraum)</span><span class="num ${cls(s.pnl)}">${pct(s.pnl/(s.balance-s.pnl)*100)}</span></div>
-      <div class="kv"><span>Ø Gewinn-Trade</span><span class="num pos">${fmtSigned(s.avgWin)}</span></div>
-      <div class="kv"><span>Ø Verlust-Trade</span><span class="num neg">${fmtSigned(-s.avgLoss)}</span></div>
-      <div class="kv"><span>Trades / Woche</span><span class="num">${(s.n/Math.max(1,range/7)).toFixed(1).replace(".",",")}</span></div>`;
+      <div style="margin-top:6px"><span class="pill ${c}">${l}</span> <span class="bot-meta">letzte Meldung ${ago(b.zuletzt_gemeldet)}</span></div></div>
+      <div class="kv"><span>Startkapital</span><span class="num">${money(b.startkapital, b.waehrung)}</span></div>
+      <div class="kv"><span>Rendite gesamt</span><span class="num ${cls(rendite||0)}">${rendite == null ? "–" : (rendite>0?"+":"") + pct(rendite)}</span></div>
+      <div class="kv"><span>Equity</span><span class="num">${money(b.equity, b.waehrung)}</span></div>
+      <div class="kv"><span>Offene Positionen</span><span class="num">${b.offene_positionen ?? 0}</span></div>
+      <div class="kv"><span>G/V 30 Tage</span><span class="num ${cls(b.gv_30t||0)}">${money(b.gv_30t, b.waehrung, true)}</span></div>
+      <div><div class="lbl" style="margin-bottom:4px">Letzte Trades</div>
+      ${last.length ? `<ul class="list">${last.map(t => `<li><span>${esc(t.symbol)} <span class="muted">${t.richtung === "long" ? "▲" : "▼"}</span></span><span class="num ${cls(t.gv)}">${money(t.gv, b.waehrung, true)}</span></li>`).join("")}</ul>`
+                    : `<div class="muted" style="font-size:13px">Noch keine abgeschlossenen Trades.</div>`}</div>`;
   }
 
-  function renderSummary(){
-    const all = BOTS.map(b => stats(b,30));
-    const active = BOTS.filter(b=>b.status==="run").length;
-    const stopped = BOTS.filter(b=>b.status==="stop").length;
-    document.getElementById("s-bots").textContent = `${active} / ${BOTS.length}`;
-    document.getElementById("s-bots-sub").innerHTML = stopped ? `<span class="neg">${stopped} gestoppt, bitte prüfen</span>` : "alle laufen";
-    const pnl = all.reduce((a,s)=>a+s.pnl,0), n = all.reduce((a,s)=>a+s.n,0);
-    const el = document.getElementById("s-pnl"); el.textContent = fmtSigned(pnl); el.className = "big num " + cls(pnl);
+  function renderBotSummary(){
+    const ok = BOTS.filter(b => botState(b)[0] === "run").length, stale = BOTS.length - ok;
+    document.getElementById("s-bots").textContent = `${ok} / ${BOTS.length}`;
+    document.getElementById("s-bots-sub").innerHTML = !BOTS.length ? "noch keine Meldung"
+      : stale ? `<span class="neg">${stale} ohne Meldung, bitte prüfen</span>` : "alle melden sich";
+    const cur = BOTS[0] && BOTS[0].waehrung;
+    const pnl = BOTS.reduce((a,b) => a + (b.gv_30t || 0), 0);
+    const el = document.getElementById("s-pnl"); el.textContent = money(pnl, cur, true); el.className = "big num " + cls(pnl);
+    const since = Date.now() - 30*864e5;
+    const n = TRADES.filter(t => new Date(t.geschlossen) >= since).length;
     document.getElementById("s-pnl-sub").textContent = `${n} Trades über alle Bots`;
-    const own = document.getElementById("s-own"); own.textContent = fmtSigned(OWN_30.pnl); own.className = "big num " + cls(OWN_30.pnl);
-    document.getElementById("s-own-sub").textContent = `${OWN_30.n} Trades · Winrate ${pct(OWN_30.wr)}`;
   }
 
-  // equity chart (indexed to 0 = G/V in €, one axis)
+  // Verlauf: G/V seit Start (Kontostand − Startkapital) je Broker-Handelstag, eine Achse
   const svgNS = "http://www.w3.org/2000/svg";
   function el(tag, attrs){ const e = document.createElementNS(svgNS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; }
 
   function renderChart(){
     const svg = document.getElementById("eq"); svg.innerHTML = "";
-    const W = svg.clientWidth || 700, H = 240, m = {l:62, r:14, t:8, b:24};
+    const W = svg.clientWidth || 700, H = 240, m = {l:70, r:14, t:8, b:24};
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    const days = Math.min(range, DAYS);
-    const series = BOTS.map(b => {
-      const pts = b.equity.filter(p => p.d < days);
-      const base = days>=DAYS ? b.start : (b.equity.find(p=>p.d===days)||b.equity[0]).v;
-      return {b, pts: pts.map(p => ({d:p.d, v:p.v-base}))};
-    });
-    let lo = 0, hi = 0; series.forEach(s => s.pts.forEach(p => { lo=Math.min(lo,p.v); hi=Math.max(hi,p.v); }));
+    const from = new Date(Date.now() - range*864e5).toISOString().slice(0,10);
+    const rows = EQUITY.filter(r => r.tag >= from);
+    const days = [...new Set(rows.map(r => r.tag))].sort();
+    const legend = document.getElementById("eq-legend");
+    legend.innerHTML = `<span style="color:var(--ink-3)">G/V seit Start</span>` +
+      BOTS.map(b => `<span><span class="sw" style="background:var(${b.color})"></span>${esc(b.name)}</span>`).join("");
+    if(!days.length){
+      const tx = el("text",{x:W/2,y:H/2,"text-anchor":"middle","font-size":13,fill:cssVar("--ink-3")});
+      tx.textContent = "Noch keine Verlaufsdaten"; svg.appendChild(tx); return;
+    }
+    const cur = BOTS[0] && BOTS[0].waehrung;
+    const series = BOTS.map(b => ({b, pts: rows.filter(r => r.bot_id === b.bot_id)
+      .map(r => ({i: days.indexOf(r.tag), tag: r.tag, v: r.kontostand - (b.startkapital || 0)}))}));
+    let lo = 0, hi = 0; series.forEach(s => s.pts.forEach(p => { lo = Math.min(lo,p.v); hi = Math.max(hi,p.v); }));
     const pad = (hi-lo)*0.08 || 10; lo -= pad; hi += pad;
-    const x = d => m.l + (days-1-d)/(days-1) * (W-m.l-m.r);
+    const x = i => days.length === 1 ? (m.l + W - m.r) / 2 : m.l + i/(days.length-1) * (W-m.l-m.r);
     const y = v => m.t + (hi-v)/(hi-lo) * (H-m.t-m.b);
-    // ticks
     const step = niceStep((hi-lo)/4);
     for(let t = Math.ceil(lo/step)*step; t <= hi; t += step){
-      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:cssVar(t===0?"--line":"--grid"),"stroke-width":t===0?1.5:1}));
+      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:cssVar(Math.abs(t)<1e-9?"--line":"--grid"),"stroke-width":Math.abs(t)<1e-9?1.5:1}));
       const tx = el("text",{x:m.l-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"});
-      tx.textContent = fmtSigned(t); svg.appendChild(tx);
+      tx.textContent = money(t, cur, true); svg.appendChild(tx);
     }
-    const labels = [days-1, Math.floor((days-1)/2), 0];
-    labels.forEach((d,i) => {
-      const dt = new Date(now); dt.setDate(dt.getDate()-d);
-      const tx = el("text",{x:x(d),y:H-6,"text-anchor":i===0?"start":i===2?"end":"middle","font-size":11,fill:cssVar("--ink-3")});
-      tx.textContent = d===0 ? "heute" : dt.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}); svg.appendChild(tx);
+    const fmtDay = d => new Date(d + "T12:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+    const ticks = days.length === 1 ? [0] : [0, Math.floor((days.length-1)/2), days.length-1];
+    [...new Set(ticks)].forEach((i,k,arr) => {
+      const tx = el("text",{x:x(i),y:H-6,"text-anchor":arr.length===1?"middle":k===0?"start":k===arr.length-1?"end":"middle","font-size":11,fill:cssVar("--ink-3")});
+      tx.textContent = fmtDay(days[i]); svg.appendChild(tx);
     });
     series.forEach(s => {
-      const sel = s.b.id === selected;
-      const d = s.pts.map((p,i) => (i?"L":"M") + x(p.d).toFixed(1) + " " + y(p.v).toFixed(1)).join(" ");
-      if(sel){
-        const area = d + ` L ${x(0)} ${y(0)} L ${x(days-1)} ${y(0)} Z`;
-        svg.appendChild(el("path",{d:area,fill:cssVar(s.b.color),opacity:.08}));
+      if(!s.pts.length) return;
+      const sel = s.b.bot_id === selected;
+      const d = s.pts.map((p,i) => (i?"L":"M") + x(p.i).toFixed(1) + " " + y(p.v).toFixed(1)).join(" ");
+      if(sel && s.pts.length > 1){
+        const first = s.pts[0], last = s.pts[s.pts.length-1];
+        svg.appendChild(el("path",{d: d + ` L ${x(last.i)} ${y(0)} L ${x(first.i)} ${y(0)} Z`, fill:cssVar(s.b.color), opacity:.08}));
       }
       svg.appendChild(el("path",{d,fill:"none",stroke:cssVar(s.b.color),"stroke-width":sel?2.5:1.5,opacity:sel?1:.45,"stroke-linejoin":"round"}));
       const last = s.pts[s.pts.length-1];
-      svg.appendChild(el("circle",{cx:x(last.d),cy:y(last.v),r:sel?4.5:3,fill:cssVar(s.b.color),stroke:cssVar("--panel"),"stroke-width":2}));
+      svg.appendChild(el("circle",{cx:x(last.i),cy:y(last.v),r:sel?4.5:3,fill:cssVar(s.b.color),stroke:cssVar("--panel"),"stroke-width":2}));
     });
     const cross = el("line",{y1:m.t,y2:H-m.b,stroke:cssVar("--ink-3"),"stroke-dasharray":"3 3",visibility:"hidden"});
     svg.appendChild(cross);
@@ -407,19 +418,18 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     const tip = document.getElementById("eq-tip"), box = document.getElementById("eq-box");
     hit.addEventListener("pointermove", ev => {
       const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * (W / r.width);
-      const d = Math.max(0, Math.min(days-1, Math.round((days-1) - (px-m.l)/(W-m.l-m.r)*(days-1))));
-      cross.setAttribute("x1", x(d)); cross.setAttribute("x2", x(d)); cross.setAttribute("visibility","visible");
-      const dt = new Date(now); dt.setDate(dt.getDate()-d);
-      tip.innerHTML = `<b>${dt.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})}</b>` +
-        series.map(s => { const p = s.pts.find(q=>q.d===d); return `<div><span><span class="sw" style="display:inline-block;background:var(${s.b.color});margin-right:6px"></span>${esc(s.b.name.replace("Bot ",""))}</span><span class="num ${cls(p.v)}">${fmtSigned(p.v)}</span></div>`; }).join("");
+      const i = days.length === 1 ? 0 : Math.max(0, Math.min(days.length-1, Math.round((px-m.l)/(W-m.l-m.r)*(days.length-1))));
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility","visible");
+      tip.innerHTML = `<b>${fmtDay(days[i])}</b>` + series.map(s => {
+        const p = s.pts.find(q => q.i === i); if(!p) return "";
+        return `<div><span><span class="sw" style="display:inline-block;background:var(${s.b.color});margin-right:6px"></span>${esc(s.b.name)}</span><span class="num ${cls(p.v)}">${money(p.v, s.b.waehrung, true)}</span></div>`;
+      }).join("");
       tip.hidden = false;
       const br = box.getBoundingClientRect(); let left = ev.clientX - br.left + 14;
       if(left + tip.offsetWidth > br.width - 8) left = ev.clientX - br.left - tip.offsetWidth - 14;
       tip.style.left = left + "px"; tip.style.top = (ev.clientY - br.top - 20) + "px";
     });
     hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility","hidden"); });
-    document.getElementById("eq-legend").innerHTML = `<span style="color:var(--ink-3)">Gewinn/Verlust seit Beginn des Zeitraums</span>` +
-      BOTS.map(b => `<span><span class="sw" style="background:var(${b.color})"></span>${esc(b.name.replace("Bot ",""))}</span>`).join("");
   }
   function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; }
 
@@ -454,16 +464,20 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     });
   }
 
-  function renderAll(){ renderSummary(); renderTable(); renderDetail(); renderChart(); renderOwn(); }
+  function renderOwnSummary(){
+    const own = document.getElementById("s-own"); own.textContent = fmtSigned(OWN_30.pnl); own.className = "big num " + cls(OWN_30.pnl);
+    document.getElementById("s-own-sub").textContent = `${OWN_30.n} Trades · Winrate ${pct(OWN_30.wr)}`;
+  }
+  function renderAll(){ renderOwnSummary(); renderOwn(); loadBots(); }
 
   document.getElementById("range").addEventListener("click", e => {
     const btn = e.target.closest("button"); if(!btn) return;
     range = +btn.dataset.d;
     document.querySelectorAll("#range button").forEach(b => b.setAttribute("aria-pressed", b===btn));
-    renderTable(); renderDetail(); renderChart();
+    renderChart();
   });
   const tbody = document.getElementById("bots");
-  const pick = tr => { if(!tr) return; selected = tr.dataset.id; renderTable(); renderDetail(); renderChart(); };
+  const pick = tr => { if(!tr || !tr.dataset.id) return; selected = tr.dataset.id; renderTable(); renderDetail(); renderChart(); };
   tbody.addEventListener("click", e => pick(e.target.closest("tr")));
   tbody.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(e.target.closest("tr")); }});
   let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); }, 120); });
