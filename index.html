@@ -186,7 +186,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   <section class="strip" aria-label="Überblick">
     <div><div class="lbl">Bots melden sich</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div></div>
     <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div></div>
-    <div><div class="lbl">Eigenes Trading · 30 T · Beispiel</div><div class="big num" id="s-own"></div><div class="sub" id="s-own-sub"></div></div>
+    <div><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div></div>
     <div><div class="lbl">Neue Rezepte · diese Woche</div><div class="big num" id="s-rec"></div><div class="sub" id="s-rec-sub"></div></div>
   </section>
 
@@ -217,7 +217,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   <div class="two">
     <section class="sec" aria-labelledby="h-own">
-      <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="sample">Beispieldaten</span></h2></div>
+      <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
         <div class="lbl" style="margin-bottom:6px">Gewinn/Verlust pro Woche</div>
@@ -242,7 +242,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   <div class="three">
     <section class="sec" aria-labelledby="h-jour">
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
-      <div class="sec-b"><div class="empty"><strong>Online, gleicher Login wie das Cockpit</strong>Die letzten Einträge erscheinen hier, sobald „Eigenes Trading“ angebunden ist.</div></div>
+      <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
     <section class="sec" aria-labelledby="h-yt1">
       <div class="sec-h"><h2 id="h-yt1">YouTube · Kanal 1</h2><span class="pill pause">noch nicht gestartet</span></div>
@@ -254,7 +254,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </section>
   </div>
 
-  <p class="foot">Rezeptbuch und Bots: echte Daten (Bots melden sich stündlich). Eigenes Trading: noch Beispieldaten.</p>
+  <p class="foot">Alles echte Daten. Bots melden sich stündlich, eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
 </div>
 
 <script>
@@ -268,8 +268,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const now = new Date();
   document.getElementById("today").textContent = now.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
 
-  // deterministic pseudo-random (nur noch für die Beispieldaten "Eigenes Trading")
-  function rng(seed){ let s = seed; return () => (s = (s*16807) % 2147483647) / 2147483647; }
 
   // ---------- Trading-Bots (echte Daten aus bot_status / bot_trades / bot_equity) ----------
   // Die Kennzahlen rechnet das Melde-Skript (D:\TradingBot\report_cockpit.py), hier wird nur angezeigt.
@@ -433,42 +431,64 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   }
   function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; }
 
-  // own trading sample
-  const r = rng(101); const WEEKS = 12; const ownWeeks = [];
-  for(let i=0;i<WEEKS;i++){ ownWeeks.push(Math.round((r()-0.42)*900)); }
-  const OWN_30 = {pnl: ownWeeks.slice(-4).reduce((a,b)=>a+b,0), n: 23, wr: 56.5};
+  // ---------- Eigenes Trading (Zusammenfassung, die das Journal selbst schreibt) ----------
+  // journal_data.cockpitSummary = Kennzahlen aus calcMetrics() des Journals -> garantiert gleiche Zahlen.
+  let OWN = null;
+  const usd = (v, signed) => money(v, "USD", signed);
+  async function loadOwn(){
+    try{
+      const rows = await sb("journal_data?select=value&key=eq.cockpitSummary");
+      OWN = rows.length ? rows[0].value : null;
+    }catch(e){ OWN = null; document.getElementById("own-kpis").innerHTML = `<div class="err">Journal-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+    renderOwnSummary(); renderOwn(); renderJournal();
+  }
+  function renderOwnSummary(){
+    const own = document.getElementById("s-own"), sub = document.getElementById("s-own-sub");
+    if(!OWN){ own.textContent = "–"; sub.textContent = "Journal einmal öffnen"; return; }
+    const d = OWN.d30;
+    own.textContent = usd(d.net, true); own.className = "big num " + cls(d.net);
+    sub.textContent = `${d.trades} Trades · Winrate ${pct(d.winRate)}`;
+  }
   function renderOwn(){
+    const kp = document.getElementById("own-kpis"), svg = document.getElementById("own-bars");
+    if(!OWN){ kp.innerHTML = `<div class="muted" style="grid-column:1/-1">Noch keine Zahlen – öffne einmal das Journal, dann erscheinen sie hier.</div>`; svg.innerHTML = ""; return; }
+    document.getElementById("own-stand").textContent = "Stand " + new Date(OWN.updated_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+    const d = OWN.d30, a = OWN.all;
+    const r = v => (v>0?"+":v<0?"−":"") + dec(Math.abs(v)) + " R";
     const k = [
-      ["G/V 30 T", fmtSigned(OWN_30.pnl), cls(OWN_30.pnl)], ["Trades", "23", ""], ["Winrate", pct(OWN_30.wr), ""],
-      ["Ø CRV", "1 : 1,9", ""], ["Max. DD", "−4,2 %", "neg"], ["Profit-Faktor", "1,64", ""],
+      ["G/V 30 T", usd(d.net, true), cls(d.net)], ["Trades 30 T", String(d.trades), ""], ["Winrate 30 T", pct(d.winRate), ""],
+      ["Ø CRV 30 T", r(d.avgCRV), cls(d.avgCRV)], ["Max. DD 30 T", usd(d.maxDD), d.maxDD < 0 ? "neg" : ""], ["Profit-Faktor 30 T", dec(d.pf), ""],
+      ["G/V gesamt", usd(a.net, true), cls(a.net)], ["Trades gesamt", String(a.trades), ""], ["Winrate gesamt", pct(a.winRate), ""],
     ];
-    document.getElementById("own-kpis").innerHTML = k.map(([l,v,c]) => `<div><div class="lbl">${l}</div><div class="big num ${c}">${v}</div></div>`).join("");
-    const svg = document.getElementById("own-bars"); svg.innerHTML = "";
-    const W = svg.clientWidth || 500, H = 150, m = {l:52,r:6,t:6,b:22};
+    kp.innerHTML = k.map(([l,v,c]) => `<div><div class="lbl">${l}</div><div class="big num ${c}">${v}</div></div>`).join("");
+    svg.innerHTML = "";
+    const weeks = OWN.weeks || [], vals = weeks.map(w => w.net), N = weeks.length;
+    if(!N) return;
+    const W = svg.clientWidth || 500, H = 150, m = {l:70,r:6,t:6,b:22};
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    const mx = Math.max(...ownWeeks.map(Math.abs)) * 1.1;
+    const mx = (Math.max(...vals.map(Math.abs)) || 1) * 1.1;
     const y = v => m.t + (mx - v)/(2*mx) * (H-m.t-m.b);
-    const bw = (W-m.l-m.r)/WEEKS;
-    [mx*0.8, 0, -mx*0.8].forEach(t => {
-      const tv = Math.round(t/100)*100;
-      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(tv),y2:y(tv),stroke:cssVar(tv===0?"--line":"--grid")}));
-      const tx = el("text",{x:m.l-8,y:y(tv)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"}); tx.textContent = fmtSigned(tv); svg.appendChild(tx);
+    const bw = (W-m.l-m.r)/N;
+    const step = niceStep(mx*0.8);
+    [step, 0, -step].forEach(t => {
+      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:cssVar(t===0?"--line":"--grid")}));
+      const tx = el("text",{x:m.l-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"}); tx.textContent = usd(t, true); svg.appendChild(tx);
     });
-    ownWeeks.forEach((v,i) => {
-      const x0 = m.l + i*bw + 2, w = Math.max(2, bw-4), top = v>=0 ? y(v) : y(0), h = Math.abs(y(v)-y(0));
-      const g = el("g",{});
-      const rect = el("rect",{x:x0,y:top,width:w,height:Math.max(1,h),rx:3,fill:cssVar(v>=0?"--good":"--bad")});
-      const t = el("title",{}); t.textContent = `KW ${27+i}: ${fmtSigned(v)}`; rect.appendChild(t);
-      g.appendChild(rect); svg.appendChild(g);
-      if(i%3===0 || i===WEEKS-1){ const tx = el("text",{x:x0+w/2,y:H-6,"text-anchor":"middle","font-size":11,fill:cssVar("--ink-3")}); tx.textContent = "KW " + (27+i); svg.appendChild(tx); }
+    const kw = iso => { const d = new Date(iso+"T12:00:00"); d.setDate(d.getDate()+3); const y1 = new Date(d.getFullYear(),0,4); return 1 + Math.round(((d-y1)/864e5 - 3 + ((y1.getDay()+6)%7))/7); };
+    weeks.forEach((w,i) => {
+      const v = w.net, x0 = m.l + i*bw + 2, bwid = Math.max(2, bw-4), top = v>=0 ? y(v) : y(0), h = Math.abs(y(v)-y(0));
+      const rect = el("rect",{x:x0,y:top,width:bwid,height:Math.max(1,h),rx:3,fill:cssVar(v>=0?"--good":"--bad")});
+      const t = el("title",{}); t.textContent = `KW ${kw(w.week)}: ${usd(v, true)}`; rect.appendChild(t); svg.appendChild(rect);
+      if(i%3===0 || i===N-1){ const tx = el("text",{x:x0+bwid/2,y:H-6,"text-anchor":"middle","font-size":11,fill:cssVar("--ink-3")}); tx.textContent = "KW " + kw(w.week); svg.appendChild(tx); }
     });
+  }
+  function renderJournal(){
+    const list = document.getElementById("jour-list");
+    if(!OWN || !(OWN.last||[]).length){ list.innerHTML = `<li class="muted">Noch keine Einträge.</li>`; return; }
+    list.innerHTML = OWN.last.map(t => `<li><span>${esc(t.symbol||"")} <span class="muted">${t.direction && String(t.direction).toLowerCase().startsWith("s") ? "▼" : "▲"} ${esc(new Date(t.date+"T12:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}))}</span></span><span class="num ${cls(t.net)}">${usd(t.net, true)}</span></li>`).join("");
   }
 
-  function renderOwnSummary(){
-    const own = document.getElementById("s-own"); own.textContent = fmtSigned(OWN_30.pnl); own.className = "big num " + cls(OWN_30.pnl);
-    document.getElementById("s-own-sub").textContent = `${OWN_30.n} Trades · Winrate ${pct(OWN_30.wr)}`;
-  }
-  function renderAll(){ renderOwnSummary(); renderOwn(); loadBots(); }
+  function renderAll(){ loadOwn(); loadBots(); }
 
   document.getElementById("range").addEventListener("click", e => {
     const btn = e.target.closest("button"); if(!btn) return;

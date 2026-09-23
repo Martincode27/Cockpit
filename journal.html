@@ -1829,6 +1829,7 @@ async function loadFromSheets(){
       localStorage.setItem('propfirm_overrides',JSON.stringify(merged));
     }
     setSyncStatus(true,'Synced');
+    setTimeout(writeCockpitSummary,0);
   }catch(e){setSyncStatus(false,'Offline');showToast('Verbindung fehlgeschlagen','error');}
 }
 
@@ -1856,6 +1857,7 @@ async function saveToSheets(){
     const rlRows=[REVIEW_LOG_COLS,...reviewLog.map(r=>REVIEW_LOG_COLS.map(c=>r[c]??''))];
     await fetch(API,{method:'POST',body:JSON.stringify({action:'save',trades:tradeRows,errors:errRows,reviewLog:rlRows})});
     setSyncStatus(true,'Synced');
+    writeCockpitSummary();
   }catch(e){setSyncStatus(false,'Sync-Fehler');showToast('Sync fehlgeschlagen','error');}
 }
 
@@ -3284,6 +3286,45 @@ function calcMetrics(list){
     else break;
   }
   return{totalNet,totalComm,winRate,avgWin,avgLoss,rr,wins:dWins.length,losses:dLosses.length,bes:dBes.length,total:dedupedList.length,maxDD:-dd,pf:gL?gW/gL:0,avgCRV,streak:curStreak,streakType};
+}
+
+// ---- Zusammenfassung fürs Cockpit (2026-09-24) ----
+// Das Cockpit rechnet nichts selbst: das Journal schreibt seine eigenen Kennzahlen (calcMetrics,
+// alle Konten wie in der Statistik) als 'cockpitSummary' in journal_data. Nur bei Änderung.
+let _lastCockpitSummary='';
+function buildCockpitSummary(){
+  const today=new Date();
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const since30=iso(new Date(today.getTime()-30*864e5));
+  const monthPrefix=iso(today).slice(0,7);
+  const pick=m=>({net:+m.totalNet.toFixed(2),trades:m.total,wins:m.wins,losses:m.losses,winRate:+m.winRate.toFixed(1),
+                  pf:+m.pf.toFixed(2),avgCRV:+m.avgCRV.toFixed(2),maxDD:+m.maxDD.toFixed(2),rr:+m.rr.toFixed(2)});
+  const valid=trades.filter(t=>t.date);
+  // G/V pro Kalenderwoche (Montag), letzte 12 Wochen
+  const monday=d=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return iso(x);};
+  const weeks=[];
+  for(let i=11;i>=0;i--)weeks.push(monday(iso(new Date(today.getTime()-i*7*864e5))));
+  const byWeek=Object.fromEntries(weeks.map(w=>[w,0]));
+  valid.forEach(t=>{const w=monday(t.date);if(w in byWeek)byWeek[w]+=safeNet(t);});
+  const last=[...valid].sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,5)
+    .map(t=>({date:t.date,time:t.time||'',symbol:t.symbol,direction:t.direction,net:+safeNet(t).toFixed(2),account:t.account||''}));
+  return {currency:'USD',
+    d30:pick(calcMetrics(valid.filter(t=>t.date>=since30))),
+    month:pick(calcMetrics(valid.filter(t=>t.date.startsWith(monthPrefix)))),
+    all:pick(calcMetrics(valid)),
+    weeks:weeks.map(w=>({week:w,net:+byWeek[w].toFixed(2)})),
+    last};
+}
+function writeCockpitSummary(){
+  try{
+    if(!trades||!trades.length)return;
+    const s=buildCockpitSummary();
+    const key=JSON.stringify(s);
+    if(key===_lastCockpitSummary)return;
+    _lastCockpitSummary=key;
+    s.updated_at=new Date().toISOString();
+    fetch(API,{method:'POST',body:JSON.stringify({action:'save',cockpitSummary:s})}).catch(e=>console.warn('Cockpit-Zusammenfassung fehlgeschlagen',e));
+  }catch(e){console.warn('Cockpit-Zusammenfassung fehlgeschlagen',e);}
 }
 
 // EOD Trailing DD: returns CURRENT dd (peak minus current balance)
