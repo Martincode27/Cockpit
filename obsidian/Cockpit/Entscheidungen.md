@@ -9,5 +9,6 @@
 - **Projektfarbe in Obsidian: Rot.**
 - **Trading-Journal nicht so veröffentlichen, wie es ist** (siehe [[Trading-Journal]], Sicherheitsbefund).
 
-## Offen
-- Hosting: privates Repo + GitHub Pages braucht GitHub Pro. Alternativen: Repo öffentlich (Daten liegen hinter dem Login) oder anderer Hoster.
+- **Hosting:** GitHub Pages, Repo `Cockpit` dafür **öffentlich** gestellt. Im Code stehen keine Geheimnisse; die Daten liegen hinter dem Login.
+- **Gleiches Supabase-Projekt wie das Rezeptbuch.** Login über Supabase Auth, nur mein Konto, Registrierung aus.
+- **Jede neue Cockpit-Tabelle bekommt RLS nur für eingeloggte Nutzer.** Der Login allein sperrt nur die Oberfläche.

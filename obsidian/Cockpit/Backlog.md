@@ -4,9 +4,12 @@
 - [x] Konzept abstimmen
 - [x] Klickbarer Entwurf mit Beispieldaten
 - [x] Repo `Cockpit` anlegen
-- [ ] Hosting entscheiden (GitHub Pro / Repo öffentlich / anderer Hoster)
-- [ ] Grundgerüst: Login (Supabase Auth) + Linkleiste
-- [ ] Rezept-Kachel mit echten Zahlen aus Supabase
+- [x] Hosting: Repo öffentlich + GitHub Pages
+- [x] Grundgerüst: Login (Supabase Auth) + Linkleiste
+- [x] Rezept-Kachel mit echten Zahlen aus Supabase
+- [ ] In Supabase: eigenen Nutzer anlegen + Registrierung abschalten
+- [ ] Auf `main` übernehmen + GitHub Pages einschalten
+- [ ] Mit echter Datenbank testen
 
 ## Trading-Bots
 - [ ] Welche Bots, welche Plattform, wo laufen sie? (Infos aus `Projects/TradingBot`)

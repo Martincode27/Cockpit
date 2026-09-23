@@ -53,14 +53,20 @@ Nur der Nutzer selbst greift zu, aber **von überall** (PC + Handy).
 ## 3. Architektur (geplant)
 
 - **Frontend:** eine HTML-Datei (`index.html`), Vanilla-JS, wie beim Rezeptbuch.
-- **Daten:** Supabase (dasselbe Projekt wie das Rezeptbuch oder ein eigenes — noch offen).
+- **Daten:** Supabase, **dasselbe Projekt wie das Rezeptbuch** (`qqsxtzbukkneptegkbkf`). Der
+  Publishable Key steht bewusst im Frontend (ist öffentlich gedacht); geschützt wird über Login + RLS.
   Das Dashboard rechnet nichts selbst aus, sondern zeigt an, was die Projekte liefern:
   - Rezeptbuch → liest direkt `recipes` (`created_at` für "neu diese Woche").
   - Trading-Bots → schreiben regelmäßig Status + Kennzahlen in eine eigene Tabelle.
   - Eigenes Trading → aus dem Trading-Journal.
   - YouTube → YouTube Data API.
-- **Login:** Supabase Auth, nur ein Konto (Registrierung abgeschaltet).
-- **Hosting:** offen — siehe Abschnitt 5.
+- **Login:** Supabase Auth (E-Mail + Passwort), direkt per `fetch` gegen `/auth/v1/token` — keine
+  Bibliothek. Sitzung in `localStorage` (`cockpit_session`), Token wird automatisch erneuert.
+  Nur ein Konto; Registrierung in Supabase abgeschaltet (macht der Nutzer im Dashboard).
+  **Wichtig:** Der Login sperrt nur die Oberfläche. Echter Schutz entsteht erst durch RLS-Policies
+  `to authenticated` auf den Cockpit-Tabellen (Bots/Trading) — bei jeder neuen Tabelle mitliefern!
+  Die Rezepte-Tabellen sind absichtlich weiterhin offen lesbar (Familien-Rezeptbuch).
+- **Hosting:** GitHub Pages, Repo **öffentlich** (Entscheidung 2026-09-23).
 
 ---
 
@@ -91,10 +97,6 @@ Den API-Key sollte der Nutzer vorsorglich erneuern.
 
 ## 5. Offene Entscheidungen
 
-- **Hosting:** Das Repo `Martincode27/Cockpit` ist **privat**. GitHub Pages geht mit privaten Repos
-  nur mit einem kostenpflichtigen GitHub-Plan (Pro). Optionen: (a) GitHub Pro, (b) Repo öffentlich
-  machen — unkritisch, weil im Code keine Geheimnisse stehen und die Daten hinter dem Login liegen,
-  (c) anderer kostenloser Hoster, der private Repos kann (neuer Account nötig, legt der Nutzer an).
 - Welche Trading-Bots gibt es, wo laufen sie, welche Plattform? → steht im Vault
   (`D:\Vault\Projects\TradingBot\`), in der Cloud-Session nicht lesbar.
 - Anzahl und Namen der YouTube-Kanäle.
@@ -105,7 +107,7 @@ Den API-Key sollte der Nutzer vorsorglich erneuern.
 
 | Datei | Zweck |
 |---|---|
-| `index.html` | Dashboard — aktuell **Entwurf mit Beispieldaten** |
+| `index.html` | Dashboard mit Login. Rezeptbuch-Kachel **echt**, Bots/eigenes Trading noch **Beispieldaten** |
 | `obsidian/` | Kopiervorlage für den Vault-Ordner `Projects\Cockpit\` inkl. roter Projektfarbe |
 
 ---
@@ -115,6 +117,10 @@ Den API-Key sollte der Nutzer vorsorglich erneuern.
 ### 2026-09-23 — Session 1 (Cloud-Session, gestartet aus dem Rezepte-Repo)
 - Idee und Konzept abgestimmt: Dashboard für Bots, eigenes Trading, Rezeptbuch, Journal, YouTube.
 - Klickbarer Entwurf mit Beispieldaten gebaut (`index.html`); Nutzer: Design später, erst Daten.
-- Repo `Martincode27/Cockpit` vom Nutzer angelegt (privat).
+- Repo `Martincode27/Cockpit` vom Nutzer angelegt, danach auf **öffentlich** gestellt (für kostenloses GitHub Pages).
 - Trading-Journal-HTML analysiert (Datenmodell, Kennzahlen, Sicherheitsbefund → Abschnitt 4).
 - Obsidian-Vault war aus der Cloud-Session nicht erreichbar → Notizen als Vorlage in `obsidian/`.
+- Login (Supabase Auth, ohne Bibliothek) und echte Rezept-Kachel eingebaut (Gesamt, diese Woche ab
+  Montag, dieser Monat, letzte 5). Mit simulierter Supabase-API im Browser getestet (Login falsch/richtig,
+  Neuladen, Abmelden, HTML-Escaping). Gegen die echte Datenbank **noch nicht** getestet — die
+  Cloud-Session hat keinen Netzwerkzugriff auf Supabase.

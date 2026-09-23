@@ -38,6 +38,7 @@
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#9085e9; --grid:#232730;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:20px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -125,6 +126,19 @@ tbody tr:last-child td{border-bottom:0}
 .empty{border:1px dashed var(--line);border-radius:10px;padding:18px;color:var(--ink-2);font-size:13px;display:grid;gap:6px}
 .empty strong{color:var(--ink)}
 .foot{font-size:12px;color:var(--ink-3);text-align:center}
+.muted{color:var(--ink-3)}
+.err{color:var(--bad);font-size:13px}
+button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:pointer}
+
+/* login */
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+.login .logo{margin-bottom:4px}
+.login label{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.login input{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink)}
+.login input:focus{outline:2px solid var(--brand);outline-offset:1px}
+.login button[type=submit]{font:inherit;font-weight:600;font-size:15px;padding:11px;border:0;border-radius:8px;background:var(--brand);color:#fff;cursor:pointer}
+.login button[type=submit]:disabled{opacity:.6;cursor:wait}
 
 @media (max-width:900px){
   .two,.three{grid-template-columns:1fr}
@@ -144,26 +158,41 @@ tbody tr:last-child td{border-bottom:0}
 </head>
 <body>
 
-<div class="wrap">
+<div class="login" id="login" hidden>
+  <form id="login-form" autocomplete="on">
+    <div class="logo"><i></i>Cockpit</div>
+    <label for="login-email">E-Mail
+      <input id="login-email" type="email" autocomplete="username" required>
+    </label>
+    <label for="login-pass">Passwort
+      <input id="login-pass" type="password" autocomplete="current-password" required>
+    </label>
+    <div class="err" id="login-err" role="alert" hidden></div>
+    <button type="submit" id="login-btn">Anmelden</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
   <header class="top">
-    <div class="logo"><i></i>Cockpit <small id="today"></small> <span class="sample">Entwurf · Beispieldaten</span></div>
+    <div class="logo"><i></i>Cockpit <small id="today"></small></div>
     <nav class="links" aria-label="Meine Seiten">
       <a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener"><span class="dot"></span>Rezeptbuch</a>
       <span class="link soon"><span class="dot"></span>Trading-Journal · bald online</span>
       <span class="link soon"><span class="dot"></span>YouTube Studio · bald</span>
+      <button type="button" class="link" id="logout">Abmelden</button>
     </nav>
   </header>
 
   <section class="strip" aria-label="Überblick">
-    <div><div class="lbl">Bots aktiv</div><div class="big num" id="s-bots"></div><div class="sub" id="s-bots-sub"></div></div>
-    <div><div class="lbl">Bots · Gewinn/Verlust 30 Tage</div><div class="big num" id="s-pnl"></div><div class="sub" id="s-pnl-sub"></div></div>
-    <div><div class="lbl">Eigenes Trading · 30 Tage</div><div class="big num" id="s-own"></div><div class="sub" id="s-own-sub"></div></div>
+    <div><div class="lbl">Bots aktiv · Beispiel</div><div class="big num" id="s-bots"></div><div class="sub" id="s-bots-sub"></div></div>
+    <div><div class="lbl">Bots · G/V 30 Tage · Beispiel</div><div class="big num" id="s-pnl"></div><div class="sub" id="s-pnl-sub"></div></div>
+    <div><div class="lbl">Eigenes Trading · 30 T · Beispiel</div><div class="big num" id="s-own"></div><div class="sub" id="s-own-sub"></div></div>
     <div><div class="lbl">Neue Rezepte · diese Woche</div><div class="big num" id="s-rec"></div><div class="sub" id="s-rec-sub"></div></div>
   </section>
 
   <section class="sec" aria-labelledby="h-bots">
     <div class="sec-h">
-      <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2>
+      <h2 id="h-bots">Trading-Bots <span class="sample">Beispieldaten</span> <span class="tag">Zeile anklicken für Details</span></h2>
       <div class="seg" role="group" aria-label="Zeitraum" id="range">
         <button type="button" data-d="7">7 T</button><button type="button" data-d="30" aria-pressed="true">30 T</button><button type="button" data-d="90">90 T</button><button type="button" data-d="365">Gesamt</button>
       </div>
@@ -186,7 +215,7 @@ tbody tr:last-child td{border-bottom:0}
 
   <div class="two">
     <section class="sec" aria-labelledby="h-own">
-      <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag">aus dem Trading-Journal</span></h2></div>
+      <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="sample">Beispieldaten</span></h2></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
         <div class="lbl" style="margin-bottom:6px">Gewinn/Verlust pro Woche</div>
@@ -198,17 +227,12 @@ tbody tr:last-child td{border-bottom:0}
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-          <div><div class="lbl">Gesamt</div><div class="big num">21</div></div>
-          <div><div class="lbl">Diese Woche</div><div class="big num">+3</div></div>
-          <div><div class="lbl">Diesen Monat</div><div class="big num">+3</div></div>
+          <div><div class="lbl">Gesamt</div><div class="big num" id="rec-total">…</div></div>
+          <div><div class="lbl">Diese Woche</div><div class="big num" id="rec-week">…</div></div>
+          <div><div class="lbl">Diesen Monat</div><div class="big num" id="rec-month">…</div></div>
         </div>
         <div class="lbl" style="margin-bottom:4px">Zuletzt hinzugefügt</div>
-        <ul class="list">
-          <li><span>Shakshuka mit Feta<span class="new">neu</span></span><span class="when">Mo, 22.09.</span></li>
-          <li><span>Protein-Pancakes<span class="new">neu</span></span><span class="when">So, 21.09.</span></li>
-          <li><span>Linsen-Dal<span class="new">neu</span></span><span class="when">So, 21.09.</span></li>
-          <li><span>Hähnchen-Reis-Bowl</span><span class="when">17.09.</span></li>
-        </ul>
+        <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
       </div>
     </section>
   </div>
@@ -228,7 +252,7 @@ tbody tr:last-child td{border-bottom:0}
     </section>
   </div>
 
-  <p class="foot">Entwurf: Alle Zahlen sind Beispieldaten, die echten Daten werden später angebunden.</p>
+  <p class="foot">Rezeptbuch: echte Daten. Bots und eigenes Trading: noch Beispieldaten, werden als Nächstes angebunden.</p>
 </div>
 
 <script>
@@ -239,7 +263,7 @@ tbody tr:last-child td{border-bottom:0}
   const cls = v => v>=0 ? "pos" : "neg";
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-  const now = new Date(2026,8,23);
+  const now = new Date();
   document.getElementById("today").textContent = now.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
 
   // deterministic pseudo-random
@@ -332,8 +356,6 @@ tbody tr:last-child td{border-bottom:0}
     document.getElementById("s-pnl-sub").textContent = `${n} Trades über alle Bots`;
     const own = document.getElementById("s-own"); own.textContent = fmtSigned(OWN_30.pnl); own.className = "big num " + cls(OWN_30.pnl);
     document.getElementById("s-own-sub").textContent = `${OWN_30.n} Trades · Winrate ${pct(OWN_30.wr)}`;
-    document.getElementById("s-rec").textContent = "+3";
-    document.getElementById("s-rec-sub").textContent = "21 Rezepte insgesamt";
   }
 
   // equity chart (indexed to 0 = G/V in €, one axis)
@@ -447,7 +469,100 @@ tbody tr:last-child td{border-bottom:0}
   let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); }, 120); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { renderChart(); renderOwn(); });
   new MutationObserver(() => { renderChart(); renderOwn(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
-  renderAll();
+  // ---------- Supabase: Login + Daten ----------
+  // Publishable Key ist öffentlich gedacht (steht auch im Rezeptbuch); geschützt wird über Login + RLS.
+  const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT";
+  const SESSION_KEY = "cockpit_session";
+
+  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function saveSession(s){ try{ s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); }catch(e){} }
+
+  async function authRequest(grant, body){
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw Object.assign(new Error(data.error_description || data.msg || data.message || ("HTTP " + res.status)), {status: res.status});
+    const s = { access_token: data.access_token, refresh_token: data.refresh_token,
+                expires_at: data.expires_at || Math.floor(Date.now()/1000) + (data.expires_in || 3600),
+                email: data.user && data.user.email };
+    saveSession(s);
+    return s;
+  }
+
+  async function validSession(){
+    const s = loadSession();
+    if(!s || !s.refresh_token) return null;
+    if(s.expires_at - 60 > Date.now()/1000) return s;
+    try{ return await authRequest("refresh_token", { refresh_token: s.refresh_token }); }
+    catch(e){ if(e.status >= 400 && e.status < 500) saveSession(null); return null; }
+  }
+
+  async function sb(path){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + s.access_token },
+    });
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }
+
+  // ---------- Rezeptbuch ----------
+  function startOfWeek(d){ const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
+  async function loadRecipes(){
+    const list = document.getElementById("rec-list");
+    try{
+      const rows = await sb("recipes?select=id,name,emoji,created_at&order=created_at.desc");
+      const week = startOfWeek(new Date()), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const nWeek = rows.filter(r => new Date(r.created_at) >= week).length;
+      const nMonth = rows.filter(r => new Date(r.created_at) >= month).length;
+      document.getElementById("rec-total").textContent = rows.length;
+      document.getElementById("rec-week").textContent = "+" + nWeek;
+      document.getElementById("rec-month").textContent = "+" + nMonth;
+      document.getElementById("s-rec").textContent = "+" + nWeek;
+      document.getElementById("s-rec-sub").textContent = rows.length + " Rezepte insgesamt";
+      list.innerHTML = rows.slice(0,5).map(r => {
+        const d = new Date(r.created_at), isNew = d >= week;
+        return `<li><span>${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}${isNew ? '<span class="new">neu</span>' : ""}</span>` +
+               `<span class="when">${d.toLocaleDateString("de-DE", isNew ? {weekday:"short",day:"2-digit",month:"2-digit"} : {day:"2-digit",month:"2-digit",year:"2-digit"})}</span></li>`;
+      }).join("") || '<li class="muted">Noch keine Rezepte.</li>';
+    }catch(e){
+      list.innerHTML = `<li class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</li>`;
+    }
+  }
+
+  // ---------- Ansichten ----------
+  const loginEl = document.getElementById("login"), appEl = document.getElementById("app");
+  function showLogin(){ appEl.hidden = true; loginEl.hidden = false; document.getElementById("login-email").focus(); }
+  function showApp(){ loginEl.hidden = true; appEl.hidden = false; renderAll(); loadRecipes(); }
+
+  document.getElementById("login-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = document.getElementById("login-btn"), err = document.getElementById("login-err");
+    btn.disabled = true; btn.textContent = "Anmelden …"; err.hidden = true;
+    try{
+      await authRequest("password", { email: document.getElementById("login-email").value.trim(), password: document.getElementById("login-pass").value });
+      document.getElementById("login-pass").value = "";
+      showApp();
+    }catch(ex){
+      err.textContent = ex.status === 400 ? "E-Mail oder Passwort falsch." : "Anmeldung fehlgeschlagen: " + ex.message;
+      err.hidden = false;
+    }finally{ btn.disabled = false; btn.textContent = "Anmelden"; }
+  });
+
+  document.getElementById("logout").addEventListener("click", async () => {
+    const s = loadSession();
+    saveSession(null);
+    if(s) fetch(`${SUPABASE_URL}/auth/v1/logout`, { method: "POST", headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + s.access_token } }).catch(() => {});
+    showLogin();
+  });
+
+  validSession().then(s => s ? showApp() : showLogin());
 })();
 </script>
 </body>
