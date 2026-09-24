@@ -178,7 +178,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <nav class="links" aria-label="Meine Seiten">
       <a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener"><span class="dot"></span>Rezeptbuch</a>
       <a class="link" href="journal.html"><span class="dot"></span>Trading-Journal</a>
-      <span class="link soon"><span class="dot"></span>YouTube Studio · bald</span>
+      <a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener"><span class="dot"></span>YouTube Studio</a>
       <button type="button" class="link" id="logout">Abmelden</button>
     </nav>
   </header>
@@ -244,17 +244,17 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec" aria-labelledby="h-yt1">
-      <div class="sec-h"><h2 id="h-yt1">YouTube · Kanal 1</h2><span class="pill pause">noch nicht gestartet</span></div>
-      <div class="sec-b"><div class="empty"><strong>Abos, Aufrufe, neueste Videos</strong>Sobald der Kanal startet, holt das Cockpit die Zahlen über die YouTube-API.</div></div>
+    <section class="sec" aria-labelledby="h-yt1" id="yt-1">
+      <div class="sec-h"><h2 id="h-yt1">YouTube</h2></div>
+      <div class="sec-b"><div class="muted">Wird geladen …</div></div>
     </section>
-    <section class="sec" aria-labelledby="h-yt2">
-      <div class="sec-h"><h2 id="h-yt2">YouTube · Kanal 2</h2><span class="pill pause">noch nicht gestartet</span></div>
-      <div class="sec-b"><div class="empty"><strong>Abos, Aufrufe, neueste Videos</strong>Platzhalter, bis der Kanal läuft.</div></div>
+    <section class="sec" aria-labelledby="h-yt2" id="yt-2">
+      <div class="sec-h"><h2 id="h-yt2">YouTube</h2></div>
+      <div class="sec-b"><div class="muted">Wird geladen …</div></div>
     </section>
   </div>
 
-  <p class="foot">Alles echte Daten. Bots melden sich stündlich, eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
+  <p class="foot">Alles echte Daten. Bots und YouTube melden sich stündlich, eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
 </div>
 
 <script>
@@ -488,7 +488,41 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     list.innerHTML = OWN.last.map(t => `<li><span>${esc(t.symbol||"")} <span class="muted">${t.direction && String(t.direction).toLowerCase().startsWith("s") ? "▼" : "▲"} ${esc(new Date(t.date+"T12:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}))}</span></span><span class="num ${cls(t.net)}">${usd(t.net, true)}</span></li>`).join("");
   }
 
-  function renderAll(){ loadOwn(); loadBots(); }
+  // ---------- YouTube (Melde-Skript GTA6Shorts/scripts/report_cockpit_youtube.py, stündlich) ----------
+  const intDE = v => v == null ? "–" : Number(v).toLocaleString("de-DE");
+  async function loadYouTube(){
+    const boxes = [document.getElementById("yt-1"), document.getElementById("yt-2")];
+    try{
+      const [chs, vids] = await Promise.all([
+        sb("yt_channels?select=*&order=sprache"),
+        sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=40"),
+      ]);
+      boxes.forEach((box, i) => {
+        const c = chs[i];
+        if(!c){ box.hidden = true; return; }
+        const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
+        const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,3);
+        box.querySelector("h2").innerHTML = `${esc(c.name)} <span class="tag">${esc(c.sprache||"")}</span>`;
+        box.querySelector(".sec-h").insertAdjacentHTML("beforeend",
+          stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link" href="https://www.youtube.com/${encodeURI(c.handle||"")}" target="_blank" rel="noopener">Kanal ↗</a>`);
+        box.querySelector(".sec-b").innerHTML = `
+          <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+            <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
+            <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
+            <div><div class="lbl">Videos</div><div class="big num">${intDE(c.videos)}</div></div>
+          </div>
+          <div class="lbl" style="margin-bottom:4px">Neueste Videos</div>
+          ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" style="text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
+                      : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
+          <div class="muted" style="font-size:12px;margin-top:8px">Stand ${ago(c.zuletzt_gemeldet)}</div>`;
+      });
+    }catch(e){
+      boxes[0].querySelector(".sec-b").innerHTML = `<div class="err">YouTube-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`;
+      boxes[1].hidden = true;
+    }
+  }
+
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); }
 
   document.getElementById("range").addEventListener("click", e => {
     const btn = e.target.closest("button"); if(!btn) return;
