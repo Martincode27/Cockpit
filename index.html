@@ -178,6 +178,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .sec.collapsed{align-self:start}
 .sec.collapsed .icon-btn.fold{transform:rotate(-90deg)}
 
+/* Prop-Firm-Ampel (9) */
+.meter{display:grid;gap:5px}
+.meter .row{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}
+.meter .row span:first-child{color:var(--ink-2)}
+.meter .bar{height:8px;border-radius:999px;background:var(--line-2);overflow:hidden}
+.meter .bar i{display:block;height:100%;border-radius:999px;background:var(--good);min-width:2px}
+.meter.warn .bar i{background:var(--warn)} .meter.bad .bar i{background:var(--bad)}
+.meter .hint{font-size:11.5px;color:var(--ink-3)}
+
 /* login */
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
 .login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
@@ -254,6 +263,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <span class="chip" id="st-bots"><i></i>Bots …</span>
     <span class="chip" id="st-yt"><i></i>YouTube …</span>
     <span class="chip" id="st-jour"><i></i>Journal …</span>
+    <span class="chip" id="st-ftmo" hidden><i></i>FTMO …</span>
     <span class="spacer"></span>
     <span class="chip plain" id="st-upd"></span>
     <button type="button" class="link sm" id="edit-btn" aria-pressed="false" title="Kacheln verschieben">Anpassen</button>
@@ -401,6 +411,26 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     }).join("");
   }
 
+  // Prop-Firm-Ampel: verbrauchter Anteil von Tages-/Gesamtlimit (Grenzen liefert das Melde-Skript)
+  const LIMIT_WARN = 50, LIMIT_BAD = 80;
+  function propLimits(b){
+    if(!b.regel || b.tages_start == null || b.tages_boden == null || b.gesamt_boden == null) return null;
+    const eq = b.equity ?? b.kontostand;
+    const dayLimit = b.tages_start - b.tages_boden, totLimit = b.startkapital - b.gesamt_boden;
+    const day = {used: Math.max(0, b.tages_start - eq), limit: dayLimit, buffer: eq - b.tages_boden};
+    const tot = {used: Math.max(0, b.startkapital - eq), limit: totLimit, buffer: eq - b.gesamt_boden};
+    day.pct = dayLimit > 0 ? day.used / dayLimit * 100 : 0; tot.pct = totLimit > 0 ? tot.used / totLimit * 100 : 0;
+    return {day, tot, worst: Math.max(day.pct, tot.pct)};
+  }
+  const limitState = p => p >= LIMIT_BAD ? "bad" : p >= LIMIT_WARN ? "warn" : "ok";
+  function meterHTML(label, m, cur){
+    const st = limitState(m.pct);
+    return `<div class="meter ${st === "ok" ? "" : st}">
+      <div class="row"><span>${label}</span><span class="num">${pct(Math.min(m.pct, 999))}</span></div>
+      <div class="bar"><i style="width:${Math.min(100, m.pct).toFixed(1)}%"></i></div>
+      <div class="hint">Limit ${money(m.limit, cur)} · Puffer ${money(m.buffer, cur)}</div></div>`;
+  }
+
   function renderDetail(){
     const el = document.getElementById("detail");
     const b = BOTS.find(x => x.bot_id === selected);
@@ -416,6 +446,9 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="kv"><span>Equity</span><span class="num">${money(b.equity, b.waehrung)}</span></div>
       <div class="kv"><span>Offene Positionen</span><span class="num">${b.offene_positionen ?? 0}</span></div>
       <div class="kv"><span>G/V 30 Tage</span><span class="num ${cls(b.gv_30t||0)}">${money(b.gv_30t, b.waehrung, true)}</span></div>
+      ${(() => { const L = propLimits(b); return L ? `<div style="display:grid;gap:10px"><div class="lbl">${esc(b.regel)} · Verlustgrenzen</div>
+        ${meterHTML("Heute verbraucht", L.day, b.waehrung)}${meterHTML("Gesamt verbraucht", L.tot, b.waehrung)}
+        <div class="hint" style="font-size:11.5px;color:var(--ink-3)">Heute = ab Mitternacht (Prag), inkl. offener Positionen. Stündliche Momentaufnahme, kein Echtzeit-Schutz.</div></div>` : ""; })()}
       <div><div class="lbl" style="margin-bottom:4px">Letzte Trades</div>
       ${last.length ? `<ul class="list">${last.map(t => `<li><span>${esc(t.symbol)} <span class="muted">${t.richtung === "long" ? "▲" : "▼"}</span></span><span class="num ${cls(t.gv)}">${money(t.gv, b.waehrung, true)}</span></li>`).join("")}</ul>`
                     : `<div class="muted" style="font-size:13px">Noch keine abgeschlossenen Trades.</div>`}</div>`;
@@ -650,6 +683,14 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       chip("st-bots", bad.length ? "bad" : "ok", bad.length ? `Bots · ${bad.length} ohne Meldung` : `Bots · ${BOTS.length}/${BOTS.length} melden sich`,
         BOTS.map(b => `${b.name}: letzte Meldung ${ago(b.zuletzt_gemeldet)}`).join("\n"));
     } else chip("st-bots", "", "Bots · keine Meldung");
+    const props = BOTS.map(b => ({b, L: propLimits(b)})).filter(x => x.L);
+    const ftmo = document.getElementById("st-ftmo");
+    ftmo.hidden = !props.length;
+    if(props.length){
+      const w = props.reduce((a,x) => x.L.worst > a.L.worst ? x : a);
+      chip("st-ftmo", limitState(w.L.worst), `${esc(w.b.regel)} · ${pct(w.L.worst)} vom Limit`,
+        props.map(x => `${x.b.name}: heute ${pct(x.L.day.pct)}, gesamt ${pct(x.L.tot.pct)} vom Limit verbraucht`).join("\n"));
+    }
     if(YT && YT.length){
       const bad = YT.filter(c => hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS);
       chip("st-yt", bad.length ? "bad" : "ok", bad.length ? `YouTube · ${bad.length} ohne Meldung` : "YouTube · meldet sich",
