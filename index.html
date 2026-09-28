@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Cockpit</title>
+<meta name="theme-color" content="#f4f5f7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>try{var t=localStorage.getItem("cockpit_theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -41,6 +50,8 @@
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:20px}
+.wrap > *,.board > *,.list > li{min-width:0}
+.link{white-space:nowrap}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
@@ -72,6 +83,12 @@ a{color:inherit}
 .sec-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line-2)}
 .sec-h h2{margin:0;font-size:15px;font-weight:650;display:flex;align-items:center;gap:10px}
 .sec-h h2 .tag{font-size:11.5px;font-weight:500;color:var(--ink-3)}
+.sec-h h2{margin-right:auto}
+.sec > .sec-h{flex-wrap:nowrap}
+.sec > .sec-h h2{min-width:0;flex-wrap:wrap;row-gap:2px}
+.sec-act,.ctl{flex:none}
+.list li > a{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
+.list li > a:hover{text-decoration:underline}
 .sec-b{padding:16px 18px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{font:inherit;font-size:12.5px;padding:5px 11px;background:transparent;border:0;color:var(--ink-2);cursor:pointer}
@@ -130,6 +147,37 @@ tbody tr:last-child td{border-bottom:0}
 .err{color:var(--bad);font-size:13px}
 button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:pointer}
 
+/* status line (2) */
+.status{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.chip.ok i{background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+.chip.warn i{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)}
+.chip.bad i{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.chip.plain{background:transparent;border-color:transparent;color:var(--ink-3);padding-inline:4px}
+.status .spacer{flex:1}
+.link.sm{padding:5px 11px;font-size:12.5px}
+.link[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* sparklines (3) */
+.spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
+
+/* board + card controls (7) */
+.board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;grid-auto-flow:row dense}
+.w12{grid-column:span 12}.w7{grid-column:span 7}.w5{grid-column:span 5}.w4{grid-column:span 4}
+.ctl{display:inline-flex;gap:4px}
+.icon-btn{font:inherit;width:28px;height:28px;display:inline-grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:7px;cursor:pointer;font-size:12px;line-height:1;padding:0}
+.icon-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.icon-btn.move{display:none}
+.editing .icon-btn.move{display:inline-grid}
+.editing .sec{outline:2px dashed var(--line);outline-offset:3px}
+.icon-btn.fold{transition:transform .15s}
+.sec.collapsed > :not(.sec-h){display:none}
+.sec.collapsed .sec-h{border-bottom:0}
+.sec.collapsed{align-self:start}
+.sec.collapsed .icon-btn.fold{transform:rotate(-90deg)}
+
 /* login */
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
 .login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
@@ -142,6 +190,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
 @media (max-width:900px){
   .two,.three{grid-template-columns:1fr}
+  .w7,.w5,.w4{grid-column:span 12}
   .chart-grid{grid-template-columns:1fr}
   .side{border-left:0;border-top:1px solid var(--line-2);grid-template-columns:1fr 1fr}
 }
@@ -153,6 +202,23 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   .kpis{grid-template-columns:1fr 1fr}
   .logo small{display:none}
   .side{grid-template-columns:1fr}
+  /* Bot-Tabelle als Karten (4) */
+  .tbl-wrap{overflow:visible}
+  #bots-table{min-width:0}
+  #bots-table thead{display:none}
+  #bots tr{display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;padding:14px 16px;border-bottom:1px solid var(--line-2)}
+  #bots tr:last-child{border-bottom:0}
+  #bots td{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0;border:0;font-size:13px;white-space:nowrap}
+  #bots td::before{content:attr(data-label);color:var(--ink-3);font-family:var(--sans);font-size:12px}
+  #bots td:first-child,#bots td:nth-child(2){grid-column:1/-1;padding:0}
+  #bots td:first-child::before,#bots td:nth-child(2)::before,#bots td[colspan]::before{content:none}
+  .status .spacer{display:none}
+  /* Kopfleiste + Statuszeile als je eine wischbare Zeile */
+  .top{gap:10px}
+  .links,.status{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;padding-block:2px;width:calc(100% + 32px)}
+  .links::-webkit-scrollbar,.status::-webkit-scrollbar{display:none}
+  .links .link{padding:6px 10px;font-size:12.5px;white-space:nowrap;flex:none}
+  .status .chip,.status .link{flex:none}
 }
 </style>
 </head>
@@ -179,23 +245,34 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener"><span class="dot"></span>Rezeptbuch</a>
       <a class="link" href="journal.html"><span class="dot"></span>Trading-Journal</a>
       <a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener"><span class="dot"></span>YouTube Studio</a>
+      <button type="button" class="link" id="theme-btn" aria-label="Farbschema wechseln"></button>
       <button type="button" class="link" id="logout">Abmelden</button>
     </nav>
   </header>
 
+  <section class="status" aria-label="Systemstatus">
+    <span class="chip" id="st-bots"><i></i>Bots …</span>
+    <span class="chip" id="st-yt"><i></i>YouTube …</span>
+    <span class="chip" id="st-jour"><i></i>Journal …</span>
+    <span class="spacer"></span>
+    <span class="chip plain" id="st-upd"></span>
+    <button type="button" class="link sm" id="edit-btn" aria-pressed="false" title="Kacheln verschieben">Anpassen</button>
+  </section>
+
   <section class="strip" aria-label="Überblick">
-    <div><div class="lbl">Bots melden sich</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div></div>
-    <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div></div>
-    <div><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div></div>
+    <div><div class="lbl">Bots · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
+    <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
+    <div><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div><svg class="spark" id="sp-own" aria-hidden="true"></svg></div>
     <div><div class="lbl">Neue Rezepte · diese Woche</div><div class="big num" id="s-rec"></div><div class="sub" id="s-rec-sub"></div></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-bots">
+  <div class="board" id="board">
+  <section class="sec w12" data-card="bots" aria-labelledby="h-bots">
     <div class="sec-h">
       <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2>
     </div>
     <div class="tbl-wrap">
-      <table>
+      <table id="bots-table">
         <thead><tr><th>Bot</th><th>Status</th><th>Kontostand</th><th>G/V gesamt</th><th>Trades</th><th>Winrate</th><th>Ø CRV</th><th>Profit-Faktor</th><th>Max. DD</th></tr></thead>
         <tbody id="bots"><tr><td colspan="9" class="muted">Wird geladen …</td></tr></tbody>
       </table>
@@ -215,8 +292,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </div>
   </section>
 
-  <div class="two">
-    <section class="sec" aria-labelledby="h-own">
+    <section class="sec w7" data-card="own" aria-labelledby="h-own">
       <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
@@ -225,7 +301,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       </div>
     </section>
 
-    <section class="sec" aria-labelledby="h-rec">
+    <section class="sec w5" data-card="rec" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
@@ -237,19 +313,17 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
       </div>
     </section>
-  </div>
 
-  <div class="three">
-    <section class="sec" aria-labelledby="h-jour">
+    <section class="sec w4" data-card="jour" aria-labelledby="h-jour">
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec" aria-labelledby="h-yt1" id="yt-1">
-      <div class="sec-h"><h2 id="h-yt1">YouTube</h2></div>
+    <section class="sec w4" data-card="yt-1" aria-labelledby="h-yt1" id="yt-1">
+      <div class="sec-h"><h2 id="h-yt1">YouTube</h2><span class="sec-act"></span></div>
       <div class="sec-b"><div class="muted">Wird geladen …</div></div>
     </section>
-    <section class="sec" aria-labelledby="h-yt2" id="yt-2">
-      <div class="sec-h"><h2 id="h-yt2">YouTube</h2></div>
+    <section class="sec w4" data-card="yt-2" aria-labelledby="h-yt2" id="yt-2">
+      <div class="sec-h"><h2 id="h-yt2">YouTube</h2><span class="sec-act"></span></div>
       <div class="sec-b"><div class="muted">Wird geladen …</div></div>
     </section>
   </div>
@@ -316,13 +390,13 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       return `<tr data-id="${esc(b.bot_id)}" tabindex="0" aria-selected="${b.bot_id===selected}">
         <td><div class="bot-name"><span class="sw" style="background:var(${b.color})"></span><div>${esc(b.name)}<div class="bot-meta">${esc(b.broker||"")} · ${b.is_demo ? "Demo" : "Live"} · ${esc(b.konto||"")}</div></div></div></td>
         <td><span class="pill ${c}">${l}</span></td>
-        <td class="num">${money(b.kontostand, b.waehrung)}</td>
-        <td class="num ${cls(b.gv_gesamt||0)}">${money(b.gv_gesamt, b.waehrung, true)}</td>
-        <td class="num">${b.trades ?? 0}</td>
-        <td class="num">${b.winrate == null ? "–" : pct(b.winrate)}</td>
-        <td class="num ${b.avg_crv == null ? "" : cls(b.avg_crv)}" title="Ø Ergebnis je Trade in Vielfachen des Risikos (G/V ÷ Risiko)">${b.avg_crv == null ? "–" : (b.avg_crv>0?"+":b.avg_crv<0?"−":"") + dec(Math.abs(b.avg_crv)) + " R"}</td>
-        <td class="num">${dec(b.profit_faktor)}</td>
-        <td class="num ${b.max_dd_pct ? "neg" : ""}">${b.max_dd_pct ? "−" + pct(b.max_dd_pct) : "0 %"}</td>
+        <td class="num" data-label="Kontostand">${money(b.kontostand, b.waehrung)}</td>
+        <td class="num ${cls(b.gv_gesamt||0)}" data-label="G/V gesamt">${money(b.gv_gesamt, b.waehrung, true)}</td>
+        <td class="num" data-label="Trades">${b.trades ?? 0}</td>
+        <td class="num" data-label="Winrate">${b.winrate == null ? "–" : pct(b.winrate)}</td>
+        <td class="num ${b.avg_crv == null ? "" : cls(b.avg_crv)}" data-label="Ø CRV" title="Ø Ergebnis je Trade in Vielfachen des Risikos (G/V ÷ Risiko)">${b.avg_crv == null ? "–" : (b.avg_crv>0?"+":b.avg_crv<0?"−":"") + dec(Math.abs(b.avg_crv)) + " R"}</td>
+        <td class="num" data-label="Profit-Faktor">${dec(b.profit_faktor)}</td>
+        <td class="num ${b.max_dd_pct ? "neg" : ""}" data-label="Max. DD">${b.max_dd_pct ? "−" + pct(b.max_dd_pct) : "0 %"}</td>
       </tr>`;
     }).join("");
   }
@@ -348,16 +422,52 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   }
 
   function renderBotSummary(){
-    const ok = BOTS.filter(b => botState(b)[0] === "run").length, stale = BOTS.length - ok;
-    document.getElementById("s-bots").textContent = `${ok} / ${BOTS.length}`;
-    document.getElementById("s-bots-sub").innerHTML = !BOTS.length ? "noch keine Meldung"
-      : stale ? `<span class="neg">${stale} ohne Meldung, bitte prüfen</span>` : "alle melden sich";
     const cur = BOTS[0] && BOTS[0].waehrung;
+    const bal = BOTS.reduce((a,b) => a + (b.kontostand || 0), 0), eqv = BOTS.reduce((a,b) => a + (b.equity || 0), 0);
+    document.getElementById("s-bots").textContent = BOTS.length ? money(bal, cur) : "–";
+    document.getElementById("s-bots-sub").textContent = BOTS.length ? `${BOTS.length} Bots · Equity ${money(eqv, cur)}` : "noch keine Meldung";
+    // Mini-Kurve: Summe der Kontostände je Tag, letzte 30 Tage
+    const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10), byDay = {};
+    EQUITY.filter(r => r.tag >= from).forEach(r => { byDay[r.tag] = (byDay[r.tag] || 0) + (r.kontostand || 0); });
+    spark("sp-bots", Object.keys(byDay).sort().map(d => byDay[d]), "line");
     const pnl = BOTS.reduce((a,b) => a + (b.gv_30t || 0), 0);
     const el = document.getElementById("s-pnl"); el.textContent = money(pnl, cur, true); el.className = "big num " + cls(pnl);
     const since = Date.now() - 30*864e5;
     const n = TRADES.filter(t => new Date(t.geschlossen) >= since).length;
     document.getElementById("s-pnl-sub").textContent = `${n} Trades über alle Bots`;
+    // Mini-Kurve: kumulierter G/V der letzten 30 Tage (Tagesschritte)
+    const cum = []; let run = 0;
+    for(let i = 29; i >= 0; i--){
+      const d0 = new Date(Date.now() - i*864e5).toISOString().slice(0,10);
+      run += TRADES.filter(t => String(t.geschlossen).slice(0,10) === d0).reduce((a,t) => a + (t.gv || 0), 0);
+      cum.push(run);
+    }
+    spark("sp-pnl", n ? cum : [], "line");
+    renderStatus();
+  }
+
+  // Mini-Kurve ohne Achsen: "line" = Linie mit Fläche, "bars" = Balken um die Nulllinie
+  function spark(id, vals, kind){
+    const svg = document.getElementById(id); if(!svg) return; svg.innerHTML = "";
+    const W = svg.clientWidth || 200, H = 30;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    if(!vals || !vals.length){
+      svg.appendChild(el("line",{x1:0,x2:W,y1:H/2,y2:H/2,stroke:cssVar("--line"),"stroke-dasharray":"3 4"})); return;
+    }
+    if(kind === "bars"){
+      const mx = Math.max(...vals.map(Math.abs)) || 1, bw = W / vals.length;
+      svg.appendChild(el("line",{x1:0,x2:W,y1:H/2,y2:H/2,stroke:cssVar("--line")}));
+      vals.forEach((v,i) => { const h = Math.max(1, Math.abs(v)/mx*(H/2-1));
+        svg.appendChild(el("rect",{x:i*bw+1,y:v>=0?H/2-h:H/2,width:Math.max(1,bw-2),height:h,rx:1.5,fill:cssVar(v>=0?"--good":"--bad")})); });
+      return;
+    }
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = (hi - lo) || 1;
+    const x = i => vals.length === 1 ? W/2 : i/(vals.length-1)*W, y = v => hi === lo ? H/2 : 2 + (hi - v)/span*(H-4);
+    const col = cssVar(vals[vals.length-1] >= vals[0] ? "--good" : "--bad");
+    const d = vals.map((v,i) => (i?"L":"M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(" ");
+    if(vals.length > 1) svg.appendChild(el("path",{d: d + ` L ${W} ${H} L 0 ${H} Z`, fill:col, opacity:.12}));
+    svg.appendChild(el("path",{d,fill:"none",stroke:col,"stroke-width":1.6,"stroke-linejoin":"round"}));
+    svg.appendChild(el("circle",{cx:x(vals.length-1),cy:y(vals[vals.length-1]),r:2.5,fill:col}));
   }
 
   // Verlauf: G/V seit Start (Kontostand − Startkapital) je Broker-Handelstag, eine Achse
@@ -440,14 +550,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       const rows = await sb("journal_data?select=value&key=eq.cockpitSummary");
       OWN = rows.length ? rows[0].value : null;
     }catch(e){ OWN = null; document.getElementById("own-kpis").innerHTML = `<div class="err">Journal-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`; }
-    renderOwnSummary(); renderOwn(); renderJournal();
+    renderOwnSummary(); renderOwn(); renderJournal(); renderStatus();
   }
   function renderOwnSummary(){
     const own = document.getElementById("s-own"), sub = document.getElementById("s-own-sub");
-    if(!OWN){ own.textContent = "–"; sub.textContent = "Journal einmal öffnen"; return; }
+    if(!OWN){ own.textContent = "–"; sub.textContent = "Journal einmal öffnen"; spark("sp-own", [], "bars"); return; }
     const d = OWN.d30;
     own.textContent = usd(d.net, true); own.className = "big num " + cls(d.net);
     sub.textContent = `${d.trades} Trades · Winrate ${pct(d.winRate)}`;
+    spark("sp-own", (OWN.weeks || []).map(w => w.net), "bars");
   }
   function renderOwn(){
     const kp = document.getElementById("own-kpis"), svg = document.getElementById("own-bars");
@@ -490,6 +601,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   // ---------- YouTube (Melde-Skript GTA6Shorts/scripts/report_cockpit_youtube.py, stündlich) ----------
   const intDE = v => v == null ? "–" : Number(v).toLocaleString("de-DE");
+  let YT = null;
   async function loadYouTube(){
     const boxes = [document.getElementById("yt-1"), document.getElementById("yt-2")];
     try{
@@ -497,14 +609,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         sb("yt_channels?select=*&order=sprache"),
         sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=40"),
       ]);
+      YT = chs;
       boxes.forEach((box, i) => {
         const c = chs[i];
         if(!c){ box.hidden = true; return; }
         const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
         const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,3);
         box.querySelector("h2").innerHTML = `${esc(c.name)} <span class="tag">${esc(c.sprache||"")}</span>`;
-        box.querySelector(".sec-h").insertAdjacentHTML("beforeend",
+        box.querySelector(".sec-act").innerHTML = (
           stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link" href="https://www.youtube.com/${encodeURI(c.handle||"")}" target="_blank" rel="noopener">Kanal ↗</a>`);
+        box.hidden = false;
         box.querySelector(".sec-b").innerHTML = `
           <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
             <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
@@ -512,17 +626,101 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
             <div><div class="lbl">Videos</div><div class="big num">${intDE(c.videos)}</div></div>
           </div>
           <div class="lbl" style="margin-bottom:4px">Neueste Videos</div>
-          ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" style="text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
+          ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
                       : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
           <div class="muted" style="font-size:12px;margin-top:8px">Stand ${ago(c.zuletzt_gemeldet)}</div>`;
       });
     }catch(e){
+      YT = null;
       boxes[0].querySelector(".sec-b").innerHTML = `<div class="err">YouTube-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`;
       boxes[1].hidden = true;
     }
+    renderStatus();
   }
 
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); }
+  // ---------- Statuszeile (2): Ampel für Bots, YouTube, Journal ----------
+  const JOURNAL_WARN_DAYS = 7;
+  function chip(id, state, text, title){
+    const c = document.getElementById(id);
+    c.className = "chip " + state; c.innerHTML = `<i></i>${text}`; c.title = title || "";
+  }
+  function renderStatus(){
+    if(BOTS.length){
+      const bad = BOTS.filter(b => botState(b)[0] !== "run");
+      chip("st-bots", bad.length ? "bad" : "ok", bad.length ? `Bots · ${bad.length} ohne Meldung` : `Bots · ${BOTS.length}/${BOTS.length} melden sich`,
+        BOTS.map(b => `${b.name}: letzte Meldung ${ago(b.zuletzt_gemeldet)}`).join("\n"));
+    } else chip("st-bots", "", "Bots · keine Meldung");
+    if(YT && YT.length){
+      const bad = YT.filter(c => hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS);
+      chip("st-yt", bad.length ? "bad" : "ok", bad.length ? `YouTube · ${bad.length} ohne Meldung` : "YouTube · meldet sich",
+        YT.map(c => `${c.name}: letzte Meldung ${ago(c.zuletzt_gemeldet)}`).join("\n"));
+    } else chip("st-yt", "", "YouTube · keine Daten");
+    if(OWN && OWN.updated_at){
+      const old = hoursSince(OWN.updated_at) / 24 >= JOURNAL_WARN_DAYS;
+      chip("st-jour", old ? "warn" : "ok", `Journal · Stand ${ago(OWN.updated_at)}`,
+        old ? "Das Journal wurde länger nicht geöffnet – die Zahlen unter „Eigenes Trading“ sind nicht aktuell." : "");
+    } else chip("st-jour", "warn", "Journal · noch keine Zahlen");
+  }
+
+  // ---------- Automatisch aktualisieren (5): alle 5 Min., solange die Seite sichtbar ist ----------
+  const REFRESH_MIN = 5;
+  let lastRefresh = 0;
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); lastRefresh = Date.now(); tick(); }
+  function tick(){
+    const m = Math.round((Date.now() - lastRefresh) / 6e4);
+    document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
+  }
+  function maybeRefresh(){
+    if(document.visibilityState !== "visible" || appEl.hidden) return;
+    if(Date.now() - lastRefresh >= REFRESH_MIN*6e4) renderAll(); else tick();
+  }
+  setInterval(maybeRefresh, 30e3);
+  document.addEventListener("visibilitychange", maybeRefresh);
+
+  // ---------- Kacheln einklappen + Reihenfolge (7), pro Gerät gemerkt ----------
+  const board = document.getElementById("board");
+  const cards = () => [...board.querySelectorAll(".sec[data-card]")];
+  const DEFAULT_ORDER = cards().map(c => c.dataset.card);
+  const lsGet = (k, d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } };
+  const lsSet = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+  function cardOrder(){
+    const saved = lsGet("cockpit_order", []).filter(id => DEFAULT_ORDER.includes(id));
+    return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
+  }
+  function applyOrder(){
+    const order = cardOrder();
+    cards().forEach(c => { c.style.order = order.indexOf(c.dataset.card); });
+    cards().forEach(c => {
+      const i = order.indexOf(c.dataset.card);
+      c.querySelector(".move.up").disabled = i === 0;
+      c.querySelector(".move.down").disabled = i === order.length - 1;
+    });
+  }
+  function redrawCharts(){ requestAnimationFrame(() => { renderChart(); renderOwn(); }); }
+  cards().forEach(c => {
+    const id = c.dataset.card, name = c.querySelector("h2").textContent.trim();
+    c.querySelector(".sec-h").insertAdjacentHTML("beforeend",
+      `<span class="ctl"><button type="button" class="icon-btn move up" aria-label="Nach oben">▲</button>` +
+      `<button type="button" class="icon-btn move down" aria-label="Nach unten">▼</button>` +
+      `<button type="button" class="icon-btn fold" aria-label="Einklappen" aria-expanded="true">▾</button></span>`);
+    const fold = c.querySelector(".fold");
+    const setFold = on => { c.classList.toggle("collapsed", on); fold.setAttribute("aria-expanded", String(!on)); fold.setAttribute("aria-label", on ? "Aufklappen" : "Einklappen"); };
+    setFold(lsGet("cockpit_collapsed", []).includes(id));
+    fold.addEventListener("click", () => {
+      const on = !c.classList.contains("collapsed"); setFold(on);
+      const set = new Set(lsGet("cockpit_collapsed", [])); on ? set.add(id) : set.delete(id); lsSet("cockpit_collapsed", [...set]);
+      if(!on) redrawCharts();
+    });
+    const move = dir => { const o = cardOrder(), i = o.indexOf(id), j = i + dir; if(j < 0 || j >= o.length) return;
+      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order", o); applyOrder(); redrawCharts(); };
+    c.querySelector(".move.up").addEventListener("click", () => move(-1));
+    c.querySelector(".move.down").addEventListener("click", () => move(1));
+  });
+  applyOrder();
+  document.getElementById("edit-btn").addEventListener("click", e => {
+    const on = !board.classList.contains("editing"); board.classList.toggle("editing", on);
+    e.currentTarget.setAttribute("aria-pressed", String(on)); e.currentTarget.textContent = on ? "Fertig" : "Anpassen";
+  });
 
   document.getElementById("range").addEventListener("click", e => {
     const btn = e.target.closest("button"); if(!btn) return;
@@ -534,9 +732,25 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const pick = tr => { if(!tr || !tr.dataset.id) return; selected = tr.dataset.id; renderTable(); renderDetail(); renderChart(); };
   tbody.addEventListener("click", e => pick(e.target.closest("tr")));
   tbody.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(e.target.closest("tr")); }});
-  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); }, 120); });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); }, 120); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { renderChart(); renderOwn(); });
-  new MutationObserver(() => { renderChart(); renderOwn(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+  new MutationObserver(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+
+  // ---------- Farbschema: System / Hell / Dunkel (pro Gerät gemerkt) ----------
+  const THEMES = ["system","light","dark"];
+  const THEME_LABEL = {system:"◐ Auto", light:"☀ Hell", dark:"☾ Dunkel"};
+  const THEME_TITLE = {system:"Farbschema folgt dem Gerät", light:"Helles Farbschema", dark:"Dunkles Farbschema"};
+  function storedTheme(){ try{ return localStorage.getItem("cockpit_theme") || "system"; }catch(e){ return "system"; } }
+  function applyTheme(t){
+    if(t === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    try{ t === "system" ? localStorage.removeItem("cockpit_theme") : localStorage.setItem("cockpit_theme", t); }catch(e){}
+    const b = document.getElementById("theme-btn");
+    b.textContent = THEME_LABEL[t]; b.title = THEME_TITLE[t] + " – klicken zum Wechseln";
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", getComputedStyle(document.body).backgroundColor);
+  }
+  document.getElementById("theme-btn").addEventListener("click", () => applyTheme(THEMES[(THEMES.indexOf(storedTheme()) + 1) % THEMES.length]));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(storedTheme()));
+  applyTheme(storedTheme());
   // ---------- Supabase: Login + Daten ----------
   // Publishable Key ist öffentlich gedacht (steht auch im Rezeptbuch); geschützt wird über Login + RLS.
   const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
@@ -607,7 +821,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Ansichten ----------
   const loginEl = document.getElementById("login"), appEl = document.getElementById("app");
   function showLogin(){ appEl.hidden = true; loginEl.hidden = false; document.getElementById("login-email").focus(); }
-  function showApp(){ loginEl.hidden = true; appEl.hidden = false; renderAll(); loadRecipes(); }
+  function showApp(){ loginEl.hidden = true; appEl.hidden = false; renderAll(); }
 
   document.getElementById("login-form").addEventListener("submit", async e => {
     e.preventDefault();
