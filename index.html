@@ -164,7 +164,13 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
 /* board + card controls (7) */
 .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;grid-auto-flow:row dense}
-.w12{grid-column:span 12}.w7{grid-column:span 7}.w5{grid-column:span 5}.w4{grid-column:span 4}
+.w12{grid-column:span 12}.w8{grid-column:span 8}.w7{grid-column:span 7}.w6{grid-column:span 6}.w5{grid-column:span 5}.w4{grid-column:span 4}
+.yt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+.yt-ch{padding:0 18px;display:grid;gap:10px;align-content:start}
+.yt-ch+.yt-ch{border-left:1px solid var(--line-2)}
+.yt-ch:first-child{padding-left:0}.yt-ch:last-child{padding-right:0}
+.yt-ch .yt-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:650;font-size:14px}
+.yt-ch .kpis{margin-bottom:0}
 .ctl{display:inline-flex;gap:4px}
 .icon-btn{font:inherit;width:28px;height:28px;display:inline-grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:7px;cursor:pointer;font-size:12px;line-height:1;padding:0}
 .icon-btn:hover{border-color:var(--ink-3);color:var(--ink)}
@@ -199,7 +205,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
 @media (max-width:900px){
   .two,.three{grid-template-columns:1fr}
-  .w7,.w5,.w4{grid-column:span 12}
+  .w8,.w7,.w6,.w5,.w4{grid-column:span 12}
   .chart-grid{grid-template-columns:1fr}
   .side{border-left:0;border-top:1px solid var(--line-2);grid-template-columns:1fr 1fr}
 }
@@ -222,6 +228,8 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   #bots td:first-child,#bots td:nth-child(2){grid-column:1/-1;padding:0}
   #bots td:first-child::before,#bots td:nth-child(2)::before,#bots td[colspan]::before{content:none}
   .status .spacer{display:none}
+  .yt-grid{grid-template-columns:1fr;gap:18px}
+  .yt-ch{padding:0}.yt-ch+.yt-ch{border-left:0;border-top:1px solid var(--line-2);padding-top:18px}
   /* Kopfleiste + Statuszeile als je eine wischbare Zeile */
   .top{gap:10px}
   .links,.status{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;padding-block:2px;width:calc(100% + 32px)}
@@ -302,7 +310,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </div>
   </section>
 
-    <section class="sec w7" data-card="own" aria-labelledby="h-own">
+    <section class="sec w8" data-card="own" aria-labelledby="h-own">
       <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
@@ -311,7 +319,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       </div>
     </section>
 
-    <section class="sec w5" data-card="rec" aria-labelledby="h-rec">
+
+    <section class="sec w4" data-card="jour" aria-labelledby="h-jour">
+      <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
+      <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
+    </section>
+    <section class="sec w6" data-card="yt-gta6" data-projekt="GTA6 Shorts" aria-labelledby="h-yt-gta6">
+      <div class="sec-h"><h2 id="h-yt-gta6">YouTube · GTA6 Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
+      <div class="sec-b"><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+    </section>
+    <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
+      <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
+      <div class="sec-b"><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+    </section>
+
+    <section class="sec w12" data-card="rec" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
@@ -322,19 +344,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         <div class="lbl" style="margin-bottom:4px">Zuletzt hinzugefügt</div>
         <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
       </div>
-    </section>
-
-    <section class="sec w4" data-card="jour" aria-labelledby="h-jour">
-      <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
-      <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
-    </section>
-    <section class="sec w4" data-card="yt-1" aria-labelledby="h-yt1" id="yt-1">
-      <div class="sec-h"><h2 id="h-yt1">YouTube</h2><span class="sec-act"></span></div>
-      <div class="sec-b"><div class="muted">Wird geladen …</div></div>
-    </section>
-    <section class="sec w4" data-card="yt-2" aria-labelledby="h-yt2" id="yt-2">
-      <div class="sec-h"><h2 id="h-yt2">YouTube</h2><span class="sec-act"></span></div>
-      <div class="sec-b"><div class="muted">Wird geladen …</div></div>
     </section>
   </div>
 
@@ -636,37 +645,37 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const intDE = v => v == null ? "–" : Number(v).toLocaleString("de-DE");
   let YT = null;
   async function loadYouTube(){
-    const boxes = [document.getElementById("yt-1"), document.getElementById("yt-2")];
+    const boxes = [...document.querySelectorAll(".sec[data-projekt]")];
     try{
       const [chs, vids] = await Promise.all([
         sb("yt_channels?select=*&order=sprache"),
-        sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=40"),
+        sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=80"),
       ]);
       YT = chs;
-      boxes.forEach((box, i) => {
-        const c = chs[i];
-        if(!c){ box.hidden = true; return; }
-        const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
-        const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,3);
-        box.querySelector("h2").innerHTML = `${esc(c.name)} <span class="tag">${esc(c.sprache||"")}</span>`;
-        box.querySelector(".sec-act").innerHTML = (
-          stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link" href="https://www.youtube.com/${encodeURI(c.handle||"")}" target="_blank" rel="noopener">Kanal ↗</a>`);
-        box.hidden = false;
-        box.querySelector(".sec-b").innerHTML = `
-          <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-            <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
-            <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
-            <div><div class="lbl">Videos</div><div class="big num">${intDE(c.videos)}</div></div>
-          </div>
-          <div class="lbl" style="margin-bottom:4px">Neueste Videos</div>
-          ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
-                      : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
-          <div class="muted" style="font-size:12px;margin-top:8px">Stand ${ago(c.zuletzt_gemeldet)}</div>`;
+      boxes.forEach(box => {
+        const list = chs.filter(c => c.projekt === box.dataset.projekt);
+        const grid = box.querySelector(".yt-grid");
+        if(!list.length){ grid.innerHTML = `<div class="muted">Noch keine Kanal-Meldung.</div>`; return; }
+        grid.innerHTML = list.map(c => {
+          const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
+          const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,2);
+          return `<div class="yt-ch">
+            <div class="yt-head"><span>${esc(c.name)} <span class="tag muted" style="font-weight:500;font-size:11.5px">${esc(c.sprache||"")}</span></span>
+              ${stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link sm" href="https://www.youtube.com/${c.handle ? encodeURI(c.handle) : "channel/" + encodeURIComponent(c.channel_id)}" target="_blank" rel="noopener">Kanal ↗</a>`}</div>
+            <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+              <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
+              <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
+              <div><div class="lbl">Videos</div><div class="big num">${intDE(c.videos)}</div></div>
+            </div>
+            ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
+                        : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
+            <div class="muted" style="font-size:12px">Stand ${ago(c.zuletzt_gemeldet)}</div>
+          </div>`;
+        }).join("");
       });
     }catch(e){
       YT = null;
-      boxes[0].querySelector(".sec-b").innerHTML = `<div class="err">YouTube-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`;
-      boxes[1].hidden = true;
+      boxes.forEach(box => { box.querySelector(".yt-grid").innerHTML = `<div class="err">YouTube-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`; });
     }
     renderStatus();
   }
