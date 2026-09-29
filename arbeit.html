@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Arbeit · Cockpit</title>
+<meta name="theme-color" content="#f4f5f7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<script>try{var t=localStorage.getItem("cockpit_theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel-2:#f8f9fb; --line:#e3e5ea; --line-2:#eceef2;
+  --ink:#14161b; --ink-2:#4a4f5c; --ink-3:#7c8190;
+  --brand:#c2272d; --work:#7c3aed; --work-soft:#efe9fd; --on-work:#ffffff;
+  --good:#0f8a4f; --good-soft:#e3f4ea; --bad:#d23b3b; --bad-soft:#fbe7e7; --warn:#b77700; --warn-soft:#fbf1dc;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+    --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98;
+    --brand:#ef5a5f; --work:#a78bfa; --work-soft:#2a2140; --on-work:#14161b;
+    --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+  --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98;
+  --brand:#ef5a5f; --work:#a78bfa; --work-soft:#2a2140; --on-work:#14161b;
+  --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:18px 60px;display:grid;gap:16px}
+.wrap > *{min-width:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--work);outline-offset:2px;border-radius:4px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.logo i{width:12px;height:12px;border-radius:3px;background:var(--work);display:block;transform:rotate(45deg)}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px;text-decoration:none;font:inherit;font-weight:500;font-size:13px;color:inherit;cursor:pointer;white-space:nowrap}
+.link:hover,.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.btn.work{background:var(--work);color:var(--on-work);border-color:var(--work);font-weight:650}
+.btn.big{padding:16px;font-size:17px;border-radius:12px;width:100%}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.tabs button{font:inherit;font-size:14px;font-weight:550;padding:10px;background:transparent;border:0;color:var(--ink-2);cursor:pointer}
+.tabs button+button{border-left:1px solid var(--line)}
+.tabs button[aria-selected="true"]{background:var(--work);color:var(--on-work)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+.card h2{margin:0;font-size:15px;font-weight:650}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
+.big{font-size:26px;font-weight:600;letter-spacing:-.01em}
+.muted{color:var(--ink-3)} .pos{color:var(--good)} .neg{color:var(--bad)} .err{color:var(--bad);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpis .big{font-size:19px;margin-top:3px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stepper{display:inline-flex;align-items:center;gap:8px}
+.stepper button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);font:inherit;font-size:16px;color:inherit;cursor:pointer}
+.list{list-style:none;margin:0;padding:0;display:grid}
+.list li{padding:11px 0;border-bottom:1px solid var(--line-2);display:grid;gap:3px;cursor:pointer}
+.list li:last-child{border-bottom:0}
+.list .line1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.list .line1 > :first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list li,.list .line1{min-width:0}
+.list .line1 > :last-child{flex:none}
+.list .line1 > .wrap-title{white-space:normal;overflow:visible}
+.list .sub{font-size:12.5px;color:var(--ink-2)}
+.tag{display:inline-block;font-size:11px;font-weight:650;padding:1px 7px;border-radius:999px;background:var(--work-soft);color:var(--work);margin-left:6px;vertical-align:1px}
+.tag.urlaub{background:var(--good-soft);color:var(--good)} .tag.krank{background:var(--bad-soft);color:var(--bad)} .tag.feiertag{background:var(--warn-soft);color:var(--warn)}
+form.grid{display:grid;gap:10px}
+label.f{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+input,select,textarea{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.month{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:650;margin-top:6px}
+.status-sel{font-size:13px;padding:5px 8px;width:auto}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:18px;width:min(460px,calc(100vw - 32px))}
+dialog::backdrop{background:rgb(0 0 0 / .45)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:550;box-shadow:0 8px 24px rgb(0 0 0 / .2);z-index:10}
+.hint{font-size:12px;color:var(--ink-3)}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:48px 16px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+@media (max-width:480px){ .two{grid-template-columns:1fr} .kpis .big{font-size:17px} }
+</style>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <form id="login-form" autocomplete="on">
+    <div class="logo"><i></i>Arbeit</div>
+    <div class="hint">Gleiche Anmeldung wie im Cockpit.</div>
+    <label class="f">E-Mail<input id="login-email" type="email" autocomplete="username" required></label>
+    <label class="f">Passwort<input id="login-pass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="login-err" role="alert" hidden></div>
+    <button type="submit" class="btn primary big" id="login-btn">Anmelden</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="logo"><i></i>Arbeit <span class="muted" style="font-size:13px;font-weight:500" id="today"></span></div>
+    <nav class="links">
+      <a class="link" href="index.html">◆ Cockpit</a>
+      <button type="button" class="link" id="theme-btn" aria-label="Farbschema wechseln"></button>
+    </nav>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="zeit">Zeit</button>
+    <button type="button" role="tab" data-tab="erfolge">Erfolge</button>
+    <button type="button" role="tab" data-tab="vorhaben">Vorhaben</button>
+  </div>
+
+  <!-- ================= ZEIT ================= -->
+  <section data-panel="zeit" class="wrap" style="padding:0;gap:16px">
+    <div class="card" id="today-card"><div class="muted">Wird geladen …</div></div>
+    <div class="card">
+      <div class="kpis">
+        <div><div class="lbl">Diese Woche</div><div class="big num" id="k-week">–</div><div class="hint" id="k-week-sub"></div></div>
+        <div><div class="lbl">Dieser Monat</div><div class="big num" id="k-month">–</div><div class="hint" id="k-month-sub"></div></div>
+        <div><div class="lbl">Überstunden</div><div class="big num" id="k-over">–</div><div class="hint">seit Beginn</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><h2>Tage</h2><button type="button" class="btn" id="add-day">+ Tag nachtragen</button></div>
+      <ul class="list" id="day-list"></ul>
+      <div class="hint">Antippen zum Bearbeiten. Soll: 8 h netto je Werktag (40 h/Woche, 45 min Pause). Urlaub/Krank/Feiertag zählen als erfüllt.</div>
+    </div>
+  </section>
+
+  <!-- ================= ERFOLGE ================= -->
+  <section data-panel="erfolge" class="wrap" style="padding:0;gap:16px" hidden>
+    <div class="card">
+      <h2>Erfolg festhalten</h2>
+      <form class="grid" id="win-form">
+        <label class="f">Was habe ich gemacht? *<input name="titel" required placeholder="z. B. Bauablauf Rohbau umgeplant"></label>
+        <label class="f">Was hat es gebracht?<textarea name="wirkung" placeholder="Wirkung für Firma/Projekt/Team"></textarea></label>
+        <div class="two">
+          <label class="f">Messbar (Zahl)<input name="zahl" placeholder="z. B. 3 Tage früher, 4.000 € gespart"></label>
+          <label class="f">Kategorie<select name="kategorie">
+            <option>Zeit</option><option>Geld</option><option>Qualität</option><option>Sicherheit</option>
+            <option>Team</option><option>Kunde</option><option>Prozess</option><option>Sonstiges</option></select></label>
+        </div>
+        <label class="f">Datum<input name="datum" type="date" required></label>
+        <input type="hidden" name="id">
+        <div class="row"><button type="submit" class="btn work" style="flex:1">Speichern</button><button type="button" class="btn" id="win-cancel" hidden>Abbrechen</button></div>
+      </form>
+      <div class="hint">Nur eigene Beiträge – keine Firmeninterna (Kundennamen, Preise, interne Dokumente).</div>
+    </div>
+    <div class="card"><div class="row"><h2>Gesammelt</h2><span class="muted" id="win-count"></span></div><div id="win-list"></div></div>
+  </section>
+
+  <!-- ================= VORHABEN ================= -->
+  <section data-panel="vorhaben" class="wrap" style="padding:0;gap:16px" hidden>
+    <div class="card">
+      <h2>Neues Vorhaben / Idee</h2>
+      <form class="grid" id="plan-form">
+        <label class="f">Titel *<input name="titel" required placeholder="z. B. Wochenplanung mit Nachunternehmern einführen"></label>
+        <label class="f">Notiz<textarea name="beschreibung" placeholder="Warum, wie, mit wem …"></textarea></label>
+        <button type="submit" class="btn work">Hinzufügen</button>
+      </form>
+    </div>
+    <div class="card"><h2>Liste</h2><div id="plan-list"></div></div>
+  </section>
+</div>
+
+<!-- Tag bearbeiten -->
+<dialog id="day-dlg">
+  <form class="grid" id="day-form" method="dialog">
+    <div class="row"><h2 style="margin:0;font-size:16px" id="day-dlg-title">Tag bearbeiten</h2></div>
+    <div class="two">
+      <label class="f">Datum<input name="tag" type="date" required></label>
+      <label class="f">Art<select name="art"><option value="arbeit">Arbeit</option><option value="urlaub">Urlaub</option><option value="krank">Krank</option><option value="feiertag">Feiertag</option></select></label>
+    </div>
+    <div class="two" id="day-times">
+      <label class="f">Beginn<input name="beginn" type="time"></label>
+      <label class="f">Ende<input name="ende" type="time"></label>
+    </div>
+    <label class="f" id="day-pause">Pause (Minuten)<input name="pause_min" type="number" min="0" step="5"></label>
+    <label class="f">Notiz<input name="notiz" placeholder="optional, z. B. Baustelle"></label>
+    <div class="row">
+      <button type="button" class="btn danger" id="day-del">Löschen</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn" id="day-cancel">Abbrechen</button>
+      <button type="submit" class="btn primary">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  // ---------- Grundlagen ----------
+  const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT"; // öffentlich gedacht, Schutz über Login + RLS
+  const SESSION_KEY = "cockpit_session";                                  // gleiche Sitzung wie Cockpit/Journal
+  const SOLL_MIN = 8 * 60, DEFAULT_PAUSE = 45;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const pad = n => String(n).padStart(2, "0");
+  const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;   // lokales Datum
+  const hm = min => { const s = min < 0 ? "−" : ""; min = Math.abs(Math.round(min)); return `${s}${Math.floor(min/60)}:${pad(min%60)} h`; };
+  const hmSigned = min => (min > 0 ? "+" : "") + hm(min);
+  const clock = ts => ts ? new Date(ts).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"}) : "–";
+  const dayLabel = tag => new Date(tag + "T12:00:00").toLocaleDateString("de-DE", {weekday:"short", day:"2-digit", month:"2-digit"});
+  const isWeekday = tag => { const d = new Date(tag + "T12:00:00").getDay(); return d >= 1 && d <= 5; };
+  function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 2200); }
+  $("#today").textContent = new Date().toLocaleDateString("de-DE", {weekday:"long", day:"numeric", month:"long"});
+
+  // ---------- Supabase ----------
+  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function saveSession(s){ try{ s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); }catch(e){} }
+  async function authRequest(grant, body){
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {method:"POST", headers:{apikey:SUPABASE_KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const d = await res.json().catch(() => ({}));
+    if(!res.ok) throw Object.assign(new Error(d.error_description || d.msg || d.message || ("HTTP " + res.status)), {status:res.status});
+    const s = {access_token:d.access_token, refresh_token:d.refresh_token, expires_at:d.expires_at || Math.floor(Date.now()/1000) + (d.expires_in || 3600), email:d.user && d.user.email};
+    saveSession(s); return s;
+  }
+  async function validSession(){
+    const s = loadSession();
+    if(!s || !s.refresh_token) return null;
+    if(s.expires_at - 60 > Date.now()/1000) return s;
+    try{ return await authRequest("refresh_token", {refresh_token:s.refresh_token}); }
+    catch(e){ if(e.status >= 400 && e.status < 500) saveSession(null); return null; }
+  }
+  async function sb(method, path, body, prefer){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {method, headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token, "Content-Type":"application/json", ...(prefer ? {Prefer:prefer} : {})}, body: body === undefined ? undefined : JSON.stringify(body)});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0,160)}`);
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+  const upsertDay = row => sb("POST", "work_days?on_conflict=tag", [{...row, updated_at:new Date().toISOString()}], "resolution=merge-duplicates,return=minimal");
+
+  // ---------- ZEIT ----------
+  let DAYS = [];
+  const netMin = (d, now = Date.now()) => {
+    if(d.art !== "arbeit") return isWeekday(d.tag) ? SOLL_MIN : 0;
+    if(!d.beginn) return 0;
+    const end = d.ende ? new Date(d.ende).getTime() : now;
+    return Math.max(0, (end - new Date(d.beginn).getTime()) / 6e4 - (d.pause_min || 0));
+  };
+  const sollMin = d => isWeekday(d.tag) ? SOLL_MIN : 0;
+
+  async function loadDays(){
+    try{ DAYS = await sb("GET", "work_days?select=*&order=tag.desc&limit=400"); renderZeit(); }
+    catch(e){ $("#today-card").innerHTML = `<div class="err">Arbeitszeiten konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+  }
+  function renderZeit(){
+    const today = isoDay(new Date()), d = DAYS.find(x => x.tag === today);
+    const card = $("#today-card");
+    if(!d || (d.art === "arbeit" && !d.beginn)){
+      card.innerHTML = `<div class="lbl">Heute</div>
+        <button type="button" class="btn work big" id="btn-start">▶ Arbeitsbeginn jetzt</button>
+        <div class="hint">Vergessen? Über „+ Tag nachtragen“ unten kannst du Zeiten auch nachträglich eintragen.</div>`;
+      $("#btn-start").onclick = () => stamp("start");
+    } else if(d.art !== "arbeit"){
+      card.innerHTML = `<div class="lbl">Heute</div><div class="big">${{urlaub:"Urlaub",krank:"Krank",feiertag:"Feiertag"}[d.art] || d.art}</div>`;
+    } else if(!d.ende){
+      card.innerHTML = `<div class="row"><div><div class="lbl">Heute seit ${clock(d.beginn)}</div><div class="big num" id="live-net">${hm(netMin(d))}</div><div class="hint">netto (abzgl. Pause)</div></div>
+          <div class="stepper"><button type="button" id="p-minus" aria-label="Pause kürzer">−</button><div style="text-align:center"><div class="lbl">Pause</div><div class="num">${d.pause_min} min</div></div><button type="button" id="p-plus" aria-label="Pause länger">+</button></div></div>
+        <button type="button" class="btn primary big" id="btn-end">■ Feierabend jetzt</button>`;
+      $("#btn-end").onclick = () => stamp("end");
+      $("#p-minus").onclick = () => changePause(-15); $("#p-plus").onclick = () => changePause(15);
+    } else {
+      const n = netMin(d), diff = n - sollMin(d);
+      card.innerHTML = `<div class="row"><div><div class="lbl">Heute erledigt · ${clock(d.beginn)}–${clock(d.ende)}</div><div class="big num">${hm(n)}</div>
+          <div class="hint">Pause ${d.pause_min} min · <span class="${diff >= 0 ? "pos" : "neg"}">${hmSigned(diff)}</span> gegenüber Soll</div></div>
+          <button type="button" class="btn" id="btn-edit-today">Bearbeiten</button></div>`;
+      $("#btn-edit-today").onclick = () => openDay(d);
+    }
+    // Kennzahlen
+    const now = new Date(), monday = new Date(now); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
+    const wk = isoDay(monday), mo = today.slice(0,7);
+    const week = DAYS.filter(x => x.tag >= wk && x.tag <= today), month = DAYS.filter(x => x.tag.startsWith(mo));
+    const sum = arr => arr.reduce((a,x) => a + netMin(x), 0);
+    let wdMonth = 0; for(let i = 1; i <= new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(); i++){ if(isWeekday(`${mo}-${pad(i)}`)) wdMonth++; }
+    $("#k-week").textContent = hm(sum(week)); $("#k-week-sub").textContent = "von 40:00 h";
+    $("#k-month").textContent = hm(sum(month)); $("#k-month-sub").textContent = `von ${hm(wdMonth * SOLL_MIN)}`;
+    const over = DAYS.filter(x => x.art !== "arbeit" || x.ende).reduce((a,x) => a + netMin(x) - sollMin(x), 0); // offene Tage zählen erst nach Feierabend
+    const ko = $("#k-over"); ko.textContent = hmSigned(over); ko.className = "big num " + (over >= 0 ? "pos" : "neg");
+    // Liste
+    $("#day-list").innerHTML = DAYS.slice(0, 60).map(x => {
+      const n = netMin(x), diff = n - sollMin(x);
+      const times = x.art === "arbeit" ? `${clock(x.beginn)}–${x.ende ? clock(x.ende) : "läuft"} · Pause ${x.pause_min} min` : "";
+      return `<li data-tag="${x.tag}"><div class="line1"><span>${dayLabel(x.tag)}${x.art !== "arbeit" ? `<span class="tag ${x.art}">${esc({urlaub:"Urlaub",krank:"Krank",feiertag:"Feiertag"}[x.art])}</span>` : ""}</span>
+        <span class="num">${hm(n)} <span class="${diff >= 0 ? "pos" : "neg"}" style="font-size:12px">${x.art === "arbeit" && x.ende ? hmSigned(diff) : ""}</span></span></div>
+        <div class="sub">${esc(times)}${x.notiz ? (times ? " · " : "") + esc(x.notiz) : ""}</div></li>`;
+    }).join("") || `<li class="muted" style="cursor:default">Noch keine Einträge.</li>`;
+    document.querySelectorAll("#day-list li[data-tag]").forEach(li => li.onclick = () => openDay(DAYS.find(x => x.tag === li.dataset.tag)));
+  }
+  setInterval(() => { const el = $("#live-net"); const d = DAYS.find(x => x.tag === isoDay(new Date())); if(el && d && !d.ende) el.textContent = hm(netMin(d)); }, 30e3);
+
+  async function stamp(kind){
+    const today = isoDay(new Date()), d = DAYS.find(x => x.tag === today) || {tag:today, art:"arbeit", pause_min:DEFAULT_PAUSE};
+    const row = {tag:today, art:"arbeit", pause_min:d.pause_min ?? DEFAULT_PAUSE, beginn:d.beginn || null, ende:d.ende || null, notiz:d.notiz || null};
+    if(kind === "start") row.beginn = new Date().toISOString();
+    if(kind === "end") row.ende = new Date().toISOString();
+    try{ await upsertDay(row); toast(kind === "start" ? "Arbeitsbeginn gespeichert" : "Feierabend gespeichert"); await loadDays(); }
+    catch(e){ toast("Fehler: " + e.message); }
+  }
+  async function changePause(delta){
+    const d = DAYS.find(x => x.tag === isoDay(new Date())); if(!d) return;
+    try{ await upsertDay({tag:d.tag, pause_min:Math.max(0, (d.pause_min || 0) + delta)}); await loadDays(); }catch(e){ toast("Fehler: " + e.message); }
+  }
+
+  // Tag bearbeiten / nachtragen
+  const dlg = $("#day-dlg"), df = $("#day-form");
+  const timeOf = ts => ts ? `${pad(new Date(ts).getHours())}:${pad(new Date(ts).getMinutes())}` : "";
+  const tsOf = (tag, t) => t ? new Date(`${tag}T${t}:00`).toISOString() : null;
+  function syncArt(){ const work = df.art.value === "arbeit"; $("#day-times").hidden = !work; $("#day-pause").hidden = !work; }
+  df.art.onchange = syncArt;
+  function openDay(d){
+    const isNew = !d;
+    d = d || {tag:isoDay(new Date()), art:"arbeit", pause_min:DEFAULT_PAUSE};
+    $("#day-dlg-title").textContent = isNew ? "Tag nachtragen" : "Tag bearbeiten";
+    df.tag.value = d.tag; df.tag.disabled = !isNew; df.art.value = d.art || "arbeit";
+    df.beginn.value = timeOf(d.beginn); df.ende.value = timeOf(d.ende); df.pause_min.value = d.pause_min ?? DEFAULT_PAUSE; df.notiz.value = d.notiz || "";
+    $("#day-del").hidden = isNew; syncArt(); dlg.showModal();
+  }
+  $("#add-day").onclick = () => openDay(null);
+  $("#day-cancel").onclick = () => dlg.close();
+  df.onsubmit = async e => {
+    e.preventDefault();
+    const tag = df.tag.value, art = df.art.value;
+    if(art === "arbeit" && df.beginn.value && df.ende.value && df.ende.value <= df.beginn.value){ toast("Ende muss nach Beginn liegen"); return; }
+    const row = {tag, art, notiz:df.notiz.value.trim() || null,
+      beginn: art === "arbeit" ? tsOf(tag, df.beginn.value) : null, ende: art === "arbeit" ? tsOf(tag, df.ende.value) : null,
+      pause_min: art === "arbeit" ? Math.max(0, parseInt(df.pause_min.value || "0", 10)) : 0};
+    try{ await upsertDay(row); dlg.close(); toast("Gespeichert"); await loadDays(); }catch(err){ toast("Fehler: " + err.message); }
+  };
+  $("#day-del").onclick = async () => {
+    if(!confirm("Diesen Tag wirklich löschen?")) return;
+    try{ await sb("DELETE", `work_days?tag=eq.${df.tag.value}`, undefined, "return=minimal"); dlg.close(); toast("Gelöscht"); await loadDays(); }catch(e){ toast("Fehler: " + e.message); }
+  };
+
+  // ---------- ERFOLGE ----------
+  let WINS = [];
+  const wf = $("#win-form");
+  function resetWin(){ wf.reset(); wf.datum.value = isoDay(new Date()); wf.id.value = ""; $("#win-cancel").hidden = true; }
+  async function loadWins(){
+    try{ WINS = await sb("GET", "work_wins?select=*&order=datum.desc,created_at.desc"); renderWins(); }
+    catch(e){ $("#win-list").innerHTML = `<div class="err">Erfolge konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+  }
+  function renderWins(){
+    $("#win-count").textContent = WINS.length ? `${WINS.length} Einträge` : "";
+    if(!WINS.length){ $("#win-list").innerHTML = `<div class="muted">Noch nichts gesammelt – der erste Erfolg kommt bestimmt.</div>`; return; }
+    let html = "", last = "";
+    WINS.forEach(w => {
+      const m = new Date(w.datum + "T12:00:00").toLocaleDateString("de-DE", {month:"long", year:"numeric"});
+      if(m !== last){ html += `${last ? "</ul>" : ""}<div class="month">${m}</div><ul class="list">`; last = m; }
+      html += `<li data-id="${w.id}"><div class="line1"><span><b>${esc(w.titel)}</b>${w.kategorie ? `<span class="tag">${esc(w.kategorie)}</span>` : ""}</span><span class="muted" style="font-size:12px">${dayLabel(w.datum)}</span></div>
+        ${w.wirkung ? `<div class="sub">${esc(w.wirkung)}</div>` : ""}${w.zahl ? `<div class="sub num">→ ${esc(w.zahl)}</div>` : ""}</li>`;
+    });
+    $("#win-list").innerHTML = html + "</ul>";
+    document.querySelectorAll("#win-list li[data-id]").forEach(li => li.onclick = () => editWin(WINS.find(w => w.id === li.dataset.id)));
+  }
+  function editWin(w){
+    wf.titel.value = w.titel; wf.wirkung.value = w.wirkung || ""; wf.zahl.value = w.zahl || ""; wf.kategorie.value = w.kategorie || "Sonstiges";
+    wf.datum.value = w.datum; wf.id.value = w.id; $("#win-cancel").hidden = false; wf.scrollIntoView({behavior:"smooth"}); wf.titel.focus();
+  }
+  $("#win-cancel").onclick = resetWin;
+  wf.onsubmit = async e => {
+    e.preventDefault();
+    const row = {titel:wf.titel.value.trim(), wirkung:wf.wirkung.value.trim() || null, zahl:wf.zahl.value.trim() || null, kategorie:wf.kategorie.value, datum:wf.datum.value};
+    try{
+      if(wf.id.value) await sb("PATCH", `work_wins?id=eq.${wf.id.value}`, row, "return=minimal");
+      else await sb("POST", "work_wins", [row], "return=minimal");
+      toast("Erfolg gespeichert"); resetWin(); await loadWins();
+    }catch(err){ toast("Fehler: " + err.message); }
+  };
+
+  // ---------- VORHABEN ----------
+  let PLANS = [];
+  const STATUS = {idee:"Idee", laeuft:"Läuft", umgesetzt:"Umgesetzt", verworfen:"Verworfen"};
+  const pf = $("#plan-form");
+  async function loadPlans(){
+    try{ PLANS = await sb("GET", "work_plans?select=*&order=created_at.desc"); renderPlans(); }
+    catch(e){ $("#plan-list").innerHTML = `<div class="err">Vorhaben konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+  }
+  function renderPlans(){
+    const order = ["laeuft","idee","umgesetzt","verworfen"];
+    const sorted = [...PLANS].sort((a,b) => order.indexOf(a.status) - order.indexOf(b.status));
+    $("#plan-list").innerHTML = sorted.length ? `<ul class="list">${sorted.map(p => `<li style="cursor:default" data-id="${p.id}">
+      <div class="line1"><span class="wrap-title" style="${p.status === "verworfen" ? "text-decoration:line-through;color:var(--ink-3)" : ""}"><b>${esc(p.titel)}</b></span>
+        <select class="status-sel" data-id="${p.id}">${Object.entries(STATUS).map(([k,v]) => `<option value="${k}"${k === p.status ? " selected" : ""}>${v}</option>`).join("")}</select></div>
+      ${p.beschreibung ? `<div class="sub">${esc(p.beschreibung)}</div>` : ""}</li>`).join("")}</ul>`
+      : `<div class="muted">Noch keine Vorhaben.</div>`;
+    document.querySelectorAll(".status-sel").forEach(sel => sel.onchange = () => setPlanStatus(sel.dataset.id, sel.value));
+  }
+  async function setPlanStatus(id, status){
+    try{
+      await sb("PATCH", `work_plans?id=eq.${id}`, {status, updated_at:new Date().toISOString()}, "return=minimal");
+      const p = PLANS.find(x => x.id === id); await loadPlans();
+      if(status === "umgesetzt" && p && confirm("Umgesetzt! Als Erfolg festhalten?")){
+        showTab("erfolge"); resetWin(); wf.titel.value = p.titel; wf.wirkung.value = p.beschreibung || ""; wf.titel.focus();
+      }
+    }catch(e){ toast("Fehler: " + e.message); }
+  }
+  pf.onsubmit = async e => {
+    e.preventDefault();
+    try{ await sb("POST", "work_plans", [{titel:pf.titel.value.trim(), beschreibung:pf.beschreibung.value.trim() || null}], "return=minimal"); pf.reset(); toast("Vorhaben gespeichert"); await loadPlans(); }
+    catch(err){ toast("Fehler: " + err.message); }
+  };
+
+  // ---------- Tabs ----------
+  function showTab(name){
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== name);
+    try{ localStorage.setItem("arbeit_tab", name); }catch(e){}
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  let startTab = "zeit"; try{ startTab = localStorage.getItem("arbeit_tab") || "zeit"; }catch(e){}
+  showTab(startTab);
+
+  // ---------- Farbschema (wie im Cockpit) ----------
+  const THEMES = ["system","light","dark"], THEME_LABEL = {system:"◐ Auto", light:"☀ Hell", dark:"☾ Dunkel"};
+  function storedTheme(){ try{ return localStorage.getItem("cockpit_theme") || "system"; }catch(e){ return "system"; } }
+  function applyTheme(t){
+    if(t === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    try{ t === "system" ? localStorage.removeItem("cockpit_theme") : localStorage.setItem("cockpit_theme", t); }catch(e){}
+    $("#theme-btn").textContent = THEME_LABEL[t];
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", getComputedStyle(document.body).backgroundColor);
+  }
+  $("#theme-btn").onclick = () => applyTheme(THEMES[(THEMES.indexOf(storedTheme()) + 1) % THEMES.length]);
+  applyTheme(storedTheme());
+
+  // ---------- Ansichten / Login ----------
+  const loginEl = $("#login"), appEl = $("#app");
+  function showLogin(){ appEl.hidden = true; loginEl.hidden = false; $("#login-email").focus(); }
+  function showApp(){ loginEl.hidden = true; appEl.hidden = false; resetWin(); loadDays(); loadWins(); loadPlans(); }
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = $("#login-btn"), err = $("#login-err");
+    btn.disabled = true; err.hidden = true;
+    try{ await authRequest("password", {email:$("#login-email").value.trim(), password:$("#login-pass").value}); $("#login-pass").value = ""; showApp(); }
+    catch(ex){ err.textContent = ex.status === 400 ? "E-Mail oder Passwort falsch." : "Anmeldung fehlgeschlagen: " + ex.message; err.hidden = false; }
+    finally{ btn.disabled = false; }
+  });
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && !appEl.hidden) loadDays(); });
+  validSession().then(s => s ? showApp() : showLogin());
+})();
+</script>
+</body>
+</html>
