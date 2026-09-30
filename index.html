@@ -199,6 +199,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .pipe.ok i{background:var(--good);box-shadow:0 0 0 3px var(--good-soft)} .pipe.warn i{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)} .pipe.bad i{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
 .pipe b{font-weight:650} .pipe .sub2{color:var(--ink-2);font-size:12.5px;margin-top:2px}
 
+/* E-Mail-Kachel */
+.mail-list{list-style:none;margin:0;padding:0;display:grid}
+.mail-list li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--line-2);min-width:0}
+.mail-list li:last-child{border-bottom:0}
+.mail-list input{margin-top:3px;width:16px;height:16px;accent-color:var(--good)}
+.mail-list .m1{display:flex;justify-content:space-between;gap:10px;font-size:13px;min-width:0}
+.mail-list .m1 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mail-list .m2{grid-column:2;font-size:12.5px;color:var(--ink-2)}
+.mail-list a{text-decoration:none} .mail-list a:hover{text-decoration:underline}
+
 /* login */
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
 .login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
@@ -279,6 +289,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <span class="chip" id="st-yt"><i></i>YouTube …</span>
     <span class="chip" id="st-pipe" hidden><i></i>Pipelines …</span>
     <span class="chip" id="st-jour"><i></i>Journal …</span>
+    <span class="chip" id="st-mail"><i></i>E-Mail …</span>
     <span class="chip" id="st-ftmo" hidden><i></i>FTMO …</span>
     <span class="spacer"></span>
     <span class="chip plain" id="st-upd"></span>
@@ -332,16 +343,12 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w6" data-card="yt-gta6" data-projekt="GTA6 Shorts" aria-labelledby="h-yt-gta6">
-      <div class="sec-h"><h2 id="h-yt-gta6">YouTube · GTA6 Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
-      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
-    </section>
-    <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
-      <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
-      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+    <section class="sec w6" data-card="mail" aria-labelledby="h-mail">
+      <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
+      <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
     </section>
 
-    <section class="sec w12" data-card="rec" aria-labelledby="h-rec">
+    <section class="sec w6" data-card="rec" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
@@ -353,6 +360,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
       </div>
     </section>
+
+    <section class="sec w6" data-card="yt-gta6" data-projekt="GTA6 Shorts" aria-labelledby="h-yt-gta6">
+      <div class="sec-h"><h2 id="h-yt-gta6">YouTube · GTA6 Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
+      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+    </section>
+    <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
+      <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
+      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+    </section>
+
   </div>
 
   <p class="foot">Alles echte Daten. Bots und YouTube melden sich stündlich, eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
@@ -706,6 +723,35 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     renderStatus();
   }
 
+  // ---------- E-Mail (Sortierung per geplanter Claude-Aufgabe, 7:00 + 17:00) ----------
+  let MAIL = [], MAIL_RUN = null;
+  const MAIL_STALE_H = 14;
+  async function loadMail(){
+    const list = document.getElementById("mail-list");
+    try{
+      const [items, runs] = await Promise.all([
+        sb("mail_items?select=*&erledigt=eq.false&order=datum.desc&limit=50"),
+        sb("mail_runs?select=*").catch(() => []),
+      ]);
+      MAIL = items; MAIL_RUN = runs[0] || null;
+      document.getElementById("mail-stand").textContent = MAIL_RUN ? "sortiert " + ago(MAIL_RUN.gelaufen) : "";
+      list.innerHTML = MAIL.length ? MAIL.map(m => `<li>
+          <input type="checkbox" data-id="${esc(m.thread_id)}" title="Als erledigt markieren" aria-label="Erledigt: ${esc(m.betreff || "")}">
+          <div class="m1"><b>${m.gmail_url ? `<a href="${esc(m.gmail_url)}" target="_blank" rel="noopener">${esc(m.betreff || "(ohne Betreff)")}</a>` : esc(m.betreff || "")}</b>
+            <span class="when num">${m.datum ? new Date(m.datum).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}) : ""}</span></div>
+          <div class="m2">${esc(m.absender || "")}${m.zusammenfassung ? " – " + esc(m.zusammenfassung) : ""}</div></li>`).join("")
+        : `<li class="muted" style="display:block">Nichts Wichtiges offen. 🎉</li>`;
+      list.querySelectorAll("input[type=checkbox]").forEach(cb => cb.addEventListener("change", async () => {
+        cb.disabled = true;
+        try{ await sbPatch(`mail_items?thread_id=eq.${encodeURIComponent(cb.dataset.id)}`, {erledigt: true, aktualisiert: new Date().toISOString()}); loadMail(); }
+        catch(e){ cb.checked = false; cb.disabled = false; alert("Konnte nicht speichern: " + e.message); }
+      }));
+    }catch(e){
+      list.innerHTML = `<li class="err" style="display:block">E-Mails konnten nicht geladen werden (${esc(e.message)}).</li>`;
+    }
+    renderStatus();
+  }
+
   // ---------- Statuszeile (2): Ampel für Bots, YouTube, Journal ----------
   const JOURNAL_WARN_DAYS = 7;
   function chip(id, state, text, title){
@@ -740,6 +786,11 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       chip("st-yt", bad.length ? "bad" : "ok", bad.length ? `YouTube · ${bad.length} ohne Meldung` : "YouTube · meldet sich",
         YT.map(c => `${c.name}: letzte Meldung ${ago(c.zuletzt_gemeldet)}`).join("\n"));
     } else chip("st-yt", "", "YouTube · keine Daten");
+    if(MAIL_RUN){
+      const n = MAIL.length, old = hoursSince(MAIL_RUN.gelaufen) >= MAIL_STALE_H;
+      chip("st-mail", old ? "warn" : (n ? "warn" : "ok"), old ? `E-Mail · Sortierung seit ${ago(MAIL_RUN.gelaufen).replace("vor ","")} aus` : `E-Mail · ${n} wichtig offen`,
+        old ? "Die automatische Sortierung ist länger nicht gelaufen (Claude-App auf dem PC offen?)." : "");
+    } else chip("st-mail", "", "E-Mail · noch nicht sortiert");
     if(OWN && OWN.updated_at){
       const old = hoursSince(OWN.updated_at) / 24 >= JOURNAL_WARN_DAYS;
       chip("st-jour", old ? "warn" : "ok", `Journal · Stand ${ago(OWN.updated_at)}`,
@@ -750,7 +801,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren (5): alle 5 Min., solange die Seite sichtbar ist ----------
   const REFRESH_MIN = 5;
   let lastRefresh = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); lastRefresh = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); lastRefresh = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
@@ -877,6 +928,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
     if(!res.ok) throw new Error("HTTP " + res.status);
     return res.json();
+  }
+
+  async function sbPatch(path, body){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {method:"PATCH",
+      headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token, "Content-Type":"application/json", Prefer:"return=minimal"}, body:JSON.stringify(body)});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error("HTTP " + res.status);
   }
 
   // ---------- Rezeptbuch ----------
