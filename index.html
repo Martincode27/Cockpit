@@ -193,6 +193,12 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .meter.warn .bar i{background:var(--warn)} .meter.bad .bar i{background:var(--bad)}
 .meter .hint{font-size:11.5px;color:var(--ink-3)}
 
+/* Pipeline-Status (10) */
+.pipe{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:14px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line-2);font-size:13px}
+.pipe i{width:9px;height:9px;border-radius:50%;background:var(--ink-3);flex:none;margin-top:5px}
+.pipe.ok i{background:var(--good);box-shadow:0 0 0 3px var(--good-soft)} .pipe.warn i{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)} .pipe.bad i{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.pipe b{font-weight:650} .pipe .sub2{color:var(--ink-2);font-size:12.5px;margin-top:2px}
+
 /* login */
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
 .login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
@@ -271,6 +277,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   <section class="status" aria-label="Systemstatus">
     <span class="chip" id="st-bots"><i></i>Bots …</span>
     <span class="chip" id="st-yt"><i></i>YouTube …</span>
+    <span class="chip" id="st-pipe" hidden><i></i>Pipelines …</span>
     <span class="chip" id="st-jour"><i></i>Journal …</span>
     <span class="chip" id="st-ftmo" hidden><i></i>FTMO …</span>
     <span class="spacer"></span>
@@ -327,11 +334,11 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </section>
     <section class="sec w6" data-card="yt-gta6" data-projekt="GTA6 Shorts" aria-labelledby="h-yt-gta6">
       <div class="sec-h"><h2 id="h-yt-gta6">YouTube · GTA6 Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
-      <div class="sec-b"><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
     </section>
     <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
       <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
-      <div class="sec-b"><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
+      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
     </section>
 
     <section class="sec w12" data-card="rec" aria-labelledby="h-rec">
@@ -644,15 +651,33 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   // ---------- YouTube (Melde-Skript GTA6Shorts/scripts/report_cockpit_youtube.py, stündlich) ----------
   const intDE = v => v == null ? "–" : Number(v).toLocaleString("de-DE");
-  let YT = null;
+  let YT = null, PIPES = [];
+  // Pipeline-Status je Projekt (bewertet vom Melde-Skript; zusätzlich rot, wenn die Meldung selbst veraltet ist)
+  const dt = ts => new Date(ts).toLocaleString("de-DE", {weekday:"short", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+  function pipeState(p){ return hoursSince(p.zuletzt_gemeldet) >= STALE_HOURS ? "bad" : (p.zustand || ""); }
+  function renderPipe(box, p){
+    const el = box.querySelector(".pipe"); if(!el) return;
+    if(!p){ el.hidden = true; return; }
+    const st = pipeState(p), i = p.info || {};
+    const text = st === "bad" && hoursSince(p.zuletzt_gemeldet) >= STALE_HOURS ? "keine Meldung vom Melde-Skript" : (p.hinweis || "");
+    const bits = [];
+    if(p.letzter_lauf) bits.push(`letzter Lauf ${ago(p.letzter_lauf)}${p.letzter_status && p.letzter_status !== "success" ? " (" + esc(p.letzter_status) + ")" : ""}`);
+    if(i.wartet_auf_freigabe) bits.push(`<b>${i.wartet_auf_freigabe}</b> warten auf Freigabe`);
+    if(i.eingeplant != null) bits.push(`${i.eingeplant} eingeplant${i.geplant_bis ? " bis " + new Date(i.geplant_bis).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}) : ""}`);
+    if(i.naechste_veroeffentlichung) bits.push(`nächstes Video ${dt(i.naechste_veroeffentlichung)}`);
+    el.className = "pipe " + (st === "aus" ? "" : st); el.hidden = false;
+    el.innerHTML = `<i></i><div><b>Pipeline: ${esc(text)}</b>${bits.length ? `<div class="sub2">${bits.join(" · ")}</div>` : ""}</div>`;
+  }
   async function loadYouTube(){
     const boxes = [...document.querySelectorAll(".sec[data-projekt]")];
     try{
-      const [chs, vids] = await Promise.all([
+      const [chs, vids, pipes] = await Promise.all([
         sb("yt_channels?select=*&order=sprache"),
         sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=80"),
+        sb("pipeline_status?select=*").catch(() => []),
       ]);
-      YT = chs;
+      YT = chs; PIPES = pipes;
+      boxes.forEach(box => renderPipe(box, pipes.find(p => p.projekt === box.dataset.projekt)));
       boxes.forEach(box => {
         const list = chs.filter(c => c.projekt === box.dataset.projekt);
         const grid = box.querySelector(".yt-grid");
@@ -700,6 +725,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       const w = props.reduce((a,x) => x.L.worst > a.L.worst ? x : a);
       chip("st-ftmo", limitState(w.L.worst), `${esc(w.b.regel)} · ${pct(w.L.worst)} vom Limit`,
         props.map(x => `${x.b.name}: heute ${pct(x.L.day.pct)}, gesamt ${pct(x.L.tot.pct)} vom Limit verbraucht`).join("\n"));
+    }
+    const pipesOn = PIPES.filter(p => p.zustand !== "aus");
+    document.getElementById("st-pipe").hidden = !pipesOn.length;
+    if(pipesOn.length){
+      const rank = {bad:3, warn:2, ok:1};
+      const worst = pipesOn.reduce((a,p) => (rank[pipeState(p)]||0) > (rank[pipeState(a)]||0) ? p : a);
+      const ws = pipeState(worst);
+      chip("st-pipe", ws, ws === "ok" ? `Pipelines · ${pipesOn.length} laufen` : `Pipeline ${esc(worst.projekt)} · ${esc(worst.hinweis || "prüfen")}`,
+        PIPES.map(p => `${p.projekt}: ${p.hinweis || p.zustand}`).join("\n"));
     }
     if(YT && YT.length){
       const bad = YT.filter(c => hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS);
