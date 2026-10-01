@@ -208,6 +208,12 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .mail-list .m1 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-list .m2{grid-column:2;font-size:12.5px;color:var(--ink-2)}
 .mail-list a{text-decoration:none} .mail-list a:hover{text-decoration:underline}
+.news-list{list-style:none;margin:0;padding:0;display:grid}
+.news-list li{padding:9px 0;border-bottom:1px solid var(--line-2);min-width:0}
+.news-list li:last-child{border-bottom:0}
+.news-list .n1{display:flex;gap:8px;align-items:baseline;font-size:13px;min-width:0}
+.news-list .n1 a{font-weight:600;text-decoration:none;min-width:0} .news-list .n1 a:hover{text-decoration:underline}
+.news-list .n2{font-size:12.5px;color:var(--ink-2);margin-top:2px}
 
 /* login */
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-inline:16px;padding-block:48px}
@@ -346,6 +352,10 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <section class="sec w6" data-card="mail" aria-labelledby="h-mail">
       <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
       <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
+    </section>
+    <section class="sec w6" data-card="news" aria-labelledby="h-news">
+      <div class="sec-h"><h2 id="h-news">Aktuelles <span class="tag" id="news-stand"></span></h2><a class="link" href="https://www.tagesschau.de" target="_blank" rel="noopener">tagesschau.de ↗</a></div>
+      <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
 
     <section class="sec w6" data-card="rec" aria-labelledby="h-rec">
@@ -752,6 +762,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     renderStatus();
   }
 
+  // ---------- Aktuelles (geplante Claude-Aufgabe "nachrichten", 6:30 + 18:30, Quelle tagesschau.de-RSS) ----------
+  async function loadNews(){
+    const list = document.getElementById("news-list"), stand = document.getElementById("news-stand");
+    try{
+      const d = (await sb("news_digest?select=*&order=erstellt.desc&limit=1"))[0];
+      if(!d){ stand.textContent = ""; list.innerHTML = `<li class="muted">Noch keine Zusammenfassung – die erste kommt um 6:30 Uhr.</li>`; return; }
+      stand.textContent = (d.ausgabe === "abend" ? "Abend" : "Morgen") + " · " + ago(d.erstellt);
+      list.innerHTML = (d.punkte || []).map(p => `<li>
+          <div class="n1">${p.rubrik ? `<span class="tag muted">${esc(p.rubrik)}</span>` : ""}${/^https:\/\//.test(p.url || "") ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.titel)}</a>` : `<b>${esc(p.titel)}</b>`}</div>
+          ${p.satz ? `<div class="n2">${esc(p.satz)}</div>` : ""}</li>`).join("");
+    }catch(e){
+      list.innerHTML = `<li class="err">Nachrichten konnten nicht geladen werden (${esc(e.message)}).</li>`;
+    }
+  }
+
   // ---------- Statuszeile (2): Ampel für Bots, YouTube, Journal ----------
   const JOURNAL_WARN_DAYS = 7;
   function chip(id, state, text, title){
@@ -801,7 +826,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren (5): alle 5 Min., solange die Seite sichtbar ist ----------
   const REFRESH_MIN = 5;
   let lastRefresh = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); lastRefresh = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); lastRefresh = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
