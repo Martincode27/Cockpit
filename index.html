@@ -691,12 +691,14 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     el.className = "pipe " + (st === "aus" ? "" : st); el.hidden = false;
     el.innerHTML = `<i></i><div><b>Pipeline: ${esc(text)}</b>${bits.length ? `<div class="sub2">${bits.join(" · ")}</div>` : ""}</div>`;
   }
+  function watchFmt(m){ if(m == null) return "–"; m = Number(m); return m < 60 ? Math.round(m) + " Min." : (m/60).toLocaleString("de-DE",{maximumFractionDigits:1}) + " Std."; }
+  function pctDE(p){ return Math.round(Number(p)) + " %"; }
   async function loadYouTube(){
     const boxes = [...document.querySelectorAll(".sec[data-projekt]")];
     try{
       const [chs, vids, pipes] = await Promise.all([
         sb("yt_channels?select=*&order=sprache"),
-        sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=80"),
+        sb("yt_videos?select=*&order=veroeffentlicht.desc&limit=80"),
         sb("pipeline_status?select=*").catch(() => []),
       ]);
       // Nur Projekte mit eigener Kachel zählen (pausierte wie GTA6 Shorts melden nicht mehr und sollen keine Warnung auslösen)
@@ -713,14 +715,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
           return `<div class="yt-ch">
             <div class="yt-head"><span>${esc(c.name)} <span class="tag muted" style="font-weight:500;font-size:11.5px">${esc(c.sprache||"")}</span></span>
               ${stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link sm" href="https://www.youtube.com/${c.handle ? encodeURI(c.handle) : "channel/" + encodeURIComponent(c.channel_id)}" target="_blank" rel="noopener">Kanal ↗</a>`}</div>
-            <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">
               <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
               <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
-              <div><div class="lbl">Videos</div><div class="big num">${intDE(c.videos)}</div></div>
+              <div><div class="lbl">Likes</div><div class="big num">${c.likes == null ? "–" : intDE(c.likes)}</div></div>
+              <div><div class="lbl" title="Geschätzte Wiedergabezeit der letzten 28 Tage (YouTube Analytics, 1–3 Tage verzögert)">Watchtime 28 T.</div><div class="big num">${watchFmt(c.watch_min_28t)}</div>
+                ${c.avg_view_pct != null ? `<div class="muted" style="font-size:11.5px">Ø ${pctDE(c.avg_view_pct)} angesehen</div>` : ""}</div>
             </div>
-            ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr.</span></li>`).join("")}</ul>`
+            ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr. · ${intDE(v.likes || 0)} ♥${v.avg_view_pct != null ? " · " + pctDE(v.avg_view_pct) : ""}</span></li>`).join("")}</ul>`
                         : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
-            <div class="muted" style="font-size:12px">Stand ${ago(c.zuletzt_gemeldet)}</div>
+            <div class="muted" style="font-size:12px">${intDE(c.videos)} Videos · Stand ${ago(c.zuletzt_gemeldet)}${c.analytics_stand ? ` · Watchtime ${ago(c.analytics_stand)}` : ""}</div>
           </div>`;
         }).join("");
       });
