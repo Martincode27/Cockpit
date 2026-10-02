@@ -165,7 +165,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 /* board + card controls (7) */
 .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;grid-auto-flow:row dense}
 .w12{grid-column:span 12}.w8{grid-column:span 8}.w7{grid-column:span 7}.w6{grid-column:span 6}.w5{grid-column:span 5}.w4{grid-column:span 4}
-.yt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+.yt-grid{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:0}
 .yt-ch{padding:0 18px;display:grid;gap:10px;align-content:start}
 .yt-ch+.yt-ch{border-left:1px solid var(--line-2)}
 .yt-ch:first-child{padding-left:0}.yt-ch:last-child{padding-right:0}
@@ -358,7 +358,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
 
-    <section class="sec w6" data-card="rec" aria-labelledby="h-rec">
+    <section class="sec w12" data-card="rec" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
@@ -371,7 +371,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       </div>
     </section>
 
-    <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
+    <section class="sec w12" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
       <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
       <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
     </section>
@@ -714,6 +714,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         const list = chs.filter(c => c.projekt === box.dataset.projekt);
         const grid = box.querySelector(".yt-grid");
         if(!list.length){ grid.innerHTML = `<div class="muted">Noch keine Kanal-Meldung.</div>`; return; }
+        grid.style.setProperty("--n", Math.min(list.length, 4));
         grid.innerHTML = list.map(c => {
           const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
           const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,2);
