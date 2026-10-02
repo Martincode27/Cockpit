@@ -371,10 +371,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       </div>
     </section>
 
-    <section class="sec w6" data-card="yt-gta6" data-projekt="GTA6 Shorts" aria-labelledby="h-yt-gta6">
-      <div class="sec-h"><h2 id="h-yt-gta6">YouTube · GTA6 Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
-      <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
-    </section>
     <section class="sec w6" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
       <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
       <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
@@ -401,7 +397,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // Die Kennzahlen rechnet das Melde-Skript (D:\TradingBot\report_cockpit.py), hier wird nur angezeigt.
   let BOTS = [], TRADES = [], EQUITY = [];
   const COLORS = ["--s1","--s2","--s3","--s4"];
-  const STALE_HOURS = 3; // Skript meldet stündlich -> ab 3 Std. ohne Meldung warnen
+  const STALE_HOURS = 1; // Bots melden minütlich, YouTube alle 15 Min. -> ab 1 Std. ohne Meldung warnen
   const CUR = {USD:"$", EUR:"€", GBP:"£", CHF:"CHF"};
   const money = (v, cur, signed) => v == null ? "–" :
     (signed ? (v>0?"+":v<0?"−":"") : (v<0?"−":"")) + Math.abs(v).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " " + (CUR[cur] || cur || "");
@@ -703,7 +699,9 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         sb("yt_videos?select=channel_id,video_id,titel,veroeffentlicht,aufrufe&order=veroeffentlicht.desc&limit=80"),
         sb("pipeline_status?select=*").catch(() => []),
       ]);
-      YT = chs; PIPES = pipes;
+      // Nur Projekte mit eigener Kachel zählen (pausierte wie GTA6 Shorts melden nicht mehr und sollen keine Warnung auslösen)
+      const shown = new Set(boxes.map(b => b.dataset.projekt));
+      YT = chs.filter(c => shown.has(c.projekt)); PIPES = pipes.filter(p => shown.has(p.projekt));
       boxes.forEach(box => renderPipe(box, pipes.find(p => p.projekt === box.dataset.projekt)));
       boxes.forEach(box => {
         const list = chs.filter(c => c.projekt === box.dataset.projekt);
@@ -823,19 +821,20 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     } else chip("st-jour", "warn", "Journal · noch keine Zahlen");
   }
 
-  // ---------- Automatisch aktualisieren (5): alle 5 Min., solange die Seite sichtbar ist ----------
-  const REFRESH_MIN = 5;
-  let lastRefresh = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); lastRefresh = Date.now(); tick(); }
+  // ---------- Automatisch aktualisieren: alles alle 5 Min., Bots jede Minute (Melde-Skript läuft minütlich) ----------
+  const REFRESH_MIN = 5, BOTS_REFRESH_MIN = 1;
+  let lastRefresh = 0, lastBots = 0;
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); lastRefresh = lastBots = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
   }
   function maybeRefresh(){
     if(document.visibilityState !== "visible" || appEl.hidden) return;
-    if(Date.now() - lastRefresh >= REFRESH_MIN*6e4) renderAll(); else tick();
+    if(Date.now() - lastRefresh >= REFRESH_MIN*6e4) renderAll();
+    else { if(Date.now() - lastBots >= BOTS_REFRESH_MIN*6e4){ lastBots = Date.now(); loadBots(); } tick(); }
   }
-  setInterval(maybeRefresh, 30e3);
+  setInterval(maybeRefresh, 15e3);
   document.addEventListener("visibilitychange", maybeRefresh);
 
   // ---------- Kacheln einklappen + Reihenfolge (7), pro Gerät gemerkt ----------
