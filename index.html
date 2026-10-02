@@ -316,8 +316,8 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </div>
     <div class="tbl-wrap">
       <table id="bots-table">
-        <thead><tr><th>Bot</th><th>Status</th><th>Kontostand</th><th>G/V gesamt</th><th>Trades</th><th>Winrate</th><th>Ø CRV</th><th>Profit-Faktor</th><th>Max. DD</th></tr></thead>
-        <tbody id="bots"><tr><td colspan="9" class="muted">Wird geladen …</td></tr></tbody>
+        <thead><tr><th>Bot</th><th>Status</th><th>Kontostand</th><th title="Gewinn/Verlust der gerade offenen Positionen (Equity − Kontostand), minütlich">G/V offen</th><th>G/V gesamt</th><th>Trades</th><th>Winrate</th><th>Ø CRV</th><th>Profit-Faktor</th><th>Max. DD</th></tr></thead>
+        <tbody id="bots"><tr><td colspan="10" class="muted">Wird geladen …</td></tr></tbody>
       </table>
     </div>
     <div class="chart-grid">
@@ -424,7 +424,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       if(!BOTS.some(b => b.bot_id === selected)) selected = BOTS.length ? BOTS[0].bot_id : null;
       renderBots();
     }catch(e){
-      document.getElementById("bots").innerHTML = `<tr><td colspan="9" class="err">Bots konnten nicht geladen werden (${esc(e.message)}).</td></tr>`;
+      document.getElementById("bots").innerHTML = `<tr><td colspan="10" class="err">Bots konnten nicht geladen werden (${esc(e.message)}).</td></tr>`;
       document.getElementById("s-bots").textContent = "–";
       document.getElementById("s-pnl").textContent = "–";
     }
@@ -434,13 +434,14 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   function renderTable(){
     const body = document.getElementById("bots");
-    if(!BOTS.length){ body.innerHTML = `<tr><td colspan="9" class="muted">Noch keine Bot-Meldung.</td></tr>`; return; }
+    if(!BOTS.length){ body.innerHTML = `<tr><td colspan="10" class="muted">Noch keine Bot-Meldung.</td></tr>`; return; }
     body.innerHTML = BOTS.map(b => {
       const [c,l] = botState(b);
       return `<tr data-id="${esc(b.bot_id)}" tabindex="0" aria-selected="${b.bot_id===selected}">
         <td><div class="bot-name"><span class="sw" style="background:var(${b.color})"></span><div>${esc(b.name)}<div class="bot-meta">${esc(b.broker||"")} · ${b.is_demo ? "Demo" : "Live"} · ${esc(b.konto||"")}</div></div></div></td>
         <td><span class="pill ${c}">${l}</span></td>
         <td class="num" data-label="Kontostand">${money(b.kontostand, b.waehrung)}</td>
+        <td class="num ${cls(gvOffen(b)||0)}" data-label="G/V offen" title="${b.offene_positionen ?? 0} offene Positionen">${gvOffen(b) == null ? "–" : money(gvOffen(b), b.waehrung, true)}</td>
         <td class="num ${cls(b.gv_gesamt||0)}" data-label="G/V gesamt">${money(b.gv_gesamt, b.waehrung, true)}</td>
         <td class="num" data-label="Trades">${b.trades ?? 0}</td>
         <td class="num" data-label="Winrate">${b.winrate == null ? "–" : pct(b.winrate)}</td>
@@ -485,20 +486,24 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="kv"><span>Rendite gesamt</span><span class="num ${cls(rendite||0)}">${rendite == null ? "–" : (rendite>0?"+":"") + pct(rendite)}</span></div>
       <div class="kv"><span>Equity</span><span class="num">${money(b.equity, b.waehrung)}</span></div>
       <div class="kv"><span>Offene Positionen</span><span class="num">${b.offene_positionen ?? 0}</span></div>
+      <div class="kv"><span>G/V offen</span><span class="num ${cls(gvOffen(b)||0)}">${gvOffen(b) == null ? "–" : money(gvOffen(b), b.waehrung, true)}</span></div>
       <div class="kv"><span>G/V 30 Tage</span><span class="num ${cls(b.gv_30t||0)}">${money(b.gv_30t, b.waehrung, true)}</span></div>
       ${(() => { const L = propLimits(b); return L ? `<div style="display:grid;gap:10px"><div class="lbl">${esc(b.regel)} · Verlustgrenzen</div>
         ${meterHTML("Heute verbraucht", L.day, b.waehrung)}${meterHTML("Gesamt verbraucht", L.tot, b.waehrung)}
-        <div class="hint" style="font-size:11.5px;color:var(--ink-3)">Heute = ab Mitternacht (Prag), inkl. offener Positionen. Stündliche Momentaufnahme, kein Echtzeit-Schutz.</div></div>` : ""; })()}
+        <div class="hint" style="font-size:11.5px;color:var(--ink-3)">Heute = ab Mitternacht (Prag), inkl. offener Positionen. Minütliche Momentaufnahme, kein Echtzeit-Schutz.</div></div>` : ""; })()}
       <div><div class="lbl" style="margin-bottom:4px">Letzte Trades</div>
       ${last.length ? `<ul class="list">${last.map(t => `<li><span>${esc(t.symbol)} <span class="muted">${t.richtung === "long" ? "▲" : "▼"}</span></span><span class="num ${cls(t.gv)}">${money(t.gv, b.waehrung, true)}</span></li>`).join("")}</ul>`
                     : `<div class="muted" style="font-size:13px">Noch keine abgeschlossenen Trades.</div>`}</div>`;
   }
 
+  // G/V der offenen Positionen = Equity − Kontostand (beides vom Melde-Skript, minütlich)
+  function gvOffen(b){ return b.equity == null || b.kontostand == null ? null : Math.round((b.equity - b.kontostand) * 100) / 100; }
   function renderBotSummary(){
     const cur = BOTS[0] && BOTS[0].waehrung;
     const bal = BOTS.reduce((a,b) => a + (b.kontostand || 0), 0), eqv = BOTS.reduce((a,b) => a + (b.equity || 0), 0);
     document.getElementById("s-bots").textContent = BOTS.length ? money(bal, cur) : "–";
-    document.getElementById("s-bots-sub").textContent = BOTS.length ? `${BOTS.length} Bots · Equity ${money(eqv, cur)}` : "noch keine Meldung";
+    const open = BOTS.reduce((a,b) => a + (gvOffen(b) || 0), 0);
+    document.getElementById("s-bots-sub").textContent = BOTS.length ? `${BOTS.length} Bots · offen ${money(open, cur, true)}` : "noch keine Meldung";
     // Mini-Kurve: Summe der Kontostände je Tag, letzte 30 Tage
     const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10), byDay = {};
     EQUITY.filter(r => r.tag >= from).forEach(r => { byDay[r.tag] = (byDay[r.tag] || 0) + (r.kontostand || 0); });
