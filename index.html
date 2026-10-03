@@ -177,7 +177,18 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 /* board + card controls (7) */
 .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;grid-auto-flow:row dense}
 .w12{grid-column:span 12}.w8{grid-column:span 8}.w7{grid-column:span 7}.w6{grid-column:span 6}.w5{grid-column:span 5}.w4{grid-column:span 4}
-.yt-grid{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:0}
+.yt-grid{display:grid;gap:0}
+.yt-row{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:22px;padding:18px 0;border-top:1px solid var(--line-2)}
+.yt-row:first-child{border-top:0;padding-top:4px}
+.yt-info{display:grid;gap:10px;align-content:start}
+.yt-info .yt-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:650;font-size:14px}
+.yt-info .kpis{margin-bottom:0}
+.yt-vids{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-content:start}
+.yt-vid{display:grid;gap:6px;text-decoration:none;color:inherit;min-width:0}
+.yt-vid img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:var(--panel-2);border:1px solid var(--line-2)}
+.yt-vid .vt{font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.yt-vid .vm{font-size:11.5px;color:var(--ink-3)}
+.yt-vid:hover .vt{text-decoration:underline}
 .yt-ch{padding:0 18px;display:grid;gap:10px;align-content:start}
 .yt-ch+.yt-ch{border-left:1px solid var(--line-2)}
 .yt-ch:first-child{padding-left:0}.yt-ch:last-child{padding-right:0}
@@ -220,6 +231,18 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .mail-list .m1 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-list .m2{grid-column:2;font-size:12.5px;color:var(--ink-2)}
 .mail-list a{text-decoration:none} .mail-list a:hover{text-decoration:underline}
+.rec-pick{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:center;background:var(--panel-2);border:1px solid var(--line-2);border-radius:12px;padding:12px;margin:4px 0 6px}
+.rec-pick img,.rec-card .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;background:var(--line-2);display:grid;place-items:center;font-size:34px}
+.rec-pick h3{margin:2px 0 4px;font-size:17px}
+.rec-pick .meta{font-size:12.5px;color:var(--ink-2);display:flex;gap:10px;flex-wrap:wrap}
+.rec-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rec-card{display:grid;gap:5px;text-decoration:none;color:inherit;min-width:0}
+.rec-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;background:var(--line-2)}
+.rec-card .t{font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-card .m{font-size:11.5px;color:var(--ink-3)}
+.rec-cats{display:flex;gap:6px;flex-wrap:wrap}
+.rec-cats span{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line-2)}
+@media (max-width:640px){ .rec-pick{grid-template-columns:110px minmax(0,1fr)} .rec-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .proj-list{list-style:none;margin:0;padding:0;display:grid}
 .proj-list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
 .proj-list li:last-child{border-bottom:0}
@@ -246,6 +269,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .login button[type=submit]:disabled{opacity:.6;cursor:wait}
 
 @media (max-width:900px){
+  .yt-row{grid-template-columns:minmax(0,1fr);gap:14px}
   .two,.three{grid-template-columns:1fr}
   .w8,.w7,.w6,.w5,.w4{grid-column:span 12}
   .chart-grid{grid-template-columns:1fr}
@@ -273,8 +297,10 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   #bots td:first-child,#bots td:nth-child(2){grid-column:1/-1;padding:0}
   #bots td:first-child::before,#bots td:nth-child(2)::before,#bots td[colspan]::before{content:none}
   .status .spacer{display:none}
-  .yt-grid{grid-template-columns:1fr;gap:18px}
-  .yt-ch{padding:0}.yt-ch+.yt-ch{border-left:0;border-top:1px solid var(--line-2);padding-top:18px}
+  .yt-row{grid-template-columns:minmax(0,1fr);gap:14px}
+  .yt-vids{grid-template-columns:minmax(0,1fr)}
+  .yt-vid{grid-template-columns:120px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:10px}
+  .yt-vid img{grid-row:1/3}
   /* Kopfleiste + Statuszeile als je eine wischbare Zeile */
   .top{gap:10px}
   .links,.status{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;padding-block:2px;width:calc(100% + 32px)}
@@ -304,7 +330,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   <header class="top">
     <div class="logo"><i></i>Cockpit <small id="today"></small></div>
     <nav class="links" aria-label="Meine Seiten">
-      <a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener"><span class="dot"></span>Rezeptbuch</a>
+      <a class="link" href="https://martincode27.github.io/Rezepte/"><span class="dot"></span>Rezeptbuch</a>
       <a class="link" href="journal.html"><span class="dot"></span>Trading-Journal</a>
       <a class="link" href="projekte.html"><span class="dot" style="background:#2563eb"></span>Projekte</a>
       <a class="link" href="arbeit.html"><span class="dot" style="background:#8b5cf6"></span>Arbeit</a>
@@ -382,6 +408,10 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
+    <section class="sec w12" data-card="proj" data-view="start" aria-labelledby="h-proj">
+      <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
+      <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
+    </section>
     <section class="sec w6" data-card="mail" data-view="start" aria-labelledby="h-mail">
       <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
       <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
@@ -391,21 +421,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
 
-    <section class="sec w6" data-card="proj" data-view="start" aria-labelledby="h-proj">
-      <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
-      <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
-    </section>
 
     <section class="sec w12" data-card="rec" data-view="rezepte" aria-labelledby="h-rec">
-      <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
+      <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/">Öffnen ↗</a></div>
       <div class="sec-b">
-        <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-          <div><div class="lbl">Gesamt</div><div class="big num" id="rec-total">…</div></div>
-          <div><div class="lbl">Diese Woche</div><div class="big num" id="rec-week">…</div></div>
-          <div><div class="lbl">Diesen Monat</div><div class="big num" id="rec-month">…</div></div>
+        <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+          <div><div class="lbl">Rezepte</div><div class="big num" id="rec-total">…</div></div>
+          <div><div class="lbl">Neu diese Woche</div><div class="big num" id="rec-week">…</div></div>
+          <div><div class="lbl">Neu diesen Monat</div><div class="big num" id="rec-month">…</div></div>
+          <div><div class="lbl">Im Vorrat</div><div class="big num" id="rec-pantry">…</div></div>
         </div>
-        <div class="lbl" style="margin-bottom:4px">Zuletzt hinzugefügt</div>
-        <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
+        <div class="rec-pick" id="rec-pick"></div>
+        <div class="lbl" style="margin:6px 0">Zuletzt hinzugefügt</div>
+        <div class="rec-grid" id="rec-list"><div class="muted">Wird geladen …</div></div>
+        <div class="lbl" style="margin:10px 0 6px">Kategorien</div>
+        <div class="rec-cats" id="rec-cats"></div>
       </div>
     </section>
 
@@ -769,23 +799,28 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
         const list = chs.filter(c => c.projekt === box.dataset.projekt);
         const grid = box.querySelector(".yt-grid");
         if(!list.length){ grid.innerHTML = `<div class="muted">Noch keine Kanal-Meldung.</div>`; return; }
-        grid.style.setProperty("--n", Math.min(list.length, 4));
         grid.innerHTML = list.map(c => {
           const stale = hoursSince(c.zuletzt_gemeldet) >= STALE_HOURS;
-          const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,2);
-          return `<div class="yt-ch">
-            <div class="yt-head"><span>${esc(c.name)} <span class="tag muted" style="font-weight:500;font-size:11.5px">${esc(c.sprache||"")}</span></span>
-              ${stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link sm" href="https://www.youtube.com/${c.handle ? encodeURI(c.handle) : "channel/" + encodeURIComponent(c.channel_id)}" target="_blank" rel="noopener">Kanal ↗</a>`}</div>
-            <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-              <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
-              <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
-              <div><div class="lbl">Likes</div><div class="big num">${c.likes == null ? "–" : intDE(c.likes)}</div></div>
-              <div><div class="lbl" title="Geschätzte Wiedergabezeit der letzten 28 Tage (YouTube Analytics, 1–3 Tage verzögert)">Watchtime 28 T.</div><div class="big num">${watchFmt(c.watch_min_28t)}</div>
-                ${c.avg_view_pct != null ? `<div class="muted" style="font-size:11.5px">Ø ${pctDE(c.avg_view_pct)} angesehen</div>` : ""}</div>
+          const vs = vids.filter(v => v.channel_id === c.channel_id).slice(0,3);
+          const url = `https://www.youtube.com/${c.handle ? encodeURI(c.handle) : "channel/" + encodeURIComponent(c.channel_id)}`;
+          return `<div class="yt-row">
+            <div class="yt-info">
+              <div class="yt-head"><span>${esc(c.name)} <span class="tag muted" style="font-weight:500;font-size:11.5px">${esc(c.sprache||"")}</span></span>
+                ${stale ? `<span class="pill stop">keine Meldung</span>` : `<a class="link sm" href="${url}" target="_blank" rel="noopener">Kanal ↗</a>`}</div>
+              <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                <div><div class="lbl">Abos</div><div class="big num">${intDE(c.abos)}</div></div>
+                <div><div class="lbl">Aufrufe</div><div class="big num">${intDE(c.aufrufe)}</div></div>
+                <div><div class="lbl">Likes</div><div class="big num">${c.likes == null ? "–" : intDE(c.likes)}</div></div>
+                <div><div class="lbl" title="Geschätzte Wiedergabezeit der letzten 28 Tage (YouTube Analytics, 1–3 Tage verzögert)">Watchtime 28 T.</div><div class="big num">${watchFmt(c.watch_min_28t)}</div>
+                  ${c.avg_view_pct != null ? `<div class="muted" style="font-size:11.5px">Ø ${pctDE(c.avg_view_pct)} angesehen</div>` : ""}</div>
+              </div>
+              <div class="muted" style="font-size:12px">${intDE(c.videos)} Videos · Stand ${ago(c.zuletzt_gemeldet)}${c.analytics_stand ? ` · Watchtime ${ago(c.analytics_stand)}` : ""}</div>
             </div>
-            ${vs.length ? `<ul class="list">${vs.map(v => `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">${esc(v.titel)}</a><span class="when num">${intDE(v.aufrufe)} Aufr. · ${intDE(v.likes || 0)} ♥${v.avg_view_pct != null ? " · " + pctDE(v.avg_view_pct) : ""}</span></li>`).join("")}</ul>`
-                        : `<div class="muted" style="font-size:13px">Noch keine öffentlichen Videos.</div>`}
-            <div class="muted" style="font-size:12px">${intDE(c.videos)} Videos · Stand ${ago(c.zuletzt_gemeldet)}${c.analytics_stand ? ` · Watchtime ${ago(c.analytics_stand)}` : ""}</div>
+            <div class="yt-vids">${vs.length ? vs.map(v => `<a class="yt-vid" href="https://www.youtube.com/watch?v=${encodeURIComponent(v.video_id)}" target="_blank" rel="noopener" title="${esc(v.titel)}">
+                <img src="https://i.ytimg.com/vi/${encodeURIComponent(v.video_id)}/mqdefault.jpg" alt="" loading="lazy">
+                <span class="vt">${esc(v.titel)}</span>
+                <span class="vm num">${v.veroeffentlicht ? new Date(v.veroeffentlicht).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}) + " · " : ""}${intDE(v.aufrufe)} Aufr. · ${intDE(v.likes || 0)} ♥${v.avg_view_pct != null ? " · Ø " + pctDE(v.avg_view_pct) : ""}${v.watch_min != null ? " · " + watchFmt(v.watch_min) : ""}</span>
+              </a>`).join("") : `<div class="muted" style="font-size:13px;align-self:center">Noch keine öffentlichen Videos.</div>`}</div>
           </div>`;
         }).join("");
       });
@@ -901,7 +936,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const lsGet = (k, d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } };
   const lsSet = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
   function cardOrder(){
-    const saved = lsGet("cockpit_order", []).filter(id => DEFAULT_ORDER.includes(id));
+    const saved = lsGet("cockpit_order_v2", []).filter(id => DEFAULT_ORDER.includes(id));
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
   const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
@@ -932,7 +967,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     });
     const move = dir => { const o = cardOrder(), same = sameView(o, id), k = same.indexOf(id) + dir; if(k < 0 || k >= same.length) return;
       const i = o.indexOf(id), j = o.indexOf(same[k]);
-      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order", o); applyOrder(); redrawCharts(); };
+      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order_v2", o); applyOrder(); redrawCharts(); };
     c.querySelector(".move.up").addEventListener("click", () => move(-1));
     c.querySelector(".move.down").addEventListener("click", () => move(1));
   });
@@ -1041,22 +1076,35 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Rezeptbuch ----------
   function startOfWeek(d){ const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
   async function loadRecipes(){
-    const list = document.getElementById("rec-list");
+    const list = document.getElementById("rec-list"), APP = "https://martincode27.github.io/Rezepte/";
     try{
-      const rows = await sb("recipes?select=id,name,emoji,created_at&order=created_at.desc");
+      const [rows, pantry] = await Promise.all([
+        sb("recipes?select=id,name,emoji,image_url,categories,difficulty,time_prep,time_cook,created_at&order=created_at.desc"),
+        sb("pantry_items?select=id").catch(() => null),
+      ]);
       const week = startOfWeek(new Date()), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const nWeek = rows.filter(r => new Date(r.created_at) >= week).length;
-      const nMonth = rows.filter(r => new Date(r.created_at) >= month).length;
       document.getElementById("rec-total").textContent = rows.length;
-      document.getElementById("rec-week").textContent = "+" + nWeek;
-      document.getElementById("rec-month").textContent = "+" + nMonth;
-      list.innerHTML = rows.slice(0,5).map(r => {
-        const d = new Date(r.created_at), isNew = d >= week;
-        return `<li><span>${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}${isNew ? '<span class="new">neu</span>' : ""}</span>` +
-               `<span class="when">${d.toLocaleDateString("de-DE", isNew ? {weekday:"short",day:"2-digit",month:"2-digit"} : {day:"2-digit",month:"2-digit",year:"2-digit"})}</span></li>`;
-      }).join("") || '<li class="muted">Noch keine Rezepte.</li>';
+      document.getElementById("rec-week").textContent = "+" + rows.filter(r => new Date(r.created_at) >= week).length;
+      document.getElementById("rec-month").textContent = "+" + rows.filter(r => new Date(r.created_at) >= month).length;
+      document.getElementById("rec-pantry").textContent = pantry ? pantry.length : "–";
+      const mins = r => (r.time_prep || 0) + (r.time_cook || 0);
+      const img = (r, cls) => /^https:\/\//.test(r.image_url || "") ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">` : `<div class="ph">${esc(r.emoji || "🍽️")}</div>`;
+      // Vorschlag des Tages: fest pro Tag (gleicher Vorschlag bei jedem Neuladen), "Anderer" würfelt neu
+      let pickIdx = rows.length ? (Math.floor(Date.now() / 864e5) * 7919) % rows.length : 0;
+      const renderPick = () => {
+        const r = rows[pickIdx]; if(!r){ document.getElementById("rec-pick").innerHTML = ""; return; }
+        document.getElementById("rec-pick").innerHTML = `${img(r)}<div><div class="lbl">Was koche ich heute?</div><h3>${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}</h3>
+          <div class="meta">${mins(r) ? `<span>⏱ ${mins(r)} Min.</span>` : ""}${r.difficulty ? `<span>${esc(r.difficulty)}</span>` : ""}${(r.categories || []).slice(0,3).map(c => `<span>${esc(c)}</span>`).join("")}</div>
+          <div style="margin-top:10px;display:flex;gap:8px"><a class="link sm" href="${APP}">Im Rezeptbuch ↗</a><button type="button" class="link sm" id="rec-reroll">🎲 Anderer</button></div></div>`;
+        document.getElementById("rec-reroll").onclick = () => { pickIdx = Math.floor(Math.random() * rows.length); renderPick(); };
+      };
+      renderPick();
+      list.innerHTML = rows.slice(0,8).map(r => `<a class="rec-card" href="${APP}">${img(r)}<span class="t">${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}</span>
+          <span class="m">${new Date(r.created_at).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${mins(r) ? " · " + mins(r) + " Min." : ""}</span></a>`).join("") || '<div class="muted">Noch keine Rezepte.</div>';
+      const cats = {}; rows.forEach(r => (r.categories || []).forEach(c => cats[c] = (cats[c] || 0) + 1));
+      document.getElementById("rec-cats").innerHTML = Object.entries(cats).sort((a,b) => b[1] - a[1]).map(([c,n]) => `<span>${esc(c)} <b class="num">${n}</b></span>`).join("");
     }catch(e){
-      list.innerHTML = `<li class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</li>`;
+      list.innerHTML = `<div class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</div>`;
     }
   }
 

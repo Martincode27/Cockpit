@@ -92,8 +92,38 @@ def scan(folder: Path) -> dict | None:
     }
 
 
+def apply_done(token: str) -> None:
+    """Im Cockpit abgehakte Punkte (Tabelle project_item_done) im Vault abhaken: "- [ ]" -> "- [x]".
+    Verglichen wird der bereinigte Text wie im Cockpit angezeigt; erledigte bzw. nicht mehr gefundene
+    Einträge werden danach aus der Tabelle gelöscht."""
+    done = req("GET", "/rest/v1/project_item_done?select=*&order=id", None, token) or []
+    for d in done:
+        f = VAULT / d["projekt"] / d["quelle"]
+        hit = False
+        if f.exists() and f.parent.parent == VAULT and d["quelle"] in QUELLEN:
+            lines = f.read_text(encoding="utf-8-sig").split("\n")
+            for i, line in enumerate(lines):
+                m = re.match(r"^(\s*- )\[ \](\s+)(.+)$", line)
+                if m and clean(m.group(3)) == d["text"]:
+                    lines[i] = f"{m.group(1)}[x]{m.group(2)}{m.group(3)}"
+                    hit = True
+                    break
+            if hit:
+                f.write_text("\n".join(lines), encoding="utf-8")
+        print(("abgehakt: " if hit else "nicht gefunden (verworfen): ") + f"{d['projekt']}/{d['quelle']}: {d['text'][:60]}")
+        req("DELETE", f"/rest/v1/project_item_done?id=eq.{d['id']}", None, token, "return=minimal")
+
+
 def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")
+    if sys.stdout:  # unter pythonw (Taskplaner, ohne Fenster) gibt es keine Konsole
+        sys.stdout.reconfigure(encoding="utf-8")
+    token = None
+    if "--dry" not in sys.argv:
+        token = login()
+        try:
+            apply_done(token)
+        except SystemExit as e:  # req() meldet HTTP-Fehler so, z. B. SQL 012 noch nicht ausgeführt -> Abgleich trotzdem
+            print(f"Abhaken übersprungen: {e}")
     rows = [r for r in (scan(d) for d in sorted(VAULT.iterdir()) if d.is_dir()) if r]
     rows.sort(key=lambda r: r["reihenfolge"])
     for r in rows:
@@ -101,7 +131,6 @@ def main() -> None:
               f"Ideen {len(r['ideen']):2d} | erledigt {r['erledigt']}")
     if "--dry" in sys.argv:
         return
-    token = login()
     req("POST", "/rest/v1/projects?on_conflict=id", rows, token, "resolution=merge-duplicates,return=minimal")
     ids = ",".join(f'"{r["id"]}"' for r in rows)
     req("DELETE", f"/rest/v1/projects?id=not.in.({ids})", None, token, "return=minimal")  # aus dem Vault entfernt

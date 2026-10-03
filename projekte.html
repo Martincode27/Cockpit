@@ -83,6 +83,11 @@ details{border-top:1px solid var(--line-2);padding-top:10px}
 summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2)}
 ul.items{margin:8px 0 0;padding-left:18px;display:grid;gap:5px;font-size:13px}
 ul.items .q{color:var(--ink-3);font-size:11.5px}
+ul.items.check{list-style:none;padding-left:0}
+ul.items.check li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start}
+ul.items.check input{width:16px;height:16px;margin-top:2px;accent-color:var(--good);cursor:pointer}
+ul.items.check li.pending span.t{text-decoration:line-through;color:var(--ink-3)}
+ul.items.check li.pending .q::after{content:" · erledigt, wird in den Vault übertragen"}
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:48px 16px}
 .login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
 label.f{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
@@ -113,7 +118,7 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
   </header>
   <div class="chips" id="filter" role="group" aria-label="Nach Status filtern"></div>
   <div class="grid" id="grid"><div class="muted">Wird geladen …</div></div>
-  <div class="hint">Quelle: Steckbrief und Backlog jedes Projekts im Vault. Wird stündlich übertragen.</div>
+  <div class="hint">Quelle: Steckbrief und Backlog jedes Projekts im Vault. Wird stündlich übertragen; abgehakte Punkte werden dabei im Vault als erledigt markiert.</div>
 </div>
 
 <script>
@@ -154,8 +159,17 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
   }
 
   // ---------- Projekte (Tabelle projects, gemeldet von tools/projects_to_cockpit.py aus dem Vault) ----------
-  let PROJ = [], filter = "alle";
+  let PROJ = [], DONE = [], filter = "alle";
+  const OPEN = new Set();  // aufgeklappte Listen bleiben beim Neuzeichnen offen
   try{ filter = localStorage.getItem("projekte_filter") || "alle"; }catch(e){}
+  const isPending = (p, i) => DONE.some(d => d.projekt === p.id && d.quelle === i.quelle && d.text === i.text);
+  function checklist(p, list){
+    return `<ul class="items check">${list.map((i, k) => {
+      const pend = isPending(p, i);
+      return `<li class="${pend ? "pending" : ""}"><input type="checkbox" data-p="${esc(p.id)}" data-k="${k}" ${pend ? "checked disabled" : ""} aria-label="Erledigt: ${esc(i.text)}">
+        <span><span class="t">${esc(i.text)}</span> <span class="q">${i.quelle && i.quelle !== "00_Start.md" ? "· " + esc(i.quelle.replace(".md","")) : ""}</span></span></li>`;
+    }).join("")}</ul>`;
+  }
   function items(list){
     return `<ul class="items">${list.map(i => `<li>${esc(i.text)}${i.quelle && i.quelle !== "00_Start.md" ? ` <span class="q">· ${esc(i.quelle.replace(".md",""))}</span>` : ""}</li>`).join("")}</ul>`;
   }
@@ -171,7 +185,7 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
       <div class="meta">${p.details
         ? `<span><b class="num">${offen.length}</b> offen</span><span><b class="num">${p.erledigt ?? 0}</b> erledigt</span><span><b class="num">${ideen.length}</b> Ideen</span>`
         : `<span>Details nur im Vault</span>`}${p.vault_geaendert ? `<span class="muted">Notizen ${ago(p.vault_geaendert)} geändert</span>` : ""}</div>
-      ${offen.length ? `<details><summary>Offene Punkte (${offen.length})</summary>${items(offen)}</details>` : ""}
+      ${offen.length ? `<details data-open="${esc(p.id)}"${OPEN.has(p.id) ? " open" : ""}><summary>Offene Punkte (${offen.filter(i => !isPending(p, i)).length})</summary>${checklist(p, offen)}</details>` : ""}
       ${ideen.length ? `<details><summary>Ideen (${ideen.length})</summary>${items(ideen)}</details>` : ""}
     </article>`;
   }
@@ -183,10 +197,23 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
     $("#filter").querySelectorAll(".chip").forEach(b => b.onclick = () => { filter = b.dataset.f; try{ localStorage.setItem("projekte_filter", filter); }catch(e){} render(); });
     const list = PROJ.filter(p => filter === "alle" || p.status === filter);
     $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="muted">Noch keine Projekte gemeldet.</div>`;
+    $("#grid").querySelectorAll("details[data-open]").forEach(d => d.addEventListener("toggle", () => d.open ? OPEN.add(d.dataset.open) : OPEN.delete(d.dataset.open)));
+    $("#grid").querySelectorAll("ul.items.check input:not(:disabled)").forEach(cb => cb.addEventListener("change", async () => {
+      const p = PROJ.find(x => x.id === cb.dataset.p), i = (p.offen || [])[+cb.dataset.k];
+      cb.disabled = true;
+      try{
+        const row = {projekt: p.id, quelle: i.quelle, text: i.text};
+        await sb("POST", "project_item_done", [row], "return=minimal");
+        DONE.push(row); render();
+      }catch(e){ cb.checked = false; cb.disabled = false; alert("Konnte nicht speichern: " + e.message); }
+    }));
   }
   async function load(){
     try{
-      PROJ = await sb("GET", "projects?select=*&order=reihenfolge,name");
+      [PROJ, DONE] = await Promise.all([
+        sb("GET", "projects?select=*&order=reihenfolge,name"),
+        sb("GET", "project_item_done?select=projekt,quelle,text").catch(() => []),
+      ]);
       const last = PROJ.reduce((a,p) => p.aktualisiert > a ? p.aktualisiert : a, "");
       $("#stand").textContent = last ? "Stand " + ago(last) : "";
       render();
