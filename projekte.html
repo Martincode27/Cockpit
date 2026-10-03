@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Projekte · Cockpit</title>
+<meta name="theme-color" content="#f4f5f7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<script>try{var t=localStorage.getItem("cockpit_theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel-2:#f8f9fb; --line:#e3e5ea; --line-2:#eceef2;
+  --ink:#14161b; --ink-2:#4a4f5c; --ink-3:#7c8190;
+  --brand:#c2272d; --work:#2563eb; --work-soft:#e6eefc; --on-work:#ffffff;
+  --good:#0f8a4f; --good-soft:#e3f4ea; --bad:#d23b3b; --bad-soft:#fbe7e7; --warn:#b77700; --warn-soft:#fbf1dc;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+    --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98;
+    --brand:#ef5a5f; --work:#6ea2ff; --work-soft:#16233d; --on-work:#14161b;
+    --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+  --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98;
+  --brand:#ef5a5f; --work:#6ea2ff; --work-soft:#16233d; --on-work:#14161b;
+  --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:18px 60px;display:grid;gap:16px}
+.wrap > *{min-width:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--work);outline-offset:2px;border-radius:4px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.logo i{width:12px;height:12px;border-radius:3px;background:var(--work);display:block;transform:rotate(45deg)}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px;text-decoration:none;font:inherit;font-weight:500;font-size:13px;color:inherit;cursor:pointer;white-space:nowrap}
+.link:hover,.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.btn.big{padding:16px;font-size:17px;border-radius:12px;width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.muted{color:var(--ink-3)} .err{color:var(--bad);font-size:13px}
+.hint{font-size:12px;color:var(--ink-3)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:999px;font-size:13px;font-weight:550;cursor:pointer;color:inherit;font-family:inherit}
+.chip[aria-pressed="true"]{border-color:var(--work);color:var(--work);background:var(--work-soft)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none;display:inline-block}
+.dot.aktiv{background:var(--good)} .dot.pausiert{background:var(--warn)} .dot.ruht{background:var(--ink-3)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+.card.pausiert,.card.ruht{opacity:.85}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ph h2{margin:0;font-size:16px;font-weight:650}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:650;padding:2px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:650;margin-bottom:2px}
+.ziel{font-size:14px;font-weight:550}
+.bar{height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--work);border-radius:99px}
+.prog{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.next{background:var(--work-soft);border-radius:8px;padding:9px 11px;font-size:13.5px}
+.next b{color:var(--work);font-weight:650}
+.meta{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
+details{border-top:1px solid var(--line-2);padding-top:10px}
+summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2)}
+ul.items{margin:8px 0 0;padding-left:18px;display:grid;gap:5px;font-size:13px}
+ul.items .q{color:var(--ink-3);font-size:11.5px}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:48px 16px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+label.f{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);width:100%;min-width:0}
+@media (max-width:760px){ .grid{grid-template-columns:minmax(0,1fr)} }
+</style>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <form id="login-form" autocomplete="on">
+    <div class="logo"><i></i>Projekte</div>
+    <div class="hint">Gleiche Anmeldung wie im Cockpit.</div>
+    <label class="f">E-Mail<input id="login-email" type="email" autocomplete="username" required></label>
+    <label class="f">Passwort<input id="login-pass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="login-err" role="alert" hidden></div>
+    <button type="submit" class="btn primary big" id="login-btn">Anmelden</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="logo"><i></i>Projekte <span class="muted" style="font-size:13px;font-weight:500" id="stand"></span></div>
+    <nav class="links">
+      <a class="link" href="index.html">◆ Cockpit</a>
+      <button type="button" class="link" id="theme-btn" aria-label="Farbschema wechseln"></button>
+    </nav>
+  </header>
+  <div class="chips" id="filter" role="group" aria-label="Nach Status filtern"></div>
+  <div class="grid" id="grid"><div class="muted">Wird geladen …</div></div>
+  <div class="hint">Quelle: Steckbrief und Backlog jedes Projekts im Vault. Wird stündlich übertragen; „Fortschritt“ ist eine Schätzung.</div>
+</div>
+
+<script>
+(function(){
+  // ---------- Grundlagen ----------
+  const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT"; // öffentlich gedacht, Schutz über Login + RLS
+  const SESSION_KEY = "cockpit_session";                                  // gleiche Sitzung wie Cockpit/Journal
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function ago(ts){ const m = Math.round((Date.now() - new Date(ts).getTime())/6e4); if(m < 60) return `vor ${Math.max(m,0)} Min.`; const h = Math.round(m/60); if(h < 48) return `vor ${h} Std.`; return `vor ${Math.round(h/24)} Tagen`; }
+  const STATUS = {aktiv:"Aktiv", pausiert:"Pausiert", ruht:"Ruht"};
+
+  // ---------- Supabase ----------
+  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function saveSession(s){ try{ s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); }catch(e){} }
+  async function authRequest(grant, body){
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {method:"POST", headers:{apikey:SUPABASE_KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const d = await res.json().catch(() => ({}));
+    if(!res.ok) throw Object.assign(new Error(d.error_description || d.msg || d.message || ("HTTP " + res.status)), {status:res.status});
+    const s = {access_token:d.access_token, refresh_token:d.refresh_token, expires_at:d.expires_at || Math.floor(Date.now()/1000) + (d.expires_in || 3600), email:d.user && d.user.email};
+    saveSession(s); return s;
+  }
+  async function validSession(){
+    const s = loadSession();
+    if(!s || !s.refresh_token) return null;
+    if(s.expires_at - 60 > Date.now()/1000) return s;
+    try{ return await authRequest("refresh_token", {refresh_token:s.refresh_token}); }
+    catch(e){ if(e.status >= 400 && e.status < 500) saveSession(null); return null; }
+  }
+  async function sb(method, path, body, prefer){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {method, headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token, "Content-Type":"application/json", ...(prefer ? {Prefer:prefer} : {})}, body: body === undefined ? undefined : JSON.stringify(body)});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0,160)}`);
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+
+  // ---------- Projekte (Tabelle projects, gemeldet von tools/projects_to_cockpit.py aus dem Vault) ----------
+  let PROJ = [], filter = "alle";
+  try{ filter = localStorage.getItem("projekte_filter") || "alle"; }catch(e){}
+  function items(list){
+    return `<ul class="items">${list.map(i => `<li>${esc(i.text)}${i.quelle && i.quelle !== "00_Start.md" ? ` <span class="q">· ${esc(i.quelle.replace(".md",""))}</span>` : ""}</li>`).join("")}</ul>`;
+  }
+  function card(p){
+    const offen = p.offen || [], ideen = p.ideen || [];
+    const fort = p.fortschritt == null ? null : Math.max(0, Math.min(100, Number(p.fortschritt)));
+    return `<article class="card ${esc(p.status)}">
+      <div class="ph"><h2>${esc(p.name)}</h2><span class="pill"><span class="dot ${esc(p.status)}"></span>${esc(STATUS[p.status] || p.status || "")}</span></div>
+      ${p.ziel ? `<div><div class="lbl">Ziel</div><div class="ziel">${esc(p.ziel)}</div></div>` : ""}
+      ${fort != null ? `<div><div class="lbl">Fortschritt (geschätzt)</div><div class="prog"><div class="bar"><i style="width:${fort}%"></i></div><span class="num">${Math.round(fort)} %</span></div></div>` : ""}
+      ${p.stand ? `<div><div class="lbl">Stand</div><div>${esc(p.stand)}</div></div>` : ""}
+      ${p.naechster_schritt ? `<div class="next"><b>Nächster Schritt:</b> ${esc(p.naechster_schritt)}</div>` : ""}
+      <div class="meta">${p.details
+        ? `<span><b class="num">${offen.length}</b> offen</span><span><b class="num">${p.erledigt ?? 0}</b> erledigt</span><span><b class="num">${ideen.length}</b> Ideen</span>`
+        : `<span>Details nur im Vault</span>`}${p.vault_geaendert ? `<span class="muted">Notizen ${ago(p.vault_geaendert)} geändert</span>` : ""}</div>
+      ${offen.length ? `<details><summary>Offene Punkte (${offen.length})</summary>${items(offen)}</details>` : ""}
+      ${ideen.length ? `<details><summary>Ideen (${ideen.length})</summary>${items(ideen)}</details>` : ""}
+    </article>`;
+  }
+  function render(){
+    const counts = {alle: PROJ.length}; PROJ.forEach(p => counts[p.status] = (counts[p.status] || 0) + 1);
+    if(!counts[filter]) filter = "alle";
+    $("#filter").innerHTML = ["alle","aktiv","pausiert","ruht"].filter(k => counts[k]).map(k =>
+      `<button type="button" class="chip" data-f="${k}" aria-pressed="${filter===k}">${k === "alle" ? "Alle" : `<span class="dot ${k}"></span>${STATUS[k]}`} <span class="num muted">${counts[k]}</span></button>`).join("");
+    $("#filter").querySelectorAll(".chip").forEach(b => b.onclick = () => { filter = b.dataset.f; try{ localStorage.setItem("projekte_filter", filter); }catch(e){} render(); });
+    const list = PROJ.filter(p => filter === "alle" || p.status === filter);
+    $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="muted">Noch keine Projekte gemeldet.</div>`;
+  }
+  async function load(){
+    try{
+      PROJ = await sb("GET", "projects?select=*&order=reihenfolge,name");
+      const last = PROJ.reduce((a,p) => p.aktualisiert > a ? p.aktualisiert : a, "");
+      $("#stand").textContent = last ? "Stand " + ago(last) : "";
+      render();
+    }catch(e){ $("#grid").innerHTML = `<div class="err">Projekte konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+  }
+
+  // ---------- Farbschema (wie im Cockpit) ----------
+  const THEMES = ["system","light","dark"], THEME_LABEL = {system:"◐ Auto", light:"☀ Hell", dark:"☾ Dunkel"};
+  function storedTheme(){ try{ return localStorage.getItem("cockpit_theme") || "system"; }catch(e){ return "system"; } }
+  function applyTheme(t){
+    if(t === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    try{ t === "system" ? localStorage.removeItem("cockpit_theme") : localStorage.setItem("cockpit_theme", t); }catch(e){}
+    $("#theme-btn").textContent = THEME_LABEL[t];
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", getComputedStyle(document.body).backgroundColor);
+  }
+  $("#theme-btn").onclick = () => applyTheme(THEMES[(THEMES.indexOf(storedTheme()) + 1) % THEMES.length]);
+  applyTheme(storedTheme());
+
+  // ---------- Ansichten / Login ----------
+  const loginEl = $("#login"), appEl = $("#app");
+  function showLogin(){ appEl.hidden = true; loginEl.hidden = false; $("#login-email").focus(); }
+  function showApp(){ loginEl.hidden = true; appEl.hidden = false; load(); }
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = $("#login-btn"), err = $("#login-err");
+    btn.disabled = true; err.hidden = true;
+    try{ await authRequest("password", {email:$("#login-email").value.trim(), password:$("#login-pass").value}); $("#login-pass").value = ""; showApp(); }
+    catch(ex){ err.textContent = ex.status === 400 ? "E-Mail oder Passwort falsch." : "Anmeldung fehlgeschlagen: " + ex.message; err.hidden = false; }
+    finally{ btn.disabled = false; }
+  });
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && !appEl.hidden) load(); });
+  validSession().then(s => s ? showApp() : showLogin());
+})();
+</script>
+</body>
+</html>

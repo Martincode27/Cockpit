@@ -208,6 +208,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .mail-list .m1 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-list .m2{grid-column:2;font-size:12.5px;color:var(--ink-2)}
 .mail-list a{text-decoration:none} .mail-list a:hover{text-decoration:underline}
+.proj-list{list-style:none;margin:0;padding:0;display:grid}
+.proj-list li{display:grid;grid-template-columns:auto minmax(0,1fr) 92px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
+.proj-list li:last-child{border-bottom:0}
+.proj-list .pd{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}
+.proj-list .pd.aktiv{background:var(--good)} .proj-list .pd.pausiert{background:var(--warn)}
+.proj-list .pn{font-weight:600;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-list .pb{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;font-size:11.5px}
+.proj-list .pb i{display:block;height:6px;border-radius:9px;background:var(--line-2);overflow:hidden}
+.proj-list .pb i b{display:block;height:100%;background:#2563eb}
+.proj-list .ps{grid-column:2/-1;font-size:12.5px;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .news-list{list-style:none;margin:0;padding:0;display:grid}
 .news-list li{padding:9px 0;border-bottom:1px solid var(--line-2);min-width:0}
 .news-list li:last-child{border-bottom:0}
@@ -283,6 +293,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <nav class="links" aria-label="Meine Seiten">
       <a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener"><span class="dot"></span>Rezeptbuch</a>
       <a class="link" href="journal.html"><span class="dot"></span>Trading-Journal</a>
+      <a class="link" href="projekte.html"><span class="dot" style="background:#2563eb"></span>Projekte</a>
       <a class="link" href="arbeit.html"><span class="dot" style="background:#8b5cf6"></span>Arbeit</a>
       <a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener"><span class="dot"></span>YouTube Studio</a>
       <button type="button" class="link" id="theme-btn" aria-label="Farbschema wechseln"></button>
@@ -358,7 +369,11 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
 
-    <section class="sec w12" data-card="rec" aria-labelledby="h-rec">
+    <section class="sec w6" data-card="proj" aria-labelledby="h-proj">
+      <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
+      <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
+    </section>
+    <section class="sec w6" data-card="rec" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
       <div class="sec-b">
         <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
@@ -834,7 +849,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren: alles alle 5 Min., Bots jede Minute (Melde-Skript läuft minütlich) ----------
   const REFRESH_MIN = 5, BOTS_REFRESH_MIN = 1;
   let lastRefresh = 0, lastBots = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); lastRefresh = lastBots = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
@@ -975,6 +990,25 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   // ---------- Rezeptbuch ----------
   function startOfWeek(d){ const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
+  // ---------- Projekte (aus dem Vault, tools/projects_to_cockpit.py, stündlich) ----------
+  async function loadProjects(){
+    const list = document.getElementById("proj-list");
+    try{
+      const ps = await sb("projects?select=name,status,fortschritt,naechster_schritt,offen,aktualisiert&order=reihenfolge,name");
+      const last = ps.reduce((a,p) => p.aktualisiert > a ? p.aktualisiert : a, "");
+      document.getElementById("proj-stand").textContent = ps.length ? `${ps.filter(p => p.status === "aktiv").length} aktiv` : "";
+      list.innerHTML = ps.length ? ps.map(p => {
+        const f = p.fortschritt == null ? null : Math.max(0, Math.min(100, Number(p.fortschritt)));
+        const n = (p.offen || []).length;
+        return `<li><span class="pd ${esc(p.status)}" title="${esc(p.status)}"></span><span class="pn">${esc(p.name)}</span>
+          <span class="pb">${f == null ? `<span></span><span class="muted">–</span>` : `<i><b style="width:${f}%"></b></i><span class="num">${Math.round(f)} %</span>`}</span>
+          <span class="ps" title="${esc(p.naechster_schritt || "")}">${p.status !== "aktiv" ? esc(p.status === "pausiert" ? "Pausiert" : "Ruht") + " · " : ""}${esc(p.naechster_schritt || "")}${n ? ` · ${n} offen` : ""}</span></li>`;
+      }).join("") : `<li class="muted">Noch keine Projekte gemeldet.</li>`;
+    }catch(e){
+      list.innerHTML = `<li class="err">Projekte konnten nicht geladen werden (${esc(e.message)}).</li>`;
+    }
+  }
+
   async function loadRecipes(){
     const list = document.getElementById("rec-list");
     try{
