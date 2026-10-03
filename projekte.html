@@ -113,7 +113,7 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
   </header>
   <div class="chips" id="filter" role="group" aria-label="Nach Status filtern"></div>
   <div class="grid" id="grid"><div class="muted">Wird geladen …</div></div>
-  <div class="hint">Quelle: Steckbrief und Backlog jedes Projekts im Vault. Wird stündlich übertragen; „Fortschritt“ ist eine Schätzung.</div>
+  <div class="hint">Quelle: Steckbrief und Backlog jedes Projekts im Vault. Wird stündlich übertragen.</div>
 </div>
 
 <script>
@@ -165,7 +165,7 @@ input{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
     return `<article class="card ${esc(p.status)}">
       <div class="ph"><h2>${esc(p.name)}</h2><span class="pill"><span class="dot ${esc(p.status)}"></span>${esc(STATUS[p.status] || p.status || "")}</span></div>
       ${p.ziel ? `<div><div class="lbl">Ziel</div><div class="ziel">${esc(p.ziel)}</div></div>` : ""}
-      ${fort != null ? `<div><div class="lbl">Fortschritt (geschätzt)</div><div class="prog"><div class="bar"><i style="width:${fort}%"></i></div><span class="num">${Math.round(fort)} %</span></div></div>` : ""}
+      ${fort != null ? `<div><div class="lbl">Fortschritt</div><div class="prog"><div class="bar"><i style="width:${fort}%"></i></div><span class="num">${Math.round(fort)} %</span></div></div>` : ""}
       ${p.stand ? `<div><div class="lbl">Stand</div><div>${esc(p.stand)}</div></div>` : ""}
       ${p.naechster_schritt ? `<div class="next"><b>Nächster Schritt:</b> ${esc(p.naechster_schritt)}</div>` : ""}
       <div class="meta">${p.details
