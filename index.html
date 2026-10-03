@@ -408,20 +408,20 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w12" data-card="proj" data-view="start" aria-labelledby="h-proj">
+
+
+    <section class="sec w6" data-card="proj" data-view="start" aria-labelledby="h-proj">
       <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
       <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
-    </section>
-    <section class="sec w6" data-card="mail" data-view="start" aria-labelledby="h-mail">
-      <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
-      <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
     </section>
     <section class="sec w6" data-card="news" data-view="start" aria-labelledby="h-news">
       <div class="sec-h"><h2 id="h-news">Aktuelles <span class="tag" id="news-stand"></span></h2><a class="link" href="https://www.tagesschau.de" target="_blank" rel="noopener">tagesschau.de ↗</a></div>
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-
-
+    <section class="sec w12" data-card="mail" data-view="start" aria-labelledby="h-mail">
+      <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
+      <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
+    </section>
     <section class="sec w12" data-card="rec" data-view="rezepte" aria-labelledby="h-rec">
       <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/">Öffnen ↗</a></div>
       <div class="sec-b">
@@ -936,7 +936,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const lsGet = (k, d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } };
   const lsSet = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
   function cardOrder(){
-    const saved = lsGet("cockpit_order_v2", []).filter(id => DEFAULT_ORDER.includes(id));
+    const saved = lsGet("cockpit_order_v3", []).filter(id => DEFAULT_ORDER.includes(id));
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
   const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
@@ -967,7 +967,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     });
     const move = dir => { const o = cardOrder(), same = sameView(o, id), k = same.indexOf(id) + dir; if(k < 0 || k >= same.length) return;
       const i = o.indexOf(id), j = o.indexOf(same[k]);
-      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order_v2", o); applyOrder(); redrawCharts(); };
+      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order_v3", o); applyOrder(); redrawCharts(); };
     c.querySelector(".move.up").addEventListener("click", () => move(-1));
     c.querySelector(".move.down").addEventListener("click", () => move(1));
   });
