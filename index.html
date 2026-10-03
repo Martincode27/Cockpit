@@ -169,7 +169,8 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 #app[data-cur="start"] [data-view]:not([data-view="start"]),
 #app[data-cur="trading"] [data-view]:not([data-view="trading"]),
-#app[data-cur="youtube"] [data-view]:not([data-view="youtube"]){display:none!important}
+#app[data-cur="youtube"] [data-view]:not([data-view="youtube"]),
+#app[data-cur="rezepte"] [data-view]:not([data-view="rezepte"]){display:none!important}
 .strip [data-go]{cursor:pointer}
 .strip [data-go]:hover .lbl{color:var(--ink)}
 
@@ -251,7 +252,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   .side{border-left:0;border-top:1px solid var(--line-2);grid-template-columns:1fr 1fr}
 }
 @media (max-width:640px){
-  .views{position:fixed;left:0;right:0;bottom:0;width:100%;z-index:30;border-radius:0;border-width:1px 0 0;display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 18px rgb(0 0 0 / .08)}
+  .views{position:fixed;left:0;right:0;bottom:0;width:100%;z-index:30;border-radius:0;border-width:1px 0 0;display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 18px rgb(0 0 0 / .08)}
   .views button{padding:13px 6px;font-size:14px}
   .wrap{padding-bottom:84px}
   .strip{grid-template-columns:1fr 1fr}
@@ -314,7 +315,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   </header>
 
   <nav class="views" id="views" aria-label="Bereiche">
-    <button type="button" data-v="start">Start</button><button type="button" data-v="trading">Trading</button><button type="button" data-v="youtube">YouTube</button>
+    <button type="button" data-v="start">Start</button><button type="button" data-v="trading">Trading</button><button type="button" data-v="youtube">YouTube</button><button type="button" data-v="rezepte">Rezepte</button>
   </nav>
 
   <section class="status" aria-label="Systemstatus">
@@ -323,7 +324,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <span class="chip" id="st-pipe" hidden><i></i>Pipelines …</span>
     <span class="chip" id="st-jour"><i></i>Journal …</span>
     <span class="chip" id="st-mail"><i></i>E-Mail …</span>
-    <span class="chip" id="st-ftmo" hidden><i></i>FTMO …</span>
     <span class="spacer"></span>
     <span class="chip plain" id="st-upd"></span>
     <button type="button" class="link sm" id="edit-btn" aria-pressed="false" title="Kacheln verschieben">Anpassen</button>
@@ -394,6 +394,19 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <section class="sec w6" data-card="proj" data-view="start" aria-labelledby="h-proj">
       <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
       <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
+    </section>
+
+    <section class="sec w12" data-card="rec" data-view="rezepte" aria-labelledby="h-rec">
+      <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
+      <div class="sec-b">
+        <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+          <div><div class="lbl">Gesamt</div><div class="big num" id="rec-total">…</div></div>
+          <div><div class="lbl">Diese Woche</div><div class="big num" id="rec-week">…</div></div>
+          <div><div class="lbl">Diesen Monat</div><div class="big num" id="rec-month">…</div></div>
+        </div>
+        <div class="lbl" style="margin-bottom:4px">Zuletzt hinzugefügt</div>
+        <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
+      </div>
     </section>
 
     <section class="sec w12" data-card="yt-ai" data-view="youtube" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
@@ -839,14 +852,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       chip("st-bots", bad.length ? "bad" : "ok", bad.length ? `Bots · ${bad.length} ohne Meldung` : `Bots · ${BOTS.length}/${BOTS.length} melden sich`,
         BOTS.map(b => `${b.name}: letzte Meldung ${ago(b.zuletzt_gemeldet)}`).join("\n"));
     } else chip("st-bots", "", "Bots · keine Meldung");
-    const props = BOTS.map(b => ({b, L: propLimits(b)})).filter(x => x.L);
-    const ftmo = document.getElementById("st-ftmo");
-    ftmo.hidden = !props.length;
-    if(props.length){
-      const w = props.reduce((a,x) => x.L.worst > a.L.worst ? x : a);
-      chip("st-ftmo", limitState(w.L.worst), `${esc(w.b.regel)} · ${pct(w.L.worst)} vom Limit`,
-        props.map(x => `${x.b.name}: heute ${pct(x.L.day.pct)}, gesamt ${pct(x.L.tot.pct)} vom Limit verbraucht`).join("\n"));
-    }
     const pipesOn = PIPES.filter(p => p.zustand !== "aus");
     document.getElementById("st-pipe").hidden = !pipesOn.length;
     if(pipesOn.length){
@@ -876,7 +881,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren: alles alle 5 Min., Bots jede Minute (Melde-Skript läuft minütlich) ----------
   const REFRESH_MIN = 5, BOTS_REFRESH_MIN = 1;
   let lastRefresh = 0, lastBots = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
@@ -938,7 +943,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   });
 
   // ---------- Bereiche Start / Trading / YouTube (Adresse #trading usw., pro Gerät gemerkt) ----------
-  const VIEWS = ["start","trading","youtube"];
+  const VIEWS = ["start","trading","youtube","rezepte"];
   function setView(v, push){
     if(!VIEWS.includes(v)) v = "start";
     document.getElementById("app").dataset.cur = v;
@@ -1035,6 +1040,26 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   // ---------- Rezeptbuch ----------
   function startOfWeek(d){ const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
+  async function loadRecipes(){
+    const list = document.getElementById("rec-list");
+    try{
+      const rows = await sb("recipes?select=id,name,emoji,created_at&order=created_at.desc");
+      const week = startOfWeek(new Date()), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const nWeek = rows.filter(r => new Date(r.created_at) >= week).length;
+      const nMonth = rows.filter(r => new Date(r.created_at) >= month).length;
+      document.getElementById("rec-total").textContent = rows.length;
+      document.getElementById("rec-week").textContent = "+" + nWeek;
+      document.getElementById("rec-month").textContent = "+" + nMonth;
+      list.innerHTML = rows.slice(0,5).map(r => {
+        const d = new Date(r.created_at), isNew = d >= week;
+        return `<li><span>${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}${isNew ? '<span class="new">neu</span>' : ""}</span>` +
+               `<span class="when">${d.toLocaleDateString("de-DE", isNew ? {weekday:"short",day:"2-digit",month:"2-digit"} : {day:"2-digit",month:"2-digit",year:"2-digit"})}</span></li>`;
+      }).join("") || '<li class="muted">Noch keine Rezepte.</li>';
+    }catch(e){
+      list.innerHTML = `<li class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</li>`;
+    }
+  }
+
   // ---------- Projekte (aus dem Vault, tools/projects_to_cockpit.py, stündlich) ----------
   async function loadProjects(){
     const list = document.getElementById("proj-list");
