@@ -70,7 +70,7 @@ a{color:inherit}
 .link.soon .dot{background:var(--ink-3)}
 
 /* summary strip */
-.strip{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.strip{display:grid;grid-template-columns:repeat(var(--c,4),minmax(0,1fr));background:var(--panel);border:1px solid var(--line);border-radius:12px}
 .strip>div{padding:14px 18px;border-left:1px solid var(--line-2)}
 .strip>div:first-child{border-left:0}
 .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
@@ -162,6 +162,17 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 /* sparklines (3) */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
 
+/* Bereiche Start / Trading / YouTube (2026-10-03) */
+.views{display:inline-flex;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;justify-self:start}
+.views button{font:inherit;font-size:14px;font-weight:600;padding:8px 18px;background:transparent;border:0;color:var(--ink-2);cursor:pointer}
+.views button+button{border-left:1px solid var(--line)}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+#app[data-cur="start"] [data-view]:not([data-view="start"]),
+#app[data-cur="trading"] [data-view]:not([data-view="trading"]),
+#app[data-cur="youtube"] [data-view]:not([data-view="youtube"]){display:none!important}
+.strip [data-go]{cursor:pointer}
+.strip [data-go]:hover .lbl{color:var(--ink)}
+
 /* board + card controls (7) */
 .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;grid-auto-flow:row dense}
 .w12{grid-column:span 12}.w8{grid-column:span 8}.w7{grid-column:span 7}.w6{grid-column:span 6}.w5{grid-column:span 5}.w4{grid-column:span 4}
@@ -240,6 +251,9 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   .side{border-left:0;border-top:1px solid var(--line-2);grid-template-columns:1fr 1fr}
 }
 @media (max-width:640px){
+  .views{position:fixed;left:0;right:0;bottom:0;width:100%;z-index:30;border-radius:0;border-width:1px 0 0;display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 18px rgb(0 0 0 / .08)}
+  .views button{padding:13px 6px;font-size:14px}
+  .wrap{padding-bottom:84px}
   .strip{grid-template-columns:1fr 1fr}
   .strip>div:nth-child(3){border-left:0}
   .strip>div:nth-child(n+3){border-top:1px solid var(--line-2)}
@@ -299,6 +313,10 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </nav>
   </header>
 
+  <nav class="views" id="views" aria-label="Bereiche">
+    <button type="button" data-v="start">Start</button><button type="button" data-v="trading">Trading</button><button type="button" data-v="youtube">YouTube</button>
+  </nav>
+
   <section class="status" aria-label="Systemstatus">
     <span class="chip" id="st-bots"><i></i>Bots …</span>
     <span class="chip" id="st-yt"><i></i>YouTube …</span>
@@ -311,15 +329,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     <button type="button" class="link sm" id="edit-btn" aria-pressed="false" title="Kacheln verschieben">Anpassen</button>
   </section>
 
-  <section class="strip" aria-label="Überblick">
+  <section class="strip" data-view="start" aria-label="Kurzüberblick" style="--c:4">
+    <div data-go="trading"><div class="lbl">Bots · G/V gesamt</div><div class="big num" id="s2-gv">…</div><div class="sub" id="s2-gv-sub"></div></div>
+    <div data-go="trading"><div class="lbl">Bots · G/V offen</div><div class="big num" id="s2-open">…</div><div class="sub" id="s2-open-sub"></div></div>
+    <div data-go="youtube"><div class="lbl">YouTube · Aufrufe</div><div class="big num" id="s2-views">…</div><div class="sub" id="s2-views-sub"></div></div>
+    <div data-go="youtube"><div class="lbl">YouTube · Abos</div><div class="big num" id="s2-abos">…</div><div class="sub" id="s2-abos-sub"></div></div>
+  </section>
+
+  <section class="strip" data-view="trading" aria-label="Überblick Trading" style="--c:3">
     <div><div class="lbl">Bots · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
     <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
     <div><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div><svg class="spark" id="sp-own" aria-hidden="true"></svg></div>
-    <div><div class="lbl">Neue Rezepte · diese Woche</div><div class="big num" id="s-rec"></div><div class="sub" id="s-rec-sub"></div></div>
   </section>
 
   <div class="board" id="board">
-  <section class="sec w12" data-card="bots" aria-labelledby="h-bots">
+  <section class="sec w12" data-card="bots" data-view="trading" aria-labelledby="h-bots">
     <div class="sec-h">
       <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2>
     </div>
@@ -344,7 +368,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </div>
   </section>
 
-    <section class="sec w8" data-card="own" aria-labelledby="h-own">
+    <section class="sec w8" data-card="own" data-view="trading" aria-labelledby="h-own">
       <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
@@ -354,44 +378,32 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     </section>
 
 
-    <section class="sec w4" data-card="jour" aria-labelledby="h-jour">
+    <section class="sec w4" data-card="jour" data-view="trading" aria-labelledby="h-jour">
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w6" data-card="mail" aria-labelledby="h-mail">
+    <section class="sec w6" data-card="mail" data-view="start" aria-labelledby="h-mail">
       <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
       <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w6" data-card="news" aria-labelledby="h-news">
+    <section class="sec w6" data-card="news" data-view="start" aria-labelledby="h-news">
       <div class="sec-h"><h2 id="h-news">Aktuelles <span class="tag" id="news-stand"></span></h2><a class="link" href="https://www.tagesschau.de" target="_blank" rel="noopener">tagesschau.de ↗</a></div>
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
 
-    <section class="sec w6" data-card="proj" aria-labelledby="h-proj">
+    <section class="sec w6" data-card="proj" data-view="start" aria-labelledby="h-proj">
       <div class="sec-h"><h2 id="h-proj">Projekte <span class="tag" id="proj-stand"></span></h2><a class="link" href="projekte.html">Alle ↗</a></div>
       <div class="sec-b"><ul class="proj-list" id="proj-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w6" data-card="rec" aria-labelledby="h-rec">
-      <div class="sec-h"><h2 id="h-rec">Rezeptbuch</h2><a class="link" href="https://martincode27.github.io/Rezepte/" target="_blank" rel="noopener">Öffnen ↗</a></div>
-      <div class="sec-b">
-        <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-          <div><div class="lbl">Gesamt</div><div class="big num" id="rec-total">…</div></div>
-          <div><div class="lbl">Diese Woche</div><div class="big num" id="rec-week">…</div></div>
-          <div><div class="lbl">Diesen Monat</div><div class="big num" id="rec-month">…</div></div>
-        </div>
-        <div class="lbl" style="margin-bottom:4px">Zuletzt hinzugefügt</div>
-        <ul class="list" id="rec-list"><li class="muted">Wird geladen …</li></ul>
-      </div>
-    </section>
 
-    <section class="sec w12" data-card="yt-ai" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
+    <section class="sec w12" data-card="yt-ai" data-view="youtube" data-projekt="AI-Shorts" aria-labelledby="h-yt-ai">
       <div class="sec-h"><h2 id="h-yt-ai">YouTube · AI-Shorts</h2><a class="link" href="https://studio.youtube.com" target="_blank" rel="noopener">Studio ↗</a></div>
       <div class="sec-b"><div class="pipe" hidden></div><div class="yt-grid"><div class="muted">Wird geladen …</div></div></div>
     </section>
 
   </div>
 
-  <p class="foot">Alles echte Daten. Bots und YouTube melden sich stündlich, eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
+  <p class="foot">Alles echte Daten. Bots melden sich jede Minute, YouTube alle 15 Min., eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
 </div>
 
 <script>
@@ -511,6 +523,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 
   // G/V der offenen Positionen = Equity − Kontostand (beides vom Melde-Skript, minütlich)
   function gvOffen(b){ return b.equity == null || b.kontostand == null ? null : Math.round((b.equity - b.kontostand) * 100) / 100; }
+  // Kurzüberblick auf der Startseite (Bots: G/V gesamt + offen, YouTube: Aufrufe + Abos)
+  function renderStart(){
+    const set = (id, txt, c) => { const el = document.getElementById(id); el.textContent = txt; if(c !== undefined) el.className = "big num " + c; };
+    if(BOTS.length){
+      const cur = BOTS[0].waehrung, gv = BOTS.reduce((a,b) => a + (b.gv_gesamt || 0), 0), op = BOTS.reduce((a,b) => a + (gvOffen(b) || 0), 0);
+      set("s2-gv", money(gv, cur, true), cls(gv)); document.getElementById("s2-gv-sub").textContent = `${BOTS.length} Bots · abgeschlossene Trades`;
+      set("s2-open", money(op, cur, true), cls(op)); document.getElementById("s2-open-sub").textContent = `${BOTS.reduce((a,b) => a + (b.offene_positionen || 0), 0)} offene Positionen`;
+    }
+    if(YT && YT.length){
+      set("s2-views", intDE(YT.reduce((a,c) => a + (c.aufrufe || 0), 0)), "");
+      document.getElementById("s2-views-sub").textContent = `${intDE(YT.reduce((a,c) => a + (c.likes || 0), 0))} Likes`;
+      set("s2-abos", intDE(YT.reduce((a,c) => a + (c.abos || 0), 0)), "");
+      document.getElementById("s2-abos-sub").textContent = `${YT.length} Kanäle`;
+    }
+  }
   function renderBotSummary(){
     const cur = BOTS[0] && BOTS[0].waehrung;
     const bal = BOTS.reduce((a,b) => a + (b.kontostand || 0), 0), eqv = BOTS.reduce((a,b) => a + (b.equity || 0), 0);
@@ -534,6 +561,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       cum.push(run);
     }
     spark("sp-pnl", n ? cum : [], "line");
+    renderStart();
     renderStatus();
   }
 
@@ -722,6 +750,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       // Nur Projekte mit eigener Kachel zählen (pausierte wie GTA6 Shorts melden nicht mehr und sollen keine Warnung auslösen)
       const shown = new Set(boxes.map(b => b.dataset.projekt));
       YT = chs.filter(c => shown.has(c.projekt)); PIPES = pipes.filter(p => shown.has(p.projekt));
+      renderStart();
       boxes.forEach(box => renderPipe(box, pipes.find(p => p.projekt === box.dataset.projekt)));
       boxes.forEach(box => {
         const list = chs.filter(c => c.projekt === box.dataset.projekt);
@@ -847,7 +876,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren: alles alle 5 Min., Bots jede Minute (Melde-Skript läuft minütlich) ----------
   const REFRESH_MIN = 5, BOTS_REFRESH_MIN = 1;
   let lastRefresh = 0, lastBots = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
@@ -870,13 +899,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     const saved = lsGet("cockpit_order", []).filter(id => DEFAULT_ORDER.includes(id));
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
+  const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
+  const sameView = (order, id) => order.filter(x => viewOf(x) === viewOf(id));
   function applyOrder(){
     const order = cardOrder();
     cards().forEach(c => { c.style.order = order.indexOf(c.dataset.card); });
     cards().forEach(c => {
-      const i = order.indexOf(c.dataset.card);
+      const same = sameView(order, c.dataset.card), i = same.indexOf(c.dataset.card);
       c.querySelector(".move.up").disabled = i === 0;
-      c.querySelector(".move.down").disabled = i === order.length - 1;
+      c.querySelector(".move.down").disabled = i === same.length - 1;
     });
   }
   function redrawCharts(){ requestAnimationFrame(() => { renderChart(); renderOwn(); }); }
@@ -894,7 +925,8 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       const set = new Set(lsGet("cockpit_collapsed", [])); on ? set.add(id) : set.delete(id); lsSet("cockpit_collapsed", [...set]);
       if(!on) redrawCharts();
     });
-    const move = dir => { const o = cardOrder(), i = o.indexOf(id), j = i + dir; if(j < 0 || j >= o.length) return;
+    const move = dir => { const o = cardOrder(), same = sameView(o, id), k = same.indexOf(id) + dir; if(k < 0 || k >= same.length) return;
+      const i = o.indexOf(id), j = o.indexOf(same[k]);
       [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order", o); applyOrder(); redrawCharts(); };
     c.querySelector(".move.up").addEventListener("click", () => move(-1));
     c.querySelector(".move.down").addEventListener("click", () => move(1));
@@ -904,6 +936,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     const on = !board.classList.contains("editing"); board.classList.toggle("editing", on);
     e.currentTarget.setAttribute("aria-pressed", String(on)); e.currentTarget.textContent = on ? "Fertig" : "Anpassen";
   });
+
+  // ---------- Bereiche Start / Trading / YouTube (Adresse #trading usw., pro Gerät gemerkt) ----------
+  const VIEWS = ["start","trading","youtube"];
+  function setView(v, push){
+    if(!VIEWS.includes(v)) v = "start";
+    document.getElementById("app").dataset.cur = v;
+    document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    lsSet("cockpit_view", v);
+    if(push) history.replaceState(null, "", v === "start" ? location.pathname : "#" + v);
+    redrawCharts();
+  }
+  document.querySelectorAll("#views button").forEach(b => b.addEventListener("click", () => { setView(b.dataset.v, true); window.scrollTo(0, 0); }));
+  document.querySelectorAll(".strip [data-go]").forEach(d => d.addEventListener("click", () => { setView(d.dataset.go, true); window.scrollTo(0, 0); }));
+  window.addEventListener("hashchange", () => setView(location.hash.slice(1) || "start"));
+  setView(location.hash.slice(1) || lsGet("cockpit_view", "start"));
 
   document.getElementById("range").addEventListener("click", e => {
     const btn = e.target.closest("button"); if(!btn) return;
@@ -1002,28 +1049,6 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       }).join("") : `<li class="muted">Noch keine Projekte gemeldet.</li>`;
     }catch(e){
       list.innerHTML = `<li class="err">Projekte konnten nicht geladen werden (${esc(e.message)}).</li>`;
-    }
-  }
-
-  async function loadRecipes(){
-    const list = document.getElementById("rec-list");
-    try{
-      const rows = await sb("recipes?select=id,name,emoji,created_at&order=created_at.desc");
-      const week = startOfWeek(new Date()), month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const nWeek = rows.filter(r => new Date(r.created_at) >= week).length;
-      const nMonth = rows.filter(r => new Date(r.created_at) >= month).length;
-      document.getElementById("rec-total").textContent = rows.length;
-      document.getElementById("rec-week").textContent = "+" + nWeek;
-      document.getElementById("rec-month").textContent = "+" + nMonth;
-      document.getElementById("s-rec").textContent = "+" + nWeek;
-      document.getElementById("s-rec-sub").textContent = rows.length + " Rezepte insgesamt";
-      list.innerHTML = rows.slice(0,5).map(r => {
-        const d = new Date(r.created_at), isNew = d >= week;
-        return `<li><span>${r.emoji ? esc(r.emoji) + " " : ""}${esc(r.name)}${isNew ? '<span class="new">neu</span>' : ""}</span>` +
-               `<span class="when">${d.toLocaleDateString("de-DE", isNew ? {weekday:"short",day:"2-digit",month:"2-digit"} : {day:"2-digit",month:"2-digit",year:"2-digit"})}</span></li>`;
-      }).join("") || '<li class="muted">Noch keine Rezepte.</li>';
-    }catch(e){
-      list.innerHTML = `<li class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</li>`;
     }
   }
 
