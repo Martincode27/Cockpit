@@ -60,7 +60,24 @@ def login() -> str:
                {"email": e["COCKPIT_BOT_EMAIL"], "password": e["COCKPIT_BOT_PASSWORD"]})["access_token"]
 
 
+ERGEBNIS = HERE / "tmp" / "mail_ergebnis.json"  # feste Datei -> der Aufruf ist bei jedem Lauf identisch
+
+
 def main() -> None:
+    # `melden` (ohne weitere Argumente): liest tools/tmp/mail_ergebnis.json =
+    #   {"wichtig": [ …wie bei items… ], "anzahl": {"wichtig": n, "info": n, "unwichtig": n}}
+    # und meldet wichtige Mails + den Lauf. Gleicher Befehl bei jedem Lauf, damit eine einmalige
+    # "Immer erlauben"-Freigabe der geplanten Aufgabe dauerhaft greift.
+    if len(sys.argv) == 2 and sys.argv[1] == "melden":
+        d = json.loads(ERGEBNIS.read_text(encoding="utf-8-sig"))
+        a = d.get("anzahl", {})
+        if d.get("wichtig"):
+            items_file = ERGEBNIS.with_name("mail_items.json")
+            items_file.write_text(json.dumps(d["wichtig"], ensure_ascii=False), encoding="utf-8")
+            sys.argv = [sys.argv[0], "items", str(items_file)]
+            main()
+        sys.argv = [sys.argv[0], "run", str(a.get("wichtig", 0)), str(a.get("info", 0)), str(a.get("unwichtig", 0))]
+        return main()
     if len(sys.argv) < 2 or sys.argv[1] not in ("items", "run"):
         raise SystemExit(__doc__)
     token = login()

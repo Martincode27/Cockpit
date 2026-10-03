@@ -53,11 +53,15 @@ def main() -> None:
     if len(sys.argv) >= 2 and sys.argv[1] == "feed":
         print(json.dumps(feed(), ensure_ascii=False, indent=1))
         return
+    if len(sys.argv) == 2 and sys.argv[1] == "push":
+        # Fester Aufruf ohne Argumente (Datei tools/tmp/news.json, Ausgabe nach Uhrzeit), damit eine einmalige
+        # "Immer erlauben"-Freigabe der geplanten Aufgabe bei jedem Lauf greift.
+        sys.argv += ["morgen" if datetime.now().hour < 12 else "abend", str(Path(__file__).resolve().parent / "tmp" / "news.json")]
     if len(sys.argv) < 4 or sys.argv[1] != "push" or sys.argv[2] not in ("morgen", "abend"):
         raise SystemExit(__doc__)
     ausgabe = sys.argv[2]
     punkte = [{k: p.get(k) for k in ("titel", "satz", "url", "rubrik")}
-              for p in json.loads(Path(sys.argv[3]).read_text(encoding="utf-8")) if p.get("titel")]
+              for p in json.loads(Path(sys.argv[3]).read_text(encoding="utf-8-sig")) if p.get("titel")]
     if not punkte:
         raise SystemExit("Keine Punkte in der Datei")
     jetzt = datetime.now().astimezone()
