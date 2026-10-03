@@ -161,7 +161,7 @@ dialog::backdrop{background:rgb(0 0 0 / .45)}
         </div>
         <label class="f">Datum<input name="datum" type="date" required></label>
         <input type="hidden" name="id">
-        <div class="row"><button type="submit" class="btn work" style="flex:1">Speichern</button><button type="button" class="btn" id="win-cancel" hidden>Abbrechen</button></div>
+        <div class="row"><button type="submit" class="btn work" style="flex:1">Speichern</button><button type="button" class="btn" id="win-cancel" hidden>Abbrechen</button><button type="button" class="btn danger" id="win-del" hidden>Löschen</button></div>
       </form>
       <div class="hint">Nur eigene Beiträge – keine Firmeninterna (Kundennamen, Preise, interne Dokumente).</div>
     </div>
@@ -358,7 +358,7 @@ dialog::backdrop{background:rgb(0 0 0 / .45)}
   // ---------- ERFOLGE ----------
   let WINS = [];
   const wf = $("#win-form");
-  function resetWin(){ wf.reset(); wf.datum.value = isoDay(new Date()); wf.id.value = ""; $("#win-cancel").hidden = true; }
+  function resetWin(){ wf.reset(); wf.datum.value = isoDay(new Date()); wf.id.value = ""; $("#win-cancel").hidden = true; $("#win-del").hidden = true; }
   async function loadWins(){
     try{ WINS = await sb("GET", "work_wins?select=*&order=datum.desc,created_at.desc"); renderWins(); }
     catch(e){ $("#win-list").innerHTML = `<div class="err">Erfolge konnten nicht geladen werden (${esc(e.message)}).</div>`; }
@@ -378,9 +378,14 @@ dialog::backdrop{background:rgb(0 0 0 / .45)}
   }
   function editWin(w){
     wf.titel.value = w.titel; wf.wirkung.value = w.wirkung || ""; wf.zahl.value = w.zahl || ""; wf.kategorie.value = w.kategorie || "Sonstiges";
-    wf.datum.value = w.datum; wf.id.value = w.id; $("#win-cancel").hidden = false; wf.scrollIntoView({behavior:"smooth"}); wf.titel.focus();
+    wf.datum.value = w.datum; wf.id.value = w.id; $("#win-cancel").hidden = false; $("#win-del").hidden = false; wf.scrollIntoView({behavior:"smooth"}); wf.titel.focus();
   }
   $("#win-cancel").onclick = resetWin;
+  $("#win-del").onclick = async () => {
+    if(!wf.id.value || !confirm(`Erfolg „${wf.titel.value}“ wirklich löschen?`)) return;
+    try{ await sb("DELETE", `work_wins?id=eq.${wf.id.value}`, undefined, "return=minimal"); toast("Erfolg gelöscht"); resetWin(); await loadWins(); }
+    catch(err){ toast("Fehler: " + err.message); }
+  };
   wf.onsubmit = async e => {
     e.preventDefault();
     const row = {titel:wf.titel.value.trim(), wirkung:wf.wirkung.value.trim() || null, zahl:wf.zahl.value.trim() || null, kategorie:wf.kategorie.value, datum:wf.datum.value};

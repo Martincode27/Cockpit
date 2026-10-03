@@ -243,6 +243,26 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .rec-cats{display:flex;gap:6px;flex-wrap:wrap}
 .rec-cats span{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line-2)}
 @media (max-width:640px){ .rec-pick{grid-template-columns:110px minmax(0,1fr)} .rec-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.todo-add{display:grid;grid-template-columns:minmax(0,1fr) 140px auto;gap:8px}
+.todo-add input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);min-width:0}
+.todo-quick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.todo-quick button{font:inherit;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer}
+.todo-quick button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
+.todo-grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:650;margin:12px 0 2px}
+.todo-grp.late{color:var(--bad)}
+.todo-ul{list-style:none;margin:0;padding:0;display:grid}
+.todo-ul li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-2)}
+.todo-ul li:last-child{border-bottom:0}
+.todo-ul input[type=checkbox]{width:17px;height:17px;accent-color:var(--good);cursor:pointer;margin:0}
+.todo-ul .tt{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+.todo-ul .td{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.todo-ul .td.late{color:var(--bad);font-weight:600}
+.todo-ul .x{background:none;border:0;color:var(--ink-3);cursor:pointer;font-size:14px;padding:2px 4px;opacity:.55}
+.todo-ul .x:hover{opacity:1;color:var(--bad)}
+.todo-ul.done .tt{text-decoration:line-through;color:var(--ink-3)}
+details.todo-done{margin-top:10px}
+details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);font-weight:600}
+@media (max-width:640px){ .todo-add{grid-template-columns:minmax(0,1fr) auto} .todo-add #todo-faellig{grid-column:1/-1;grid-row:2} }
 .proj-list{list-style:none;margin:0;padding:0;display:grid}
 .proj-list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
 .proj-list li:last-child{border-bottom:0}
@@ -418,7 +438,21 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       <div class="sec-h"><h2 id="h-news">Aktuelles <span class="tag" id="news-stand"></span></h2><a class="link" href="https://www.tagesschau.de" target="_blank" rel="noopener">tagesschau.de ↗</a></div>
       <div class="sec-b"><ul class="news-list" id="news-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
-    <section class="sec w12" data-card="mail" data-view="start" aria-labelledby="h-mail">
+    <section class="sec w6" data-card="todo" data-view="start" aria-labelledby="h-todo">
+      <div class="sec-h"><h2 id="h-todo">To-dos <span class="tag" id="todo-stand"></span></h2></div>
+      <div class="sec-b">
+        <form class="todo-add" id="todo-form" autocomplete="off">
+          <input id="todo-titel" placeholder="Neues To-do …" maxlength="200" aria-label="Neues To-do">
+          <input id="todo-faellig" type="date" aria-label="Fällig am (optional)" title="Fällig am (optional)">
+          <button type="submit" class="link sm">+</button>
+        </form>
+        <div class="todo-quick" id="todo-quick">
+          <button type="button" data-d="0">heute</button><button type="button" data-d="1">morgen</button><button type="button" data-d="7">nächste Woche</button><button type="button" data-d="">ohne Datum</button>
+        </div>
+        <div id="todo-list"><div class="muted">Wird geladen …</div></div>
+      </div>
+    </section>
+    <section class="sec w6" data-card="mail" data-view="start" aria-labelledby="h-mail">
       <div class="sec-h"><h2 id="h-mail">E-Mail · Wichtig <span class="tag" id="mail-stand"></span></h2><a class="link" href="https://mail.google.com/mail/u/0/#label/Cockpit%2FWichtig" target="_blank" rel="noopener">Gmail ↗</a></div>
       <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
     </section>
@@ -916,7 +950,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   // ---------- Automatisch aktualisieren: alles alle 5 Min., Bots jede Minute (Melde-Skript läuft minütlich) ----------
   const REFRESH_MIN = 5, BOTS_REFRESH_MIN = 1;
   let lastRefresh = 0, lastBots = 0;
-  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); loadProjects(); lastRefresh = lastBots = Date.now(); tick(); }
+  function renderAll(){ loadOwn(); loadBots(); loadYouTube(); loadRecipes(); loadMail(); loadNews(); loadProjects(); loadTodos(); lastRefresh = lastBots = Date.now(); tick(); }
   function tick(){
     const m = Math.round((Date.now() - lastRefresh) / 6e4);
     document.getElementById("st-upd").textContent = lastRefresh ? (m < 1 ? "gerade aktualisiert" : `aktualisiert vor ${m} Min.`) : "";
@@ -936,7 +970,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   const lsGet = (k, d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } };
   const lsSet = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
   function cardOrder(){
-    const saved = lsGet("cockpit_order_v3", []).filter(id => DEFAULT_ORDER.includes(id));
+    const saved = lsGet("cockpit_order_v4", []).filter(id => DEFAULT_ORDER.includes(id));
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
   const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
@@ -967,7 +1001,7 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     });
     const move = dir => { const o = cardOrder(), same = sameView(o, id), k = same.indexOf(id) + dir; if(k < 0 || k >= same.length) return;
       const i = o.indexOf(id), j = o.indexOf(same[k]);
-      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order_v3", o); applyOrder(); redrawCharts(); };
+      [o[i], o[j]] = [o[j], o[i]]; lsSet("cockpit_order_v4", o); applyOrder(); redrawCharts(); };
     c.querySelector(".move.up").addEventListener("click", () => move(-1));
     c.querySelector(".move.down").addEventListener("click", () => move(1));
   });
@@ -1064,6 +1098,15 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
     return res.json();
   }
 
+  async function sbSend(method, path, body){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {method,
+      headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token, "Content-Type":"application/json", Prefer:"return=minimal"},
+      body: body === undefined ? undefined : JSON.stringify(body)});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+  }
   async function sbPatch(path, body){
     const s = await validSession();
     if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
@@ -1107,6 +1150,74 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
       list.innerHTML = `<div class="err">Rezepte konnten nicht geladen werden (${esc(e.message)}).</div>`;
     }
   }
+
+  // ---------- To-dos (Tabelle todos, SQL 014) ----------
+  let TODOS = [];
+  const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoLocal(d); };
+  function todoDate(f){
+    if(!f) return "";
+    const today = isoLocal(new Date());
+    if(f === today) return "heute";
+    if(f === plusDays(1)) return "morgen";
+    if(f === plusDays(-1)) return "gestern";
+    return new Date(f + "T12:00:00").toLocaleDateString("de-DE", {weekday:"short", day:"2-digit", month:"2-digit"});
+  }
+  function todoLi(t, done){
+    const late = !done && t.faellig && t.faellig < isoLocal(new Date());
+    return `<li><input type="checkbox" data-id="${esc(t.id)}" ${done ? "checked" : ""} aria-label="${done ? "Wieder öffnen" : "Erledigt"}: ${esc(t.titel)}">
+      <span class="tt" title="${esc(t.notiz || "")}">${esc(t.titel)}</span>
+      <span class="td ${late ? "late" : ""}">${done ? (t.erledigt_am ? "erledigt " + todoDate(isoLocal(new Date(t.erledigt_am))) : "") : todoDate(t.faellig)}</span>
+      <button type="button" class="x" data-del="${esc(t.id)}" title="Löschen" aria-label="Löschen: ${esc(t.titel)}">✕</button></li>`;
+  }
+  function renderTodos(){
+    const today = isoLocal(new Date()), week = plusDays(7);
+    const open = TODOS.filter(t => !t.erledigt).sort((a,b) => (a.faellig || "9999") < (b.faellig || "9999") ? -1 : (a.faellig || "9999") > (b.faellig || "9999") ? 1 : a.created_at < b.created_at ? -1 : 1);
+    const done = TODOS.filter(t => t.erledigt).sort((a,b) => (b.erledigt_am || "") < (a.erledigt_am || "") ? -1 : 1).slice(0, 15);
+    const groups = [
+      ["Überfällig", open.filter(t => t.faellig && t.faellig < today), "late"],
+      ["Heute", open.filter(t => t.faellig === today), ""],
+      ["Nächste 7 Tage", open.filter(t => t.faellig && t.faellig > today && t.faellig <= week), ""],
+      ["Später", open.filter(t => t.faellig && t.faellig > week), ""],
+      ["Ohne Datum", open.filter(t => !t.faellig), ""],
+    ].filter(g => g[1].length);
+    document.getElementById("todo-stand").textContent = open.length ? `${open.length} offen` : "";
+    document.getElementById("todo-list").innerHTML =
+      (groups.length ? groups.map(([n, l, c]) => `<div class="todo-grp ${c}">${n}</div><ul class="todo-ul">${l.map(t => todoLi(t, false)).join("")}</ul>`).join("")
+                     : `<div class="muted" style="margin-top:8px">Alles erledigt. 🎉</div>`) +
+      (done.length ? `<details class="todo-done"><summary>Erledigt (${TODOS.filter(t => t.erledigt).length})</summary><ul class="todo-ul done">${done.map(t => todoLi(t, true)).join("")}</ul></details>` : "");
+    document.querySelectorAll("#todo-list input[type=checkbox]").forEach(cb => cb.addEventListener("change", async () => {
+      const t = TODOS.find(x => x.id === cb.dataset.id); if(!t) return;
+      const on = cb.checked; cb.disabled = true;
+      try{ await sbSend("PATCH", `todos?id=eq.${encodeURIComponent(t.id)}`, {erledigt: on, erledigt_am: on ? new Date().toISOString() : null});
+           t.erledigt = on; t.erledigt_am = on ? new Date().toISOString() : null; renderTodos(); }
+      catch(e){ cb.checked = !on; cb.disabled = false; alert("Konnte nicht speichern: " + e.message); }
+    }));
+    document.querySelectorAll("#todo-list [data-del]").forEach(b => b.addEventListener("click", async () => {
+      const t = TODOS.find(x => x.id === b.dataset.del); if(!t || !confirm(`„${t.titel}“ löschen?`)) return;
+      try{ await sbSend("DELETE", `todos?id=eq.${encodeURIComponent(t.id)}`); TODOS = TODOS.filter(x => x !== t); renderTodos(); }
+      catch(e){ alert("Konnte nicht löschen: " + e.message); }
+    }));
+  }
+  async function loadTodos(){
+    try{ TODOS = await sb("todos?select=*&order=created_at.desc&limit=300"); renderTodos(); }
+    catch(e){ document.getElementById("todo-list").innerHTML = `<div class="err">To-dos konnten nicht geladen werden (${esc(e.message)}).</div>`; }
+  }
+  document.querySelectorAll("#todo-quick button").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("todo-faellig").value = b.dataset.d === "" ? "" : plusDays(+b.dataset.d);
+    document.querySelectorAll("#todo-quick button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    document.getElementById("todo-titel").focus();
+  }));
+  document.getElementById("todo-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const ti = document.getElementById("todo-titel"), fa = document.getElementById("todo-faellig");
+    const titel = ti.value.trim(); if(!titel) return;
+    try{
+      await sbSend("POST", "todos", [{titel, faellig: fa.value || null}]);
+      ti.value = ""; fa.value = ""; document.querySelectorAll("#todo-quick button").forEach(x => x.setAttribute("aria-pressed", "false"));
+      await loadTodos(); ti.focus();
+    }catch(err){ alert("Konnte nicht speichern: " + err.message); }
+  });
 
   // ---------- Projekte (aus dem Vault, tools/projects_to_cockpit.py, stündlich) ----------
   async function loadProjects(){
