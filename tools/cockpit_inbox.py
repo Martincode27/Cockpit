@@ -27,6 +27,7 @@ TMP = HERE / "tmp"
 STATUS = TMP / "eingang_status.json"
 LOG = TMP / "eingang_log.txt"
 PY = sys.executable.replace("pythonw.exe", "python.exe")
+SCRATCH = Path.home() / "AppData" / "Local" / "Temp" / "claude"  # Scratchpads der Claude-Sitzungen
 
 
 def log(msg: str) -> None:
@@ -60,21 +61,30 @@ def main() -> None:
                 log(f"feed -> {r.returncode}: {(r.stderr or '')[-300:]}")
         except Exception:
             log("feed FEHLER " + traceback.format_exc()[-400:])
-    # 2) Ergebnisse übertragen, wenn neu
+    # 2) Ergebnisse übertragen, wenn neu. Die geplanten Aufgaben dürfen ohne Rückfrage nur in ihren eigenen
+    #    Scratchpad-Ordner schreiben (…\Temp\claude\<Ordner>\<Sitzung>\scratchpad\cockpit\<datei>) — wir nehmen
+    #    die neueste Datei aus allen Scratchpads bzw. aus tools/tmp (z. B. bei Läufen von Hand).
     for name, args in (("mail_ergebnis.json", ["mail_to_cockpit.py", "melden"]),
                        ("news.json", ["news_to_cockpit.py", "push"])):
-        f = TMP / name
-        if not f.exists():
+        cands = [TMP / name] + list(SCRATCH.glob(f"*/*/scratchpad/cockpit/{name}"))
+        cands = [c for c in cands if c.exists()]
+        if not cands:
             continue
+        f = max(cands, key=lambda c: c.stat().st_mtime)
         m = f.stat().st_mtime
-        if status.get(name) == m:
+        if m <= status.get(name, 0):
             continue
         try:
             if name == "news.json":
                 # Morgen/Abend nach dem Zeitpunkt, an dem die Aufgabe die Datei geschrieben hat
                 args = ["news_to_cockpit.py", "push", "morgen" if datetime.fromtimestamp(m).hour < 12 else "abend", str(f)]
+            else:
+                if f != TMP / name:  # mail_to_cockpit.py melden liest immer tools/tmp/mail_ergebnis.json
+                    (TMP / name).write_text(f.read_text(encoding="utf-8-sig"), encoding="utf-8")
             run(args)
-            status[name] = m
+            # auch die Kopie in tools/tmp gilt als erledigt (sonst würde sie beim nächsten Lauf erneut gesendet)
+            status[name] = max(m, (TMP / name).stat().st_mtime if (TMP / name).exists() else 0)
+            log(f"{name} übernommen aus {f}")
         except Exception:
             log(f"{name} FEHLER " + traceback.format_exc()[-400:])
     STATUS.write_text(json.dumps(status), encoding="utf-8")
