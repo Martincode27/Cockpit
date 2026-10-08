@@ -10,6 +10,7 @@ alle 5 Minuten, pythonw ohne Fenster) erledigt den Rest:
                                              (erneuert, wenn älter als 20 Minuten)
 
 Verarbeitete Dateien werden über ihren Änderungszeitpunkt in tmp/eingang_status.json gemerkt (nichts gelöscht).
+  - Sport: sport_to_cockpit.py (Formstark lesen -> sport_tage) alle 15 Minuten
 Fehler landen in tmp/eingang_log.txt. Nur Python-Standardbibliothek.
 """
 from __future__ import annotations
@@ -87,6 +88,13 @@ def main() -> None:
             log(f"{name} übernommen aus {f}")
         except Exception:
             log(f"{name} FEHLER " + traceback.format_exc()[-400:])
+    # 3) Sport aus Formstark (nur lesend) alle 15 Minuten ins Cockpit
+    if time.time() - status.get("sport_lauf", 0) > 15 * 60:
+        try:
+            run(["sport_to_cockpit.py"])
+        except Exception:
+            log("sport FEHLER " + traceback.format_exc()[-400:])
+        status["sport_lauf"] = time.time()
     STATUS.write_text(json.dumps(status), encoding="utf-8")
 
 
