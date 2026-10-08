@@ -9,6 +9,9 @@ Liest tools/tmp/assistent.json, eine Liste von Aktionen:
                          "beginn": "HH:MM", "ende": "HH:MM", "pause_min": 45, "notiz": "..."}
   {"aktion": "todo",     "titel": "...", "faellig": "YYYY-MM-DD" (optional), "notiz": "..."}
   {"aktion": "todo_erledigt", "titel": "..."}   (Teil des Titels genügt; muss genau ein offenes To-do treffen)
+  {"aktion": "sport",    "datum": "YYYY-MM-DD", "name": "...", "minuten": 60,
+                         "uebungen": [{"e": "pullpro", "s": 10, "r": 10}]}   -> Formstark (Martins Profil), IDs: formstark_uebungen.json
+  {"aktion": "sport_lesen", "anzahl": 5}
   {"aktion": "lesen",    "was": "erfolge|vorhaben|tage|todos", "anzahl": 10}
 Zeiten bei "tag" sind Ortszeit des PCs (Europe/Berlin). Bestehende Tage werden ergänzt (nur übergebene Felder).
 Nichts wird gelöscht. Rechte: SQL 013 (Bot darf lesen/anlegen/ändern, nicht löschen).
@@ -78,6 +81,14 @@ def main() -> None:
                 continue
             req("PATCH", f"/rest/v1/todos?id=eq.{hits[0]['id']}", {"erledigt": True, "erledigt_am": datetime.now().astimezone().isoformat()}, token, "return=minimal")
             print(f"To-do erledigt: {hits[0]['titel']}")
+        elif art == "sport":
+            import formstark
+            print(formstark.eintragen(a.get("datum") or date.today().isoformat(), a.get("uebungen") or [],
+                                      a.get("name") or "", a.get("minuten"), a.get("notiz") or ""))
+        elif art == "sport_lesen":
+            import formstark
+            for z in formstark.letzte(int(a.get("anzahl", 5))):
+                print(z)
         elif art == "lesen":
             tab, order = {"erfolge": ("work_wins", "datum.desc"), "vorhaben": ("work_plans", "updated_at.desc"),
                           "tage": ("work_days", "tag.desc"), "todos": ("todos", "created_at.desc")}[a.get("was", "erfolge")]

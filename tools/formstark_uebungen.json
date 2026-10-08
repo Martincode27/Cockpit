@@ -1,0 +1,231 @@
+{
+"deadhang": {
+"n": "Dead Hang",
+"g": "Stange"
+},
+"scap": {
+"n": "Scapular Pull-ups",
+"g": "Stange"
+},
+"hold": {
+"n": "Oben halten",
+"g": "Stange"
+},
+"neg": {
+"n": "Negative Klimmzüge",
+"g": "Stange"
+},
+"pullup": {
+"n": "Klimmzug-Versuch",
+"g": "Stange"
+},
+"knee": {
+"n": "Knieheben",
+"g": "Bauch"
+},
+"plank": {
+"n": "Plank",
+"g": "Bauch"
+},
+"hipthrust": {
+"n": "Hip Thrust / Glute Bridge",
+"g": "Po"
+},
+"squat": {
+"n": "Kniebeugen",
+"g": "Po"
+},
+"slbridge": {
+"n": "Einbeinige Glute Bridge",
+"g": "Po"
+},
+"sideleg": {
+"n": "Seitliches Beinheben",
+"g": "Po"
+},
+"bss": {
+"n": "Bulgarian Split Squat",
+"g": "Po"
+},
+"donkey": {
+"n": "Donkey Kicks",
+"g": "Po"
+},
+"frog": {
+"n": "Frog Pumps",
+"g": "Po"
+},
+"bandpull": {
+"n": "Klimmzug mit Band",
+"g": "Stange"
+},
+"row": {
+"n": "Rudern unter dem Tisch",
+"g": "Stange"
+},
+"superman": {
+"n": "Superman",
+"g": "Haltung"
+},
+"birddog": {
+"n": "Bird Dog",
+"g": "Haltung"
+},
+"deadbug": {
+"n": "Dead Bug",
+"g": "Bauch"
+},
+"hollow": {
+"n": "Hollow Hold",
+"g": "Bauch",
+"u": "s"
+},
+"rdl": {
+"n": "Kreuzheben mit Rucksack",
+"g": "Po"
+},
+"lunge": {
+"n": "Rückwärtiger Ausfallschritt",
+"g": "Po"
+},
+"stepup": {
+"n": "Step-ups",
+"g": "Po"
+},
+"clamshell": {
+"n": "Muschel (Clamshell)",
+"g": "Po"
+},
+"wallsit": {
+"n": "Wandsitzen",
+"g": "Po",
+"u": "s"
+},
+"kickback": {
+"n": "Kickbacks im Stehen",
+"g": "Po"
+},
+"marchbridge": {
+"n": "Marching Bridge",
+"g": "Po"
+},
+"kneepush": {
+"n": "Liegestütz auf Knien",
+"g": "Oberkörper"
+},
+"scappush": {
+"n": "Schulterblatt-Liegestütz",
+"g": "Oberkörper"
+},
+"yraise": {
+"n": "Y-Raises liegend",
+"g": "Haltung"
+},
+"legraise": {
+"n": "Beinheben an der Stange",
+"g": "Stange"
+},
+"pullpro": {
+"n": "Klimmzüge",
+"g": "Calisthenics",
+"pro": 1
+},
+"wpull": {
+"n": "Klimmzüge mit Zusatzgewicht",
+"g": "Calisthenics",
+"pro": 1
+},
+"chinup": {
+"n": "Chin-ups (Untergriff)",
+"g": "Calisthenics",
+"pro": 1
+},
+"pullfast": {
+"n": "Explosive Klimmzüge",
+"g": "Calisthenics",
+"pro": 1
+},
+"muscleup": {
+"n": "Muscle-up",
+"g": "Calisthenics",
+"pro": 1
+},
+"toes": {
+"n": "Toes to Bar",
+"g": "Calisthenics",
+"pro": 1
+},
+"tucklever": {
+"n": "Tuck Front Lever",
+"g": "Calisthenics",
+"pro": 1,
+"u": "s"
+},
+"dips": {
+"n": "Dips",
+"g": "Calisthenics",
+"pro": 1
+},
+"pushup": {
+"n": "Liegestütze",
+"g": "Calisthenics",
+"pro": 1
+},
+"diamond": {
+"n": "Diamond-Liegestütze",
+"g": "Calisthenics",
+"pro": 1
+},
+"archer": {
+"n": "Archer-Liegestütze",
+"g": "Calisthenics",
+"pro": 1
+},
+"clap": {
+"n": "Klatsch-Liegestütze",
+"g": "Calisthenics",
+"pro": 1
+},
+"pike": {
+"n": "Pike Push-ups",
+"g": "Calisthenics",
+"pro": 1
+},
+"wallhs": {
+"n": "Handstand an der Wand",
+"g": "Calisthenics",
+"pro": 1,
+"u": "s"
+},
+"pistol": {
+"n": "Pistol Squats",
+"g": "Calisthenics",
+"pro": 1
+},
+"jumpsquat": {
+"n": "Sprungkniebeugen",
+"g": "Calisthenics",
+"pro": 1
+},
+"nordic": {
+"n": "Nordic Curls",
+"g": "Calisthenics",
+"pro": 1
+},
+"lsit": {
+"n": "L-Sit",
+"g": "Calisthenics",
+"pro": 1,
+"u": "s"
+},
+"dragonflag": {
+"n": "Dragon Flag",
+"g": "Calisthenics",
+"pro": 1
+},
+"burpee": {
+"n": "Burpees",
+"g": "Calisthenics",
+"pro": 1
+}
+}
