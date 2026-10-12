@@ -216,6 +216,19 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .meter .bar i{display:block;height:100%;border-radius:999px;background:var(--good);min-width:2px}
 .meter.warn .bar i{background:var(--warn)} .meter.bad .bar i{background:var(--bad)}
 .meter .hint{font-size:11.5px;color:var(--ink-3)}
+/* Trading-Erweiterung: Ertrag je Bein, Demo-Gates, Betrieb */
+.legrow{display:grid;grid-template-columns:minmax(90px,1.5fr) 3fr minmax(70px,auto);gap:10px;align-items:center;padding:4px 0;font-size:12.5px}
+.legrow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.legrow .trk{position:relative;height:12px;background:var(--line-2);border-radius:5px}
+.legrow .trk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.legrow .trk i{position:absolute;top:2px;bottom:2px;border-radius:4px}
+.legrow .v{text-align:right;white-space:nowrap}
+.gate{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.gate:last-child{border-bottom:0}
+.gate .ok{color:var(--good);font-weight:700}.gate .no{color:var(--ink-3)}
+.gate .hint{grid-column:2/4;font-size:11.5px;color:var(--ink-3);margin-top:-2px}
+.hlth{display:grid;gap:4px;font-size:12.5px}
+
 
 /* Pipeline-Status (10) */
 .pipe{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:14px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line-2);font-size:13px}
@@ -434,6 +447,26 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     </div>
   </section>
 
+    <section class="sec w12" data-card="pos" data-view="trading" aria-labelledby="h-pos">
+      <div class="sec-h"><h2 id="h-pos">Offene Positionen <span class="tag" id="pos-tag"></span></h2></div>
+      <div class="tbl-wrap">
+        <table id="pos-table">
+          <thead><tr><th>Bot</th><th>Symbol</th><th>Richtung</th><th>Lots</th><th>Einstieg</th><th>Aktuell</th><th>Stop</th><th>Ziel</th><th>G/V</th><th>Bein</th></tr></thead>
+          <tbody id="pos-body"><tr><td colspan="10" class="muted">Wird geladen …</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec w6" data-card="legs" data-view="trading" aria-labelledby="h-legs">
+      <div class="sec-h"><h2 id="h-legs">Ertrag je Bein <span class="tag" id="legs-tag">gewählter Bot · geschlossene Trades, netto</span></h2></div>
+      <div class="sec-b" id="legs-body"><div class="muted">Wird geladen …</div></div>
+    </section>
+
+    <section class="sec w6" data-card="gates" data-view="trading" aria-labelledby="h-gates">
+      <div class="sec-h"><h2 id="h-gates">Demo-Test <span class="tag" id="gates-tag"></span></h2></div>
+      <div class="sec-b" id="gates-body"><div class="muted">Wird geladen …</div></div>
+    </section>
+
     <section class="sec w8" data-card="own" data-view="trading" aria-labelledby="h-own">
       <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
@@ -527,7 +560,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 
   // ---------- Trading-Bots (echte Daten aus bot_status / bot_trades / bot_equity) ----------
   // Die Kennzahlen rechnet das Melde-Skript (D:\TradingBot\report_cockpit.py), hier wird nur angezeigt.
-  let BOTS = [], TRADES = [], EQUITY = [];
+  let BOTS = [], TRADES = [], EQUITY = [], POSITIONS = [], LEGS = [], HEALTH = [];
   const COLORS = ["--s1","--s2","--s3","--s4"];
   const STALE_HOURS = 1; // Bots melden minütlich, YouTube alle 15 Min. -> ab 1 Std. ohne Meldung warnen
   const CUR = {USD:"$", EUR:"€", GBP:"£", CHF:"CHF"};
@@ -546,11 +579,16 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 
   async function loadBots(){
     try{
-      const [st, tr, eq] = await Promise.all([
+      const opt = path => sb(path).catch(() => []);   // Erweiterung: fehlt eine Tabelle, laeuft der Rest weiter
+      const [st, tr, eq, pos, legs, hl] = await Promise.all([
         sb("bot_status?select=*&order=bot_id"),
         sb("bot_trades?select=bot_id,symbol,richtung,geschlossen,gv,risiko&order=geschlossen.desc&limit=500"),
         sb("bot_equity?select=bot_id,tag,kontostand&order=tag"),
+        opt("bot_positions?select=*&order=bot_id,seit.desc"),
+        opt("bot_legs?select=*&order=bot_id,netto.desc"),
+        opt("bot_health?select=*"),
       ]);
+      POSITIONS = pos; LEGS = legs; HEALTH = hl;
       BOTS = st.map((b,i) => ({...b, color: COLORS[i % COLORS.length]}));
       TRADES = tr; EQUITY = eq;
       if(!BOTS.some(b => b.bot_id === selected)) selected = BOTS.length ? BOTS[0].bot_id : null;
@@ -562,7 +600,80 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     }
   }
 
-  function renderBots(){ renderTable(); renderDetail(); renderChart(); renderBotSummary(); }
+
+  // ---------- Trading-Erweiterung: Betrieb, offene Positionen, Ertrag je Bein, Demo-Gates ----------
+  const healthOf = id => HEALTH.find(h => h.bot_id === id);
+  function betriebHTML(b){
+    const h = healthOf(b.bot_id); if(!h) return "";
+    const hb = h.herzschlag ? hoursSince(h.herzschlag) * 60 : null;      // Minuten
+    const okProc = h.prozesse === 2, okBeat = hb != null && hb < 25;
+    const w = h.waechter || {};
+    return `<div class="hlth"><div class="lbl">Betrieb</div>
+      <div class="kv"><span>Prozesse</span><span class="num ${okProc ? "pos" : "neg"}">${h.prozesse ?? "–"} / 2</span></div>
+      <div class="kv"><span>Aktive Beine</span><span class="num">${h.beine ?? "–"}</span></div>
+      <div class="kv"><span>Herzschlag</span><span class="num ${okBeat ? "pos" : "neg"}">${hb == null ? "–" : (hb < 60 ? "vor " + Math.round(hb) + " Min." : ago(h.herzschlag))}</span></div>
+      <div class="kv"><span>Fehler seit Start</span><span class="num">${h.fehler ?? "–"}</span></div>
+      <div class="kv"><span>Wächter (Spread / Margin)</span><span class="num">${w.spread ?? 0} / ${w.margin ?? 0}</span></div>
+      <div class="kv"><span>Margin-Level</span><span class="num">${h.margin_level == null ? "–" : Math.round(h.margin_level).toLocaleString("de-DE") + " %"}</span></div></div>`;
+  }
+
+  function renderPositions(){
+    const body = document.getElementById("pos-body");
+    const fresh = POSITIONS.filter(p => hoursSince(p.aktualisiert) < 0.25);   // nur Zeilen der letzten 15 Min.
+    document.getElementById("pos-tag").textContent = fresh.length ? `${fresh.length} offen` : "";
+    if(!fresh.length){ body.innerHTML = `<tr><td colspan="10" class="muted">Keine offenen Positionen (oder letzte Meldung älter als 15 Min.).</td></tr>`; return; }
+    const name = id => (BOTS.find(b => b.bot_id === id) || {}).name || id;
+    const cur = id => (BOTS.find(b => b.bot_id === id) || {}).waehrung;
+    const px = v => v == null ? "–" : (+v).toLocaleString("de-DE", {maximumFractionDigits: 5});
+    body.innerHTML = fresh.sort((a, b) => b.gv - a.gv).map(p => `<tr>
+      <td data-label="Bot">${esc(name(p.bot_id))}</td><td data-label="Symbol"><b>${esc(p.symbol)}</b></td>
+      <td data-label="Richtung" class="${p.richtung === "long" ? "pos" : "neg"}">${p.richtung === "long" ? "▲ long" : "▼ short"}</td>
+      <td class="num" data-label="Lots">${dec(p.volumen)}</td><td class="num" data-label="Einstieg">${px(p.einstieg)}</td><td class="num" data-label="Aktuell">${px(p.aktuell)}</td>
+      <td class="num" data-label="Stop">${px(p.sl)}</td><td class="num" data-label="Ziel">${px(p.tp)}</td>
+      <td class="num ${cls(p.gv)}" data-label="G/V"><b>${money(p.gv, cur(p.bot_id), true)}</b></td>
+      <td data-label="Bein" class="bot-meta">${esc(p.bein || "")}</td></tr>`).join("");
+  }
+
+  function renderLegs(){
+    const el = document.getElementById("legs-body");
+    const b = BOTS.find(x => x.bot_id === selected);
+    const rows = LEGS.filter(l => l.bot_id === selected).sort((a, c) => c.netto - a.netto);
+    document.getElementById("legs-tag").textContent = b ? `${b.name} · geschlossene Trades, netto` : "";
+    if(!rows.length){ el.innerHTML = `<div class="muted">Noch keine geschlossenen Trades je Bein.</div>`; return; }
+    const mx = Math.max(1, ...rows.map(r => Math.abs(r.netto)));
+    el.innerHTML = rows.map(r => {
+      const w = Math.abs(r.netto) / mx * 50, left = r.netto >= 0 ? 50 : 50 - w;
+      return `<div class="legrow"><span class="nm" title="${esc(r.bein)}">${esc(r.bein)}</span>
+        <div class="trk"><i style="left:${left}%;width:${w}%;background:var(${r.netto >= 0 ? "--good" : "--bad"})"></i></div>
+        <span class="v num ${cls(r.netto)}">${money(r.netto, b && b.waehrung, true)} <span class="muted">(${r.trades})</span></span></div>`;
+    }).join("");
+  }
+
+  function renderGates(){
+    const el = document.getElementById("gates-body");
+    const h = healthOf(selected), b = BOTS.find(x => x.bot_id === selected);
+    if(!h || !h.gate){ el.innerHTML = `<div class="muted">Keine Gate-Daten (Melde-Skript neu starten).</div>`; return; }
+    const g = h.gate, k = g.kriterien || {};
+    const start = new Date(g.start), end = new Date(g.ende), nowD = new Date();
+    const total = (end - start) / 864e5, done = Math.min(total, Math.max(0, (nowD - start) / 864e5));
+    document.getElementById("gates-tag").textContent = `${esc(g.start.split("-").reverse().join("."))} – ${esc(g.ende.split("-").reverse().join("."))}`;
+    const row = (ok, text, val, hint) => `<div class="gate"><span class="${ok ? "ok" : "no"}">${ok ? "✓" : "○"}</span><span>${text}</span><span class="num">${val}</span>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+    const months = Object.entries(g.monate || {}).map(([m, v]) => `${m.slice(5)}/${m.slice(2,4)}: ${money(v, b && b.waehrung, true)}`).join(" · ") || "noch kein Monat";
+    const trPct = Math.min(100, g.trades / 100 * 100);
+    el.innerHTML = `
+      <div class="meter"><div class="row"><span>Zeitraum</span><span class="num">Tag ${Math.round(done)} von ${Math.round(total)}</span></div>
+        <div class="bar"><i style="width:${(done / total * 100).toFixed(1)}%"></i></div></div>
+      <div style="margin-top:8px">
+      ${row(k.netto_plus, "Nettoplus seit Start", money(g.netto, b && b.waehrung, true))}
+      ${row(k.jeder_monat_plus, "Jeder Monat im Plus", "", months)}
+      ${row(k.dd_unter_12, "Max. Drawdown unter 12 %", dec(g.max_dd_pct) + " %")}
+      ${row(k.trades_100, "Mindestens 100 Trades", g.trades + " / 100", `<div class="meter" style="margin-top:4px"><div class="bar"><i style="width:${trPct}%"></i></div></div>`)}
+      ${row(k.avg_r_005, "Ø Ergebnis ≥ +0,05 R je Trade", g.avg_r == null ? "–" : (g.avg_r > 0 ? "+" : "") + dec(g.avg_r, 3) + " R")}
+      </div>
+      <div class="hint" style="font-size:11.5px;color:var(--ink-3);margin-top:8px">Wenige Trades erlauben noch kein Urteil. Kriterien aus dem Plan „Weg zum Ziel“ (3 Monate Demo, Beine seit 07.10.).</div>`;
+  }
+
+  function renderBots(){ renderTable(); renderDetail(); renderChart(); renderBotSummary(); renderPositions(); renderLegs(); renderGates(); }
 
   function renderTable(){
     const body = document.getElementById("bots");
@@ -620,6 +731,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       <div class="kv"><span>Offene Positionen</span><span class="num">${b.offene_positionen ?? 0}</span></div>
       <div class="kv"><span>G/V offen</span><span class="num ${cls(gvOffen(b)||0)}">${gvOffen(b) == null ? "–" : money(gvOffen(b), b.waehrung, true)}</span></div>
       <div class="kv"><span>G/V 30 Tage</span><span class="num ${cls(b.gv_30t||0)}">${money(b.gv_30t, b.waehrung, true)}</span></div>
+      ${betriebHTML(b)}
       ${(() => { const L = propLimits(b); return L ? `<div style="display:grid;gap:10px"><div class="lbl">${esc(b.regel)} · Verlustgrenzen</div>
         ${meterHTML("Heute verbraucht", L.day, b.waehrung)}${meterHTML("Gesamt verbraucht", L.tot, b.waehrung)}
         <div class="hint" style="font-size:11.5px;color:var(--ink-3)">Heute = ab Mitternacht (Prag), inkl. offener Positionen. Minütliche Momentaufnahme, kein Echtzeit-Schutz.</div></div>` : ""; })()}
