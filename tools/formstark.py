@@ -1,4 +1,7 @@
-"""Formstark (Sport-App der Freundin, formstark.netlify.app): Martins Workouts lesen und eintragen.
+"""Formstark (Sport-App der Freundin): Martins Workouts lesen und eintragen.
+
+Zwei Wege, Umschalter FORMSTARK_BACKEND in tools/.env: "supabase" (neue App b4hkmh9hfg-svg.github.io/Formstark,
+Login FORMSTARK_SB_EMAIL/_PASSWORT) oder sonst der alte Firestore-Weg (formstark.netlify.app, unten beschrieben).
 
 Formstark speichert jedes Profil als EIN Firestore-Dokument `data/users/<Team-Code>/state_<profil>` mit den
 Feldern `j` (ganzer App-Zustand als JSON-Text) und `upd` (Zeitstempel ms). Workouts liegen in
@@ -65,7 +68,143 @@ def http(method: str, url: str, body=None) -> dict:
         raise SystemExit(f"Firestore {method}: HTTP {e.code} {e.read().decode()[:300]}") from None
 
 
+# ---------- Neuer Weg: Formstark auf Supabase (seit 2026-10, github.io/Formstark) ----------
+# Ein Eintrag = eine Zeile (profile, workouts, eintraege, tageswerte; Umwandlung wie daten.js der App).
+# Login mit Martins eigenem Formstark-Zugang (FORMSTARK_SB_EMAIL/_PASSWORT in .env). Umschalter:
+# FORMSTARK_BACKEND=supabase (sonst alter Firestore-Weg). URL + publishable key sind öffentlich (stehen in der App).
+SB_URL = "https://uxiyjsbhtijrhptwlibs.supabase.co"
+SB_KEY = "sb_publishable_sF0G1BqSIXTjOnWAjtYvjg_pZXxBYkZ"
+LISTEN = ["prs", "recipes", "shop", "goals", "myw", "cex", "duels", "prog", "tests"]
+TAGLISTEN = ["acts", "food"]
+
+
+def backend() -> str:
+    return env().get("FORMSTARK_BACKEND", "firestore").strip().lower()
+
+
+def sb_http(method: str, path: str, body=None, token: str | None = None, prefer: str | None = None):
+    h = {"apikey": SB_KEY, "Content-Type": "application/json"}
+    if token:
+        h["Authorization"] = "Bearer " + token
+    if prefer:
+        h["Prefer"] = prefer
+    req = urllib.request.Request(SB_URL + path, method=method, headers=h,
+                                 data=json.dumps(body).encode() if body is not None else None)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            raw = r.read()
+            return json.loads(raw) if raw else None
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"Formstark-Supabase {method} {path.split('?')[0]}: HTTP {e.code} {e.read().decode()[:300]}") from None
+
+
+def sb_login() -> tuple[str, str]:
+    e = env()
+    mail, pw = e.get("FORMSTARK_SB_EMAIL", ""), e.get("FORMSTARK_SB_PASSWORT", "")
+    if not mail or not pw:
+        raise SystemExit("FORMSTARK_SB_EMAIL / FORMSTARK_SB_PASSWORT fehlen in tools/.env")
+    d = sb_http("POST", "/auth/v1/token?grant_type=password", {"email": mail, "password": pw})
+    return d["access_token"], d["user"]["id"]
+
+
+def sb_zeilen(token: str, uid: str) -> dict:
+    out = {}
+    for t in ("profile", "workouts", "eintraege", "tageswerte"):
+        rows, off = [], 0
+        while True:
+            part = sb_http("GET", f"/rest/v1/{t}?select=*&user_id=eq.{uid}&limit=1000&offset={off}", None, token) or []
+            rows += part
+            if len(part) < 1000:
+                break
+            off += 1000
+        out[t] = rows
+    out["profile"] = out["profile"][0] if out["profile"] else None
+    return out
+
+
+def _unpack(d, rid):
+    if isinstance(d, dict) and "_v" in d:
+        return d["_v"]
+    x = dict(d or {})
+    ohne = x.pop("_ni", None)
+    x.pop("_o", None)
+    if not ohne and x.get("id") in (None, ""):
+        x["id"] = rid
+    return x
+
+
+def _ordnung(d) -> float:
+    o = d.get("_o") if isinstance(d, dict) else None
+    return o if isinstance(o, (int, float)) and not isinstance(o, bool) else 1e9
+
+
+def zeilen_zu_s(rows: dict) -> dict:
+    """Python-Gegenstück zu zeilenZuS() aus daten.js der App: Zeilen -> App-Zustand S."""
+    S: dict = {}
+    p = rows.get("profile")
+    if p and isinstance(p.get("einstellungen"), dict):
+        S.update(p["einstellungen"])
+    S["log"], S["photos"] = {}, {}
+    tmp: dict = {}
+    for r in rows.get("eintraege") or []:
+        if r.get("geloescht") or not r.get("daten"):
+            continue
+        if r["art"] == "photos":
+            S["photos"][r["id"]] = r["daten"].get("_v")
+            continue
+        item = (_ordnung(r["daten"]), _unpack(r["daten"], r["id"]))
+        if r["art"] in LISTEN:
+            tmp.setdefault(r["art"], []).append(item)
+        elif r["art"] in TAGLISTEN and r.get("tag"):
+            tmp.setdefault((r["tag"], r["art"]), []).append(item)
+    for art in LISTEN:
+        S[art] = [v for _, v in sorted(tmp.get(art, []), key=lambda x: x[0])]
+    for k, lst in tmp.items():
+        if isinstance(k, tuple):
+            S["log"].setdefault(k[0], {})[k[1]] = [v for _, v in sorted(lst, key=lambda x: x[0])]
+    wk: dict = {}
+    for r in rows.get("workouts") or []:
+        if r.get("geloescht"):
+            continue
+        ex = r.get("extra") if isinstance(r.get("extra"), dict) else {}
+        had = ex.get("had") if isinstance(ex.get("had"), list) else None
+        w = {} if ex.get("noId") else {"id": r["id"]}
+        for f, v in ex.items():
+            if f not in ("o", "had", "noId", "rawMin", "rawFeel", "rawN", "rawNote"):
+                w[f] = v
+        fremd = had is None
+
+        def setze(feld, wert, rawkey=None):
+            if had is not None and feld not in had:
+                return
+            w[feld] = ex[rawkey] if rawkey and rawkey in ex else wert
+        setze("n", (r.get("name") or "Workout") if fremd else r.get("name"), "rawN")
+        setze("min", r.get("minuten"), "rawMin")
+        setze("feel", (r.get("gefuehl") or 0) if fremd else r.get("gefuehl"), "rawFeel")
+        setze("note", (r.get("notiz") or "") if fremd else r.get("notiz"), "rawNote")
+        if fremd and "src" not in w:
+            w["src"] = ""
+        setze("items", r.get("uebungen") or [])
+        wk.setdefault(r["tag"], []).append((ex.get("o") or 0, w))
+    for t, lst in wk.items():
+        S["log"].setdefault(t, {})["wk"] = [v for _, v in sorted(lst, key=lambda x: x[0])]
+    for r in rows.get("tageswerte") or []:
+        d = r.get("daten")
+        if not d or d.get("_geloescht"):
+            continue
+        S["log"].setdefault(r["tag"], {})
+        if r["bereich"] != "_leer":
+            S["log"][r["tag"]][r["bereich"]] = d.get("v")
+    return S
+
+
 def lesen(profil: str = PROFIL) -> tuple[dict, dict]:
+    if backend() == "supabase":
+        if profil != PROFIL:
+            raise SystemExit("Supabase-Weg liest nur Martins eigenes Profil")
+        token, uid = sb_login()
+        rows = sb_zeilen(token, uid)
+        return zeilen_zu_s(rows), {"backend": "supabase", "uid": uid, "token": token, "rows": rows}
     cfg, code = zugang()
     d = http("GET", doc_url(cfg, code, profil))
     j = d.get("fields", {}).get("j", {}).get("stringValue")
@@ -97,6 +236,23 @@ def eintragen(datum: str, items: list[dict], name: str = "", minuten=None, notiz
         clean.append({"e": e, "s": s, "r": r, "u": UEBUNGEN[e].get("u", "r"), "kg": it.get("kg")})
     if not clean and not minuten:
         raise SystemExit("Keine Übungen und keine Dauer angegeben")
+    if backend() == "supabase":
+        st, raw = lesen()
+        if str((st.get("profile") or {}).get("name", "")).strip().lower() != "martin":
+            raise SystemExit("Sicherheitsstopp: Profil heißt nicht 'Martin' – nichts geschrieben")
+        bdir = HERE / "tmp" / "formstark_backup"
+        bdir.mkdir(parents=True, exist_ok=True)
+        (bdir / f"martin_sb_{time.strftime('%Y%m%d_%H%M%S')}.json").write_text(
+            json.dumps(raw["rows"], ensure_ascii=False), encoding="utf-8")
+        # Neue Zeile ohne "extra": die App behandelt sie als Eintrag von außen (daten.js, "fremd").
+        wid = "a" + "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(7))
+        sb_http("POST", "/rest/v1/workouts?on_conflict=user_id,id", [{
+            "id": wid, "tag": datum, "name": (name or "Workout").strip()[:50],
+            "minuten": round(float(minuten)) if minuten else None, "gefuehl": 0,
+            "notiz": (notiz or "").strip()[:140], "quelle": "assistent", "uebungen": clean, "geloescht": False}],
+            raw["token"], "resolution=merge-duplicates,return=minimal")
+        teile = ", ".join(f"{UEBUNGEN[i['e']]['n']} {i['s']}×{i['r']}{' s' if i['u'] == 's' else ''}" for i in clean)
+        return f"Formstark: Workout am {datum} eingetragen – {teile or str(minuten) + ' Min.'}"
     cfg, code = zugang()
     for versuch in range(3):
         st, raw = lesen()
