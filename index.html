@@ -294,7 +294,14 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 .sp-days li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13.5px}
 .sp-days li:last-child{border-bottom:0}
 .sp-days .d{color:var(--ink-3);font-size:12.5px}
-.sp-days .e div+div{margin-top:3px}
+.sp-days li.sp-kw{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0 6px;border-bottom:2px solid var(--line-2);font-weight:650;font-size:13.5px}
+.sp-days li.sp-kw .muted{font-weight:500;font-size:12.5px}
+.sp-b+.sp-b{margin-top:10px}
+.sp-t{font-weight:650}
+.sp-i{font-weight:500;color:var(--good);margin-left:4px}
+.sp-b ul{margin:3px 0 0;padding-left:16px;color:var(--ink-2);font-size:13px}
+.sp-b ul li{display:list-item;padding:1px 0;border:0}
+.sp-n{color:var(--ink-3);font-size:12.5px;font-style:italic;margin-top:3px}
 @media (max-width:640px){ .sp-wk{grid-template-columns:110px minmax(0,1fr) 46px} .sp-days li{grid-template-columns:minmax(0,1fr)} }
 .proj-list{list-style:none;margin:0;padding:0;display:grid}
 .proj-list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
@@ -510,7 +517,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       <div class="sec-b"><ul class="mail-list" id="mail-list"><li class="muted" style="display:block">Wird geladen …</li></ul></div>
     </section>
     <section class="sec w12" data-card="sport" data-view="sport" aria-labelledby="h-sport">
-      <div class="sec-h"><h2 id="h-sport">Sport <span class="tag" id="sport-stand"></span></h2><a class="link" href="https://formstark.netlify.app" target="_blank" rel="noopener">Formstark ↗</a></div>
+      <div class="sec-h"><h2 id="h-sport">Sport <span class="tag" id="sport-stand"></span></h2><a class="link" href="https://b4hkmh9hfg-svg.github.io/Formstark/" target="_blank" rel="noopener">Formstark ↗</a></div>
       <div class="sec-b">
         <div class="sp-week" id="sp-week"><div class="muted">Wird geladen …</div></div>
         <div class="lbl" style="margin:16px 0 6px">Wochen</div>
@@ -1368,6 +1375,9 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     try{
       const rows = await sb("sport_tage?select=tag,eintraege,aktualisiert&order=tag.desc&limit=200");
       const T = {}; rows.forEach(r => T[r.tag] = r.eintraege || []);
+      // Block {t, i, r, d, n} (seit 2026-10-18) oder alter Text
+      const blk = b => typeof b === "string" ? {t: b, i: "", r: 0, d: [], n: ""} : b;
+      const kurz = b => (b = blk(b), b.t + (b.i ? " · " + b.i : ""));
       const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
       const monday = d => { const x = new Date(d); x.setHours(12,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
       const kw = d => { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - n); const y = new Date(Date.UTC(x.getUTCFullYear(),0,1)); return Math.ceil(((x - y) / 864e5 + 1) / 7); };
@@ -1379,7 +1389,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       wkEl.innerHTML = `<div class="big num">${n0}<span class="muted" style="font-size:18px"> / ${SPORT_ZIEL}</span></div>
         <div><div class="lbl" style="margin-bottom:6px">Diese Woche (KW ${kw(m0)})${ok0 ? " · Ziel erreicht 🎉" : ` · noch ${SPORT_ZIEL - n0}×`}</div>
           <div class="sp-bar ${ok0 ? "ok" : ""}"><i style="width:${Math.min(100, n0 / SPORT_ZIEL * 100)}%"></i></div>
-          <div class="sp-dots">${weekDays(m0).map(d => `<span class="${T[iso(d)] ? "on" : ""} ${iso(d) === todayK ? "today" : ""}" title="${T[iso(d)] ? esc(T[iso(d)].join(" · ")) : ""}">${d.toLocaleDateString("de-DE",{weekday:"short"}).replace(".","")}</span>`).join("")}</div></div>`;
+          <div class="sp-dots">${weekDays(m0).map(d => `<span class="${T[iso(d)] ? "on" : ""} ${iso(d) === todayK ? "today" : ""}" title="${T[iso(d)] ? esc(T[iso(d)].map(kurz).join(" | ")) : ""}">${d.toLocaleDateString("de-DE",{weekday:"short"}).replace(".","")}</span>`).join("")}</div></div>`;
       // Wochen: aktuelle + 7 zurück, Serie erreichter Wochen (abgeschlossene)
       const first = rows.length ? monday(new Date(rows.reduce((a,r) => r.tag < a ? r.tag : a, rows[0].tag) + "T12:00:00")) : m0;  // erst ab dem ersten Eintrag zählen
       const weeks = Array.from({length:8}, (_, i) => { const m = new Date(m0); m.setDate(m.getDate() - 7*i); return m; }).filter(m => m >= first);
@@ -1391,9 +1401,24 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
           <div class="sp-bar ${ok ? "ok" : ""}"><i style="width:${Math.min(100, n / SPORT_ZIEL * 100)}%"></i></div>
           <span class="r num">${ok ? "✓" : i === 0 ? "" : "✗"} ${n}/${SPORT_ZIEL}</span></div>`;
       }).join("") + `<div class="muted" style="font-size:12.5px;margin-top:4px">${streak ? `${streak} ${streak === 1 ? "Woche" : "Wochen"} in Folge Ziel erreicht` : "Noch keine Serie – 4 Trainingstage in einer Woche starten sie."}</div>`;
-      const days = rows.slice(0, 21);
-      document.getElementById("sp-days").innerHTML = days.length ? days.map(r => `<li><span class="d">${new Date(r.tag + "T12:00:00").toLocaleDateString("de-DE",{weekday:"short", day:"2-digit", month:"2-digit"})}</span>
-          <span class="e">${(r.eintraege || []).map(t => `<div>${esc(t)}</div>`).join("")}</span></li>`).join("")
+      // Trainings nach Kalenderwochen (letzte 8 Wochen mit Einträgen), je Training Überbegriff + Details
+      const gruppen = [];
+      rows.forEach(r => {
+        const m = monday(new Date(r.tag + "T12:00:00")), k = iso(m);
+        let g = gruppen.find(x => x.k === k);
+        if(!g){ if(gruppen.length >= 8) return; g = {k, m, tage: []}; gruppen.push(g); }
+        g.tage.push(r);
+      });
+      const fmt = n => n.toLocaleString("de-DE");
+      document.getElementById("sp-days").innerHTML = gruppen.length ? gruppen.map(g => {
+        const e = new Date(g.m); e.setDate(e.getDate() + 6);
+        const reps = g.tage.reduce((a, r) => a + (r.eintraege || []).reduce((s, b) => s + (blk(b).r || 0), 0), 0);
+        return `<li class="sp-kw"><span>KW ${kw(g.m)} <span class="muted">${g.m.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${e.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span></span>
+            <span class="muted">${g.tage.length} ${g.tage.length === 1 ? "Trainingstag" : "Trainingstage"}${reps ? ` · ${fmt(reps)} Wdh.` : ""}</span></li>` +
+          g.tage.map(r => `<li><span class="d">${new Date(r.tag + "T12:00:00").toLocaleDateString("de-DE",{weekday:"short", day:"2-digit", month:"2-digit"})}</span>
+            <span class="e">${(r.eintraege || []).map(blk).map(b => `<div class="sp-b"><div class="sp-t">${esc(b.t)}${b.i ? ` <span class="sp-i">${esc(b.i)}</span>` : ""}</div>
+              ${b.d && b.d.length ? `<ul>${b.d.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}${b.n ? `<div class="sp-n">${esc(b.n)}</div>` : ""}</div>`).join("")}</span></li>`).join("");
+      }).join("")
         : `<li class="muted" style="display:block">Noch keine Trainings übertragen.</li>`;
     }catch(e){
       wkEl.innerHTML = `<div class="err">Sport konnte nicht geladen werden (${esc(e.message)}).</div>`;
