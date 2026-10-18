@@ -227,5 +227,49 @@
 "n": "Burpees",
 "g": "Calisthenics",
 "pro": 1
+},
+"aupull": {
+"n": "Australian Pull-ups",
+"g": "Haltung"
+},
+"aupullu": {
+"n": "Australian Pull-ups Untergriff",
+"g": "Haltung"
+},
+"gtri": {
+"n": "Trizepsdrücken am Kabel",
+"g": "Gym"
+},
+"crunch": {
+"n": "Crunches",
+"g": "Bauch"
+},
+"hangknee": {
+"n": "Hanging Knee Raises",
+"g": "Calisthenics"
+},
+"russian": {
+"n": "Russian Twists",
+"g": "Bauch"
+},
+"cx_1biti9t": {
+"n": "Holzfäller",
+"g": "Eigene"
+},
+"cx_50znhj4": {
+"n": "Landmine-Rotation",
+"g": "Eigene"
+},
+"cx_290qifd": {
+"n": "Trizeps-Pulldown mit Band",
+"g": "Eigene"
+},
+"cx_11i68yf": {
+"n": "Sit-ups",
+"g": "Eigene"
+},
+"cx_5ckk0sr": {
+"n": "Crunch-Maschine",
+"g": "Eigene"
 }
 }
