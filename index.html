@@ -228,6 +228,32 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .gate .ok{color:var(--good);font-weight:700}.gate .no{color:var(--ink-3)}
 .gate .hint{grid-column:2/4;font-size:11.5px;color:var(--ink-3);margin-top:-2px}
 .hlth{display:grid;gap:4px;font-size:12.5px}
+/* Signal-Kopierer + Wochenrückblick (2026-10-30) */
+.cop-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpis .sub{font-size:12px;color:var(--ink-3)}
+.cop-k{display:grid;gap:4px;padding:8px 0;border-bottom:1px solid var(--line-2)}
+.cop-k:last-child{border-bottom:0}
+.cop-k .kv b{font-weight:650}
+.cop-k .m{font-size:12px;color:var(--ink-3)}
+.cop-two{display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--line-2)}
+.wk-charts{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
+.wk-charts svg{display:block;width:100%;height:170px;overflow:visible}
+.wk-charts .legend{margin:4px 0 2px}
+.seg button:disabled{opacity:.35;cursor:default}
+#wk-table tr.tot td{font-weight:650;border-top:1px solid var(--line)}
+#wk-table th,#wk-table td{padding:10px 8px}
+#wk-table td.sub1{padding-left:26px;color:var(--ink-2)}
+@media (max-width:900px){ .cop-two,.wk-charts{grid-template-columns:1fr} }
+@media (max-width:640px){
+  .cop-kpis{grid-template-columns:1fr 1fr}
+  #wk-table{min-width:0} #wk-table thead{display:none}
+  #wk-rows tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;padding:12px 0;border-bottom:1px solid var(--line-2)}
+  #wk-rows td{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0;border:0;font-size:13px;white-space:nowrap}
+  #wk-rows td::before{content:attr(data-label);color:var(--ink-3);font-size:12px}
+  #wk-rows td:first-child,#wk-rows td:nth-child(8){grid-column:1/-1} #wk-rows td:first-child{display:block;text-align:left} #wk-rows td:first-child::before{content:none}
+  #wk-table tr.tot td{border-top:0}
+  #wk-table td.sub1{padding-left:0}
+}
 
 
 /* Pipeline-Status (10) */
@@ -429,6 +455,30 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   </section>
 
   <div class="board" id="board">
+  <section class="sec w12" data-card="copier" data-view="trading" aria-labelledby="h-cop">
+    <div class="sec-h"><h2 id="h-cop">Signal-Kopierer <span class="tag" id="cop-tag"></span></h2></div>
+    <div id="cop-body"><div class="sec-b muted">Wird geladen …</div></div>
+  </section>
+
+  <section class="sec w12" data-card="week" data-view="trading" aria-labelledby="h-wk">
+    <div class="sec-h"><h2 id="h-wk">Wochenrückblick <span class="tag" id="wk-tag"></span></h2>
+      <div class="seg" role="group" aria-label="Woche wählen"><button type="button" id="wk-prev" aria-label="Vorige Woche">‹</button><button type="button" id="wk-cur" title="Zur laufenden Woche">KW</button><button type="button" id="wk-next" aria-label="Nächste Woche">›</button></div>
+    </div>
+    <div class="sec-b">
+      <div class="kpis cop-kpis" id="wk-kpis"></div>
+      <div class="tbl-wrap">
+        <table id="wk-table">
+          <thead><tr><th>Quelle</th><th>Trades</th><th title="Gewinner / Verlierer / Break-even">G / V / BE</th><th title="Gewinner ÷ (Gewinner + Verlierer), Break-even zählt nicht">Winrate</th><th>G/V</th><th title="G/V der Woche ÷ Kontostand zu Wochenbeginn">% vom Konto</th><th title="Ø Ergebnis je Trade in Vielfachen des Risikos (Stop-Loss)">Ø R</th><th title="Bester / schlechtester Trade der Woche">Bester / Schlechtester</th><th title="Längste Folge von Verlusttrades in der Woche">Serie</th></tr></thead>
+          <tbody id="wk-rows"><tr><td colspan="9" class="muted">Wird geladen …</td></tr></tbody>
+        </table>
+      </div>
+      <div class="wk-charts">
+        <div><div class="lbl">Tag für Tag · % vom Konto</div><div class="legend" id="wk-legend"></div><svg id="wk-days" role="img" aria-label="Gewinn und Verlust je Tag in Prozent vom Konto"></svg></div>
+        <div><div class="lbl">Letzte 8 Wochen · % vom Konto <span class="muted" style="text-transform:none">(Woche anklicken)</span></div><div class="legend" id="wk-legend2"></div><svg id="wk-trend" role="img" aria-label="Gewinn und Verlust der letzten 8 Wochen in Prozent vom Konto"></svg></div>
+      </div>
+    </div>
+  </section>
+
   <section class="sec w12" data-card="bots" data-view="trading" aria-labelledby="h-bots">
     <div class="sec-h">
       <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2><a class="link" href="labor.html">Labor ↗</a>
@@ -550,7 +600,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 
   </div>
 
-  <p class="foot">Alles echte Daten. Bots melden sich jede Minute, YouTube alle 15 Min., eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
+  <p class="foot">Alles echte Daten. Bots und Signal-Kopierer melden sich jede Minute, YouTube alle 15 Min., eigenes Trading kommt aus dem Journal (Stand: letzter Besuch dort).</p>
 </div>
 
 <script>
@@ -587,17 +637,22 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   async function loadBots(){
     try{
       const opt = path => sb(path).catch(() => []);   // Erweiterung: fehlt eine Tabelle, laeuft der Rest weiter
-      const [st, tr, eq, pos, legs, hl] = await Promise.all([
+      const since = wkMonday(-7).toISOString();
+      const [st, tr, eq, pos, legs, hl, ctr, wtr] = await Promise.all([
         sb("bot_status?select=*&order=bot_id"),
-        sb("bot_trades?select=bot_id,symbol,richtung,geschlossen,gv,risiko&order=geschlossen.desc&limit=500"),
+        sb("bot_trades?select=bot_id,symbol,richtung,geschlossen,gv,risiko&bot_id=neq.copier&order=geschlossen.desc&limit=500"),
         sb("bot_equity?select=bot_id,tag,kontostand&order=tag"),
         opt("bot_positions?select=*&order=bot_id,seit.desc"),
         opt("bot_legs?select=*&order=bot_id,netto.desc"),
         opt("bot_health?select=*"),
+        opt("bot_trades?select=bot_id,symbol,richtung,eroeffnet,geschlossen,gv,risiko,kommentar&bot_id=eq.copier&order=geschlossen&limit=5000"),
+        opt(`bot_trades?select=bot_id,symbol,richtung,geschlossen,gv,risiko,kommentar&geschlossen=gte.${encodeURIComponent(since)}&order=geschlossen&limit=5000`),
       ]);
       POSITIONS = pos; LEGS = legs; HEALTH = hl;
-      BOTS = st.map((b,i) => ({...b, color: COLORS[i % COLORS.length]}));
-      TRADES = tr; EQUITY = eq;
+      // Kopierer (Echtgeld) eigene Karte, Bot-Tabelle/-Verlauf nur für die Demo-Bots
+      COP = st.find(b => b.bot_id === "copier") || null; COP_TR = ctr; WK_TR = wtr; EQ_ALL = eq;
+      BOTS = st.filter(b => b.bot_id !== "copier").map((b,i) => ({...b, color: COLORS[i % COLORS.length]}));
+      TRADES = tr; EQUITY = eq.filter(r => r.bot_id !== "copier");
       if(!BOTS.some(b => b.bot_id === selected)) selected = BOTS.length ? BOTS[0].bot_id : null;
       renderBots();
     }catch(e){
@@ -629,8 +684,8 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     const fresh = POSITIONS.filter(p => hoursSince(p.aktualisiert) < 0.25);   // nur Zeilen der letzten 15 Min.
     document.getElementById("pos-tag").textContent = fresh.length ? `${fresh.length} offen` : "";
     if(!fresh.length){ body.innerHTML = `<tr><td colspan="10" class="muted">Keine offenen Positionen (oder letzte Meldung älter als 15 Min.).</td></tr>`; return; }
-    const name = id => (BOTS.find(b => b.bot_id === id) || {}).name || id;
-    const cur = id => (BOTS.find(b => b.bot_id === id) || {}).waehrung;
+    const name = id => ([...BOTS, COP].find(b => b && b.bot_id === id) || {}).name || id;
+    const cur = id => ([...BOTS, COP].find(b => b && b.bot_id === id) || {}).waehrung;
     const px = v => v == null ? "–" : (+v).toLocaleString("de-DE", {maximumFractionDigits: 5});
     body.innerHTML = fresh.sort((a, b) => b.gv - a.gv).map(p => `<tr>
       <td data-label="Bot">${esc(name(p.bot_id))}</td><td data-label="Symbol"><b>${esc(p.symbol)}</b></td>
@@ -680,7 +735,251 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       <div class="hint" style="font-size:11.5px;color:var(--ink-3);margin-top:8px">Wenige Trades erlauben noch kein Urteil. Kriterien aus dem Plan „Weg zum Ziel“ (3 Monate Demo, Beine seit 07.10.).</div>`;
   }
 
-  function renderBots(){ renderTable(); renderDetail(); renderChart(); renderBotSummary(); renderPositions(); renderLegs(); renderGates(); }
+  // ---------- Signal-Kopierer + Wochenrückblick (2026-10-30) ----------
+  // Kopierer = bot_id "copier" (Telegram-Signale, Echtgeld-Konto PU Prime), meldet über report_cockpit.py wie die Bots.
+  // Kanal aus dem Order-Kommentar: TGY… = H.O.F Yellow, TG… = Ruthless VIP, ohne Kennung = von Hand eröffnet.
+  let COP = null, COP_TR = [], WK_TR = [], EQ_ALL = [], wkOff = 0;
+  const COP_COLOR = "--s4", WK_MAX = 7;
+  const KANAL = {Ruthless: "Ruthless VIP", Yellow: "H.O.F Yellow", Manuell: "Von Hand"};
+  const kanalOf = t => { const c = t.kommentar || ""; return c.startsWith("TGY") ? "Yellow" : c.startsWith("TG") ? "Ruthless" : "Manuell"; };
+  const signalOf = t => /^TGY?\d+/.test(t.kommentar || "") ? t.kommentar.split("_")[0] : null;
+  const sgn = (v, d=1) => v == null ? "–" : (v>0?"+":v<0?"−":"") + Math.abs(v).toLocaleString("de-DE",{minimumFractionDigits:d, maximumFractionDigits:d});
+  const fmtR = v => v == null ? "–" : sgn(v, 2) + " R";
+  const fmtPF = v => v == null ? "–" : v === Infinity ? "∞" : dec(v);
+  const byClose = (a, b) => a.geschlossen < b.geschlossen ? -1 : a.geschlossen > b.geschlossen ? 1 : 0;
+  const dayISO = d => new Date(d.getTime() - d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  const fdm = d => d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  function wkMonday(off){ const x = new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7) + 7*off); return x; }
+  function kwNr(d){ const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - n); const y0 = new Date(Date.UTC(x.getUTCFullYear(),0,1)); return Math.ceil(((x - y0) / 864e5 + 1) / 7); }
+
+  // Kennzahlen einer Trade-Liste. Winrate ohne Break-even (G/V = 0, z. B. Stop auf Einstieg).
+  function stats(T){
+    T = [...T].sort(byClose);
+    const w = T.filter(t => t.gv > 0), l = T.filter(t => t.gv < 0);
+    const sw = w.reduce((a,t) => a + t.gv, 0), sl = -l.reduce((a,t) => a + t.gv, 0);
+    const rs = T.filter(t => t.risiko > 0).map(t => t.gv / t.risiko);
+    let run = 0, serie = 0;
+    T.forEach(t => { if(t.gv < 0){ run++; serie = Math.max(serie, run); } else if(t.gv > 0) run = 0; });
+    return {n: T.length, w: w.length, l: l.length, be: T.length - w.length - l.length, net: sw - sl,
+      wr: w.length + l.length ? w.length / (w.length + l.length) * 100 : null, pf: sl ? sw / sl : (sw ? Infinity : null),
+      avgW: w.length ? sw / w.length : null, avgL: l.length ? -sl / l.length : null,
+      avgR: rs.length ? rs.reduce((a,v) => a + v, 0) / rs.length : null, serie,
+      best: T.length ? T.reduce((a,t) => t.gv > a.gv ? t : a) : null, worst: T.length ? T.reduce((a,t) => t.gv < a.gv ? t : a) : null,
+      sig: new Set(T.map(signalOf).filter(Boolean)).size};
+  }
+  // Kontostand am letzten Handelstag vor `day` (YYYY-MM-DD), sonst Startkapital
+  function balBefore(id, day){
+    let v = null;
+    for(const r of EQ_ALL) if(r.bot_id === id && r.tag < day) v = r.kontostand;
+    if(v != null) return v;
+    const b = id === "copier" ? COP : BOTS.find(x => x.bot_id === id);
+    return b ? b.startkapital : null;
+  }
+
+  function renderCopier(){
+    const body = document.getElementById("cop-body");
+    if(!COP){ body.innerHTML = `<div class="sec-b muted">Noch keine Meldung vom Kopierer (das Melde-Skript läuft jede Minute).</div>`; return; }
+    const cur = COP.waehrung, T = [...COP_TR].sort(byClose), st = stats(T);
+    const h = healthOf("copier"), hbMin = h && h.herzschlag ? hoursSince(h.herzschlag) * 60 : null;
+    const live = hbMin != null && hbMin < 10 && botState(COP)[0] === "run";
+    const rendite = COP.startkapital ? (COP.kontostand - COP.startkapital) / COP.startkapital * 100 : null;
+    const seit = T.length ? new Date(T[0].eroeffnet || T[0].geschlossen) : null;
+    document.getElementById("cop-tag").textContent = `${COP.broker || ""} · ${COP.is_demo ? "Demo" : "Echtgeld"}${seit ? " · seit " + seit.toLocaleDateString("de-DE") : ""}`;
+    const op = gvOffen(COP);
+    const k = [
+      ["Kontostand", money(COP.kontostand, cur), "", `Start ${money(COP.startkapital, cur)} · offen ${money(op, cur, true)}`],
+      ["G/V gesamt", money(st.net, cur, true), cls(st.net), `Rendite ${rendite == null ? "–" : sgn(rendite) + " %"}`],
+      ["Max. Drawdown", COP.max_dd_pct ? "−" + pct(COP.max_dd_pct) : "0 %", COP.max_dd_pct ? "neg" : "", "vom Höchststand (abgeschl. Trades)"],
+      ["Winrate", st.wr == null ? "–" : pct(st.wr), "", `${st.w} Gewinner · ${st.l} Verlierer · ${st.be} BE`],
+      ["Profit-Faktor", fmtPF(st.pf), st.pf == null ? "" : st.pf >= 1 ? "pos" : "neg", `Ø ${fmtR(st.avgR)} je Trade`],
+      ["Ø Gewinner / Verlierer", `${money(st.avgW, cur, true)} / ${money(st.avgL, cur, true)}`, "", st.avgW && st.avgL ? `Verhältnis ${dec(st.avgW / -st.avgL)} : 1` : ""],
+      ["Signale / Trades", `${st.sig} / ${st.n}`, "", `längste Verlustserie ${st.serie}`],
+      ["Kopierer", live ? "läuft" : "kein Lebenszeichen", live ? "pos" : "neg", `${hbMin == null ? "–" : hbMin < 60 ? "Herzschlag vor " + Math.round(hbMin) + " Min." : "Herzschlag " + ago(h.herzschlag)} · ${COP.offene_positionen ?? 0} offen`],
+    ];
+    const kanal = Object.keys(KANAL).map(key => ({key, T: T.filter(t => kanalOf(t) === key)})).filter(x => x.T.length);
+    const sym = {};
+    T.forEach(t => { const s = (t.symbol || "?").replace(/\.s$/, ""); sym[s] = sym[s] || {n: 0, v: 0}; sym[s].n++; sym[s].v += t.gv; });
+    const symRows = Object.entries(sym).sort((a, b) => b[1].v - a[1].v), mx = Math.max(1, ...symRows.map(([, s]) => Math.abs(s.v)));
+    const last = T.slice(-8).reverse();
+    body.innerHTML = `
+      <div class="sec-b"><div class="kpis cop-kpis" style="margin-bottom:0">${k.map(([l, v, c, s]) => `<div><div class="lbl">${l}</div><div class="big num ${c}">${v}</div><div class="sub">${esc(s)}</div></div>`).join("")}</div></div>
+      <div class="chart-grid">
+        <div class="chart-box" id="cop-box">
+          <div class="legend" style="margin:0 0 8px"><span style="color:var(--ink-3)">Kontostand nach jedem Trade</span><span><span class="sw" style="background:var(--good)"></span>Gewinn</span><span><span class="sw" style="background:var(--bad)"></span>Verlust</span><span><span class="sw" style="background:var(--ink-3)"></span>Break-even</span></div>
+          <svg id="cop-eq" role="img" aria-label="Kontostand des Kopierers nach jedem Trade"></svg>
+          <div class="tip" id="cop-tip" hidden></div>
+        </div>
+        <aside class="side"><div><div class="lbl">Nach Kanal</div>
+          ${kanal.map(x => { const s = stats(x.T); return `<div class="cop-k">
+            <div class="kv"><b>${esc(KANAL[x.key])}</b><span class="num ${cls(s.net)}">${money(s.net, cur, true)}</span></div>
+            <div class="m">${s.sig ? s.sig + " Signale · " : ""}${s.n} Trades · Winrate ${s.wr == null ? "–" : pct(s.wr)}</div>
+            <div class="m">PF ${fmtPF(s.pf)} · Ø ${fmtR(s.avgR)} · bester ${money(s.best && s.best.gv, cur, true)}</div></div>`; }).join("") || `<div class="muted">Noch keine Trades.</div>`}
+        </div></aside>
+      </div>
+      <div class="sec-b cop-two">
+        <div><div class="lbl" style="margin-bottom:6px">Nach Symbol</div>
+          ${symRows.map(([s, v]) => { const w = Math.abs(v.v) / mx * 50, left = v.v >= 0 ? 50 : 50 - w; return `<div class="legrow"><span class="nm">${esc(s)}</span>
+            <div class="trk"><i style="left:${left}%;width:${w}%;background:var(${v.v >= 0 ? "--good" : "--bad"})"></i></div>
+            <span class="v num ${cls(v.v)}">${money(v.v, cur, true)} <span class="muted">(${v.n})</span></span></div>`; }).join("") || `<div class="muted">–</div>`}</div>
+        <div><div class="lbl" style="margin-bottom:4px">Letzte Trades</div>
+          ${last.length ? `<ul class="list">${last.map(t => `<li><span>${esc((t.symbol || "").replace(/\.s$/, ""))} <span class="muted">${t.richtung === "long" ? "▲" : "▼"} ${esc(KANAL[kanalOf(t)])} · ${new Date(t.geschlossen).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span></span><span class="num ${cls(t.gv)}">${money(t.gv, cur, true)}</span></li>`).join("")}</ul>` : `<div class="muted">Noch keine Trades.</div>`}</div>
+      </div>`;
+    renderCopChart();
+  }
+
+  // Kontostand als Treppenkurve über die Zeit, Punkt je abgeschlossenem Trade
+  function renderCopChart(){
+    const svg = document.getElementById("cop-eq"); if(!svg) return; svg.innerHTML = "";
+    const W = svg.clientWidth || 700, H = 240, m = {l:62, r:14, t:8, b:24};
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    if(!COP || !COP_TR.length){
+      const tx = el("text",{x:W/2,y:H/2,"text-anchor":"middle","font-size":13,fill:cssVar("--ink-3")}); tx.textContent = "Noch keine abgeschlossenen Trades"; svg.appendChild(tx); return;
+    }
+    const cur = COP.waehrung, T = [...COP_TR].sort(byClose), start = COP.startkapital || 0;
+    const t0 = new Date(T[0].eroeffnet || T[0].geschlossen).getTime();
+    let run = start; const pts = [{t: t0, v: start, tr: null}];
+    T.forEach(t => { run += t.gv; pts.push({t: new Date(t.geschlossen).getTime(), v: run, tr: t}); });
+    const t1 = Math.max(Date.now(), pts[pts.length-1].t);
+    let lo = Math.min(start, ...pts.map(p => p.v)), hi = Math.max(start, ...pts.map(p => p.v));
+    const pad = (hi - lo) * 0.08 || 10; lo -= pad; hi += pad;
+    const x = t => m.l + (t - t0) / ((t1 - t0) || 1) * (W - m.l - m.r), y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+    const step = niceStep((hi - lo) / 4);
+    for(let v = Math.ceil(lo / step) * step; v <= hi; v += step){
+      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:cssVar("--grid")}));
+      const tx = el("text",{x:m.l-8,y:y(v)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"});
+      tx.textContent = Math.round(v).toLocaleString("de-DE") + " " + (CUR[cur] || cur || ""); svg.appendChild(tx);
+    }
+    svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(start),y2:y(start),stroke:cssVar("--ink-3"),"stroke-dasharray":"4 4"}));
+    const st = el("text",{x:W-m.r,y:y(start)-5,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3")}); st.textContent = "Start"; svg.appendChild(st);
+    for(let i = 0; i < 5; i++){
+      const tt = t0 + (t1 - t0) * i / 4, tx = el("text",{x:x(tt),y:H-6,"text-anchor":i===0?"start":i===4?"end":"middle","font-size":11,fill:cssVar("--ink-3")});
+      tx.textContent = fdm(new Date(tt)); svg.appendChild(tx);
+    }
+    let d = `M ${x(pts[0].t).toFixed(1)} ${y(pts[0].v).toFixed(1)}`;
+    for(let i = 1; i < pts.length; i++) d += ` L ${x(pts[i].t).toFixed(1)} ${y(pts[i-1].v).toFixed(1)} L ${x(pts[i].t).toFixed(1)} ${y(pts[i].v).toFixed(1)}`;
+    d += ` L ${x(t1).toFixed(1)} ${y(pts[pts.length-1].v).toFixed(1)}`;
+    svg.appendChild(el("path",{d: d + ` L ${x(t1).toFixed(1)} ${y(start).toFixed(1)} L ${x(t0).toFixed(1)} ${y(start).toFixed(1)} Z`, fill:cssVar(COP_COLOR), opacity:.08}));
+    svg.appendChild(el("path",{d, fill:"none", stroke:cssVar(COP_COLOR), "stroke-width":2, "stroke-linejoin":"round"}));
+    pts.slice(1).forEach(p => svg.appendChild(el("circle",{cx:x(p.t),cy:y(p.v),r:3,fill:cssVar(p.tr.gv > 0 ? "--good" : p.tr.gv < 0 ? "--bad" : "--ink-3"),stroke:cssVar("--panel"),"stroke-width":1})));
+    const cross = el("line",{y1:m.t,y2:H-m.b,stroke:cssVar("--ink-3"),"stroke-dasharray":"3 3",visibility:"hidden"}); svg.appendChild(cross);
+    const hit = el("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:"transparent"}); svg.appendChild(hit);
+    const tip = document.getElementById("cop-tip"), box = document.getElementById("cop-box");
+    hit.addEventListener("pointermove", ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
+      let best = pts[1]; pts.slice(1).forEach(p => { if(Math.abs(x(p.t) - px) < Math.abs(x(best.t) - px)) best = p; });
+      cross.setAttribute("x1", x(best.t)); cross.setAttribute("x2", x(best.t)); cross.setAttribute("visibility","visible");
+      const t = best.tr;
+      tip.innerHTML = `<b>${new Date(t.geschlossen).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</b>
+        <div><span>${esc((t.symbol || "").replace(/\.s$/, ""))} ${t.richtung === "long" ? "▲" : "▼"} · ${esc(KANAL[kanalOf(t)])}</span><span class="num ${cls(t.gv)}">${money(t.gv, cur, true)}</span></div>
+        <div><span>Kontostand</span><span class="num">${money(best.v, cur)}</span></div>`;
+      tip.hidden = false;
+      const br = box.getBoundingClientRect(); let left = ev.clientX - br.left + 14;
+      if(left + tip.offsetWidth > br.width - 8) left = ev.clientX - br.left - tip.offsetWidth - 14;
+      tip.style.left = left + "px"; tip.style.top = (ev.clientY - br.top - 20) + "px";
+    });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility","hidden"); });
+  }
+
+  // Quellen des Wochenrückblicks: Kopierer je Kanal + gesamt, danach jeder Bot
+  function wkSources(){
+    const s = [];
+    if(COP){
+      Object.keys(KANAL).forEach(k => s.push({id: "copier", k, name: KANAL[k], cur: COP.waehrung, color: COP_COLOR, sub: true}));
+      s.push({id: "copier", name: "Signal-Kopierer", cur: COP.waehrung, color: COP_COLOR, total: true});
+    }
+    BOTS.forEach(b => s.push({id: b.bot_id, name: b.name, cur: b.waehrung, color: b.color}));
+    return s;
+  }
+  const wkTrades = (src, T) => T.filter(t => t.bot_id === src.id && (!src.k || kanalOf(t) === src.k));
+  function wkRange(off){ const a = wkMonday(off), b = new Date(a); b.setDate(b.getDate() + 7); return [a, b]; }
+  const inRange = (T, a, b) => T.filter(t => { const d = new Date(t.geschlossen); return d >= a && d < b; });
+
+  function renderWeek(){
+    const [m0, m1] = wkRange(wkOff), day0 = dayISO(m0);
+    document.getElementById("wk-cur").textContent = `KW ${kwNr(m0)}`;
+    document.getElementById("wk-tag").textContent = `${fdm(m0)}–${fdm(new Date(m1 - 864e5))}${wkOff === 0 ? " · laufende Woche" : ""}`;
+    document.getElementById("wk-next").disabled = wkOff >= 0;
+    document.getElementById("wk-prev").disabled = wkOff <= -WK_MAX;
+    const W = inRange(WK_TR, m0, m1);
+    const rows = wkSources().map(s => { const T = wkTrades(s, W), st = stats(T), bal = balBefore(s.id, day0); return {s, T, st, bal, p: bal ? st.net / bal * 100 : null}; })
+      .filter(r => !(r.s.sub && !r.T.length));   // Kanal ohne Trades in der Woche ausblenden
+    const main = rows.filter(r => !r.s.sub);
+    // Kacheln: Kopierer, Bots zusammen, bester + schlechtester Trade (in % vom jeweiligen Konto, damit € und $ vergleichbar sind)
+    const cop = main.find(r => r.s.total), bots = main.filter(r => !r.s.total);
+    const bNet = bots.reduce((a, r) => a + r.st.net, 0), bBal = bots.reduce((a, r) => a + (r.bal || 0), 0), bN = bots.reduce((a, r) => a + r.st.n, 0);
+    const all = main.flatMap(r => r.T.map(t => ({t, r, p: r.bal ? t.gv / r.bal * 100 : 0})));
+    const best = all.length ? all.reduce((a, x) => x.p > a.p ? x : a) : null, worst = all.length ? all.reduce((a, x) => x.p < a.p ? x : a) : null;
+    const lbl = x => `${(x.t.symbol || "").replace(/\.s$/, "")} · ${x.r.s.total ? "Kopierer " + KANAL[kanalOf(x.t)] : x.r.s.name}`;
+    const k = [
+      ["Signal-Kopierer", cop ? money(cop.st.net, cop.s.cur, true) : "–", cop ? cls(cop.st.net) : "", cop ? `${cop.p == null ? "–" : sgn(cop.p) + " %"} vom Konto · ${cop.st.n} Trades` : "keine Daten"],
+      ["Bots zusammen", bots.length ? money(bNet, bots[0].s.cur, true) : "–", cls(bNet), `${bBal ? sgn(bNet / bBal * 100, 2) + " %" : "–"} · ${bN} Trades`],
+      ["Bester Trade", best && best.t.gv > 0 ? money(best.t.gv, best.r.s.cur, true) : "–", "pos", best && best.t.gv > 0 ? `${lbl(best)} · ${sgn(best.p, 2)} %` : "kein Gewinner"],
+      ["Schlechtester Trade", worst && worst.t.gv < 0 ? money(worst.t.gv, worst.r.s.cur, true) : "–", "neg", worst && worst.t.gv < 0 ? `${lbl(worst)} · ${sgn(worst.p, 2)} %` : "kein Verlierer"],
+    ];
+    document.getElementById("wk-kpis").innerHTML = k.map(([l, v, c, s]) => `<div><div class="lbl">${l}</div><div class="big num ${c}">${v}</div><div class="sub">${esc(s)}</div></div>`).join("");
+    const tb = (t, cur) => t ? `<span class="${cls(t.gv)}" title="${esc((t.symbol || "").replace(/\.s$/, ""))}">${money(t.gv, cur, true)}</span>` : "–";
+    document.getElementById("wk-rows").innerHTML = rows.map(r => { const s = r.st, n = s.n; return `<tr class="${r.s.total ? "tot" : ""}">
+      <td class="${r.s.sub ? "sub1" : ""}"><div class="bot-name">${r.s.sub ? "" : `<span class="sw" style="background:var(${r.s.color})"></span>`}${esc(r.s.sub ? "↳ " + r.s.name : r.s.name)}</div></td>
+      <td class="num" data-label="Trades"><span>${n}${s.sig ? ` <span class="muted">(${s.sig} Sig.)</span>` : ""}</span></td>
+      <td class="num" data-label="G / V / BE"><span>${n ? `${s.w} / ${s.l} / ${s.be}` : "–"}</span></td>
+      <td class="num" data-label="Winrate"><span>${s.wr == null ? "–" : pct(s.wr)}</span></td>
+      <td class="num ${cls(s.net)}" data-label="G/V"><span>${n ? money(s.net, r.s.cur, true) : "–"}</span></td>
+      <td class="num ${r.p == null ? "" : cls(r.p)}" data-label="% vom Konto"><span>${n && r.p != null ? sgn(r.p, 2) + " %" : "–"}</span></td>
+      <td class="num ${s.avgR == null ? "" : cls(s.avgR)}" data-label="Ø R"><span>${fmtR(s.avgR)}</span></td>
+      <td class="num" data-label="Bester / Schlechtester"><span>${n ? tb(s.best, r.s.cur) + " / " + tb(s.worst, r.s.cur) : "–"}</span></td>
+      <td class="num" data-label="Verlustserie"><span>${n ? s.serie : "–"}</span></td></tr>`; }).join("") || `<tr><td colspan="9" class="muted">Keine Daten.</td></tr>`;
+    // Diagramme: Tage der Woche und die letzten 8 Wochen, je Konto in % vom Kontostand zu Wochenbeginn
+    const groups = main.map(r => ({name: r.s.name, color: r.s.color, src: r.s}));
+    const legend = groups.map(g => `<span><span class="sw" style="background:var(${g.color})"></span>${esc(g.name)}</span>`).join("");
+    document.getElementById("wk-legend").innerHTML = legend; document.getElementById("wk-legend2").innerHTML = legend;
+    const days = [...Array(7)].map((_, i) => { const a = new Date(m0); a.setDate(a.getDate() + i); const b = new Date(a); b.setDate(b.getDate() + 1); return [a, b]; });
+    groupBars("wk-days", days.map(([a]) => ({label: a.toLocaleDateString("de-DE",{weekday:"short"}), title: a.toLocaleDateString("de-DE",{weekday:"long", day:"2-digit", month:"2-digit"}), active: dayISO(a) === dayISO(new Date())})),
+      groups, (ci, gi) => { const r = main[gi]; const T = inRange(r.T, ...days[ci]); return T.length && r.bal ? T.reduce((a, t) => a + t.gv, 0) / r.bal * 100 : null; });
+    const weeks = [...Array(WK_MAX + 1)].map((_, i) => i - WK_MAX);
+    groupBars("wk-trend", weeks.map(o => ({label: "KW " + kwNr(wkMonday(o)), title: "KW " + kwNr(wkMonday(o)), active: o === wkOff})),
+      groups, (ci, gi) => { const [a, b] = wkRange(weeks[ci]), T = inRange(wkTrades(groups[gi].src, WK_TR), a, b), bal = balBefore(groups[gi].src.id, dayISO(a));
+        return T.length && bal ? T.reduce((s, t) => s + t.gv, 0) / bal * 100 : null; },
+      ci => { wkOff = weeks[ci]; renderWeek(); });
+  }
+
+  // Gruppierte Balken um die Nulllinie (Werte in %); onClick(ci) macht Spalten anklickbar
+  function groupBars(id, cats, groups, val, onClick){
+    const svg = document.getElementById(id); if(!svg) return; svg.innerHTML = "";
+    const W = svg.clientWidth || 500, H = 170, m = {l:50, r:4, t:8, b:22};
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const vals = []; cats.forEach((c, ci) => groups.forEach((g, gi) => { const v = val(ci, gi); if(v != null) vals.push(v); }));
+    const mx = Math.max(1, ...vals.map(Math.abs)) * 1.1;
+    const y = v => m.t + (mx - v) / (2 * mx) * (H - m.t - m.b);
+    const step = niceStep(mx * 0.8);
+    [step, 0, -step].forEach(t => {
+      svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:cssVar(t === 0 ? "--line" : "--grid")}));
+      const tx = el("text",{x:m.l-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"});
+      tx.textContent = sgn(t, step < 1 ? 1 : 0) + " %"; svg.appendChild(tx);
+    });
+    const cw = (W - m.l - m.r) / cats.length, gw = Math.max(3, Math.min(16, (cw - 8) / Math.max(1, groups.length)));
+    cats.forEach((c, ci) => {
+      const cx = m.l + ci * cw;
+      if(c.active) svg.appendChild(el("rect",{x:cx+1,y:m.t,width:cw-2,height:H-m.t-m.b,rx:6,fill:cssVar("--panel-2")}));
+      const x0 = cx + (cw - gw * groups.length) / 2;
+      groups.forEach((g, gi) => {
+        const v = val(ci, gi); if(v == null) return;
+        const r = el("rect",{x:x0+gi*gw+0.5,y:v >= 0 ? y(v) : y(0),width:Math.max(2,gw-1.5),height:Math.max(1.5,Math.abs(y(v)-y(0))),rx:2,fill:cssVar(g.color)});
+        const t = el("title",{}); t.textContent = `${c.title} · ${g.name}: ${sgn(v, 2)} %`; r.appendChild(t); svg.appendChild(r);
+      });
+      const tx = el("text",{x:cx+cw/2,y:H-6,"text-anchor":"middle","font-size":11,fill:cssVar(c.active ? "--ink" : "--ink-3"),"font-weight":c.active ? 650 : 400});
+      tx.textContent = c.label; svg.appendChild(tx);
+      if(onClick){
+        const hit = el("rect",{x:cx,y:0,width:cw,height:H,fill:"transparent",style:"cursor:pointer"});
+        const t = el("title",{}); t.textContent = c.title + " anzeigen"; hit.appendChild(t);
+        hit.addEventListener("click", () => onClick(ci)); svg.appendChild(hit);
+      }
+    });
+  }
+  document.getElementById("wk-prev").addEventListener("click", () => { wkOff = Math.max(-WK_MAX, wkOff - 1); renderWeek(); });
+  document.getElementById("wk-next").addEventListener("click", () => { wkOff = Math.min(0, wkOff + 1); renderWeek(); });
+  document.getElementById("wk-cur").addEventListener("click", () => { wkOff = 0; renderWeek(); });
+
+  function renderBots(){ renderTable(); renderDetail(); renderChart(); renderBotSummary(); renderPositions(); renderLegs(); renderGates(); renderCopier(); renderWeek(); }
 
   function renderTable(){
     const body = document.getElementById("bots");
@@ -1120,6 +1419,8 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   const lsSet = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
   function cardOrder(){
     const saved = lsGet("cockpit_order_v4", []).filter(id => DEFAULT_ORDER.includes(id));
+    // neue Karten (2026-10-30) auch bei gespeicherter Reihenfolge oben im Trading-Bereich einsortieren
+    ["copier", "week"].forEach(id => { if(saved.length && !saved.includes(id)){ const i = saved.indexOf("bots"); saved.splice(i < 0 ? saved.length : i, 0, id); } });
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
   const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
@@ -1185,7 +1486,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   const pick = tr => { if(!tr || !tr.dataset.id) return; selected = tr.dataset.id; renderTable(); renderDetail(); renderChart(); };
   tbody.addEventListener("click", e => pick(e.target.closest("tr")));
   tbody.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(e.target.closest("tr")); }});
-  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); }, 120); });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); renderCopChart(); renderWeek(); }, 120); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { renderChart(); renderOwn(); });
   new MutationObserver(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
 
