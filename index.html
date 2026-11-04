@@ -240,6 +240,16 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
 .wk-charts svg{display:block;width:100%;height:170px;overflow:visible}
 .wk-charts .legend{margin:4px 0 2px}
 .seg button:disabled{opacity:.35;cursor:default}
+.wk-m{display:none}
+/* Trading-Unterbereiche (2026-11-04) */
+.subnav{justify-self:start;background:var(--panel);max-width:100%;overflow-x:auto}
+.subnav button{white-space:nowrap;padding:7px 14px;font-size:13px}
+#app[data-sub="kop"] .sec[data-sub]:not([data-sub~="kop"]),
+#app[data-sub="week"] .sec[data-sub]:not([data-sub~="week"]),
+#app[data-sub="bots"] .sec[data-sub]:not([data-sub~="bots"]),
+#app[data-sub="own"] .sec[data-sub]:not([data-sub~="own"]){display:none!important}
+.strip [data-sub-go]{cursor:pointer}
+.strip [data-sub-go]:hover .lbl{color:var(--ink)}
 #wk-table tr.tot td{font-weight:650;border-top:1px solid var(--line)}
 #wk-table th,#wk-table td{padding:10px 8px}
 #wk-table td.sub1{padding-left:26px;color:var(--ink-2)}
@@ -250,7 +260,9 @@ button.link{font:inherit;font-size:13px;font-weight:500;color:inherit;cursor:poi
   #wk-rows tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;padding:12px 0;border-bottom:1px solid var(--line-2)}
   #wk-rows td{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0;border:0;font-size:13px;white-space:nowrap}
   #wk-rows td::before{content:attr(data-label);color:var(--ink-3);font-size:12px}
-  #wk-rows td:first-child,#wk-rows td:nth-child(8){grid-column:1/-1} #wk-rows td:first-child{display:block;text-align:left} #wk-rows td:first-child::before{content:none}
+  #wk-rows td:first-child{grid-column:1/-1;display:block;text-align:left} #wk-rows td:first-child::before{content:none}
+  #wk-rows td:nth-child(2),#wk-rows td:nth-child(3),#wk-rows td:nth-child(4),#wk-rows td:nth-child(7),#wk-rows td:nth-child(8),#wk-rows td:nth-child(9){display:none}
+  #wk-rows td.wk-m{display:block;grid-column:1/-1;white-space:normal;text-align:left;font-size:12px;color:var(--ink-3)}
   #wk-table tr.tot td{border-top:0}
   #wk-table td.sub1{padding-left:0}
 }
@@ -366,7 +378,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   .views button{padding:13px 2px;font-size:13px}
   .wrap{padding-bottom:84px}
   .strip{grid-template-columns:1fr 1fr}
-  .strip>div:nth-child(3){border-left:0}
+  .strip>div:nth-child(3),.strip>div:nth-child(5){border-left:0}
   .strip>div:nth-child(n+3){border-top:1px solid var(--line-2)}
   .big{font-size:20px}
   .kpis{grid-template-columns:1fr 1fr}
@@ -432,6 +444,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 
   <section class="status" aria-label="Systemstatus">
     <span class="chip" id="st-bots"><i></i>Bots …</span>
+    <span class="chip" id="st-cop"><i></i>Kopierer …</span>
     <span class="chip" id="st-yt"><i></i>YouTube …</span>
     <span class="chip" id="st-pipe" hidden><i></i>Pipelines …</span>
     <span class="chip" id="st-jour"><i></i>Journal …</span>
@@ -441,26 +454,32 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     <button type="button" class="link sm" id="edit-btn" aria-pressed="false" title="Kacheln verschieben">Anpassen</button>
   </section>
 
-  <section class="strip" data-view="start" aria-label="Kurzüberblick" style="--c:4">
-    <div data-go="trading"><div class="lbl">Bots · G/V gesamt</div><div class="big num" id="s2-gv">…</div><div class="sub" id="s2-gv-sub"></div></div>
-    <div data-go="trading"><div class="lbl">Bots · G/V offen</div><div class="big num" id="s2-open">…</div><div class="sub" id="s2-open-sub"></div></div>
+  <section class="strip" data-view="start" aria-label="Kurzüberblick" style="--c:5">
+    <div data-go="trading"><div class="lbl">Echtgeld · Kopierer</div><div class="big num" id="s2-cop">…</div><div class="sub" id="s2-cop-sub"></div></div>
+    <div data-go="trading"><div class="lbl">Demo-Bots · G/V gesamt</div><div class="big num" id="s2-gv">…</div><div class="sub" id="s2-gv-sub"></div></div>
+    <div data-go="trading"><div class="lbl">Demo-Bots · G/V offen</div><div class="big num" id="s2-open">…</div><div class="sub" id="s2-open-sub"></div></div>
     <div data-go="youtube"><div class="lbl">YouTube · Aufrufe</div><div class="big num" id="s2-views">…</div><div class="sub" id="s2-views-sub"></div></div>
     <div data-go="youtube"><div class="lbl">YouTube · Abos</div><div class="big num" id="s2-abos">…</div><div class="sub" id="s2-abos-sub"></div></div>
   </section>
 
-  <section class="strip" data-view="trading" aria-label="Überblick Trading" style="--c:3">
-    <div><div class="lbl">Bots · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
-    <div><div class="lbl">Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
-    <div><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div><svg class="spark" id="sp-own" aria-hidden="true"></svg></div>
+  <section class="strip" data-view="trading" aria-label="Überblick Trading" style="--c:4">
+    <div data-sub-go="kop"><div class="lbl">Echtgeld · Kopierer</div><div class="big num" id="s-cop">…</div><div class="sub" id="s-cop-sub"></div><svg class="spark" id="sp-cop" aria-hidden="true"></svg></div>
+    <div data-sub-go="bots"><div class="lbl">Demo-Bots · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
+    <div data-sub-go="bots"><div class="lbl">Demo-Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
+    <div data-sub-go="own"><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div><svg class="spark" id="sp-own" aria-hidden="true"></svg></div>
   </section>
 
+  <nav class="seg subnav" id="subnav" data-view="trading" aria-label="Unterbereiche Trading">
+    <button type="button" data-s="kop">Kopierer</button><button type="button" data-s="week">Woche</button><button type="button" data-s="bots">Bots</button><button type="button" data-s="own">Eigenes Trading</button>
+  </nav>
+
   <div class="board" id="board">
-  <section class="sec w12" data-card="copier" data-view="trading" aria-labelledby="h-cop">
+  <section class="sec w12" data-card="copier" data-view="trading" data-sub="kop" aria-labelledby="h-cop">
     <div class="sec-h"><h2 id="h-cop">Signal-Kopierer <span class="tag" id="cop-tag"></span></h2></div>
     <div id="cop-body"><div class="sec-b muted">Wird geladen …</div></div>
   </section>
 
-  <section class="sec w12" data-card="week" data-view="trading" aria-labelledby="h-wk">
+  <section class="sec w12" data-card="week" data-view="trading" data-sub="week" aria-labelledby="h-wk">
     <div class="sec-h"><h2 id="h-wk">Wochenrückblick <span class="tag" id="wk-tag"></span></h2>
       <div class="seg" role="group" aria-label="Woche wählen"><button type="button" id="wk-prev" aria-label="Vorige Woche">‹</button><button type="button" id="wk-cur" title="Zur laufenden Woche">KW</button><button type="button" id="wk-next" aria-label="Nächste Woche">›</button></div>
     </div>
@@ -479,7 +498,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     </div>
   </section>
 
-  <section class="sec w12" data-card="bots" data-view="trading" aria-labelledby="h-bots">
+  <section class="sec w12" data-card="bots" data-view="trading" data-sub="bots" aria-labelledby="h-bots">
     <div class="sec-h">
       <h2 id="h-bots">Trading-Bots <span class="tag">Zeile anklicken für Details</span></h2><a class="link" href="labor.html">Labor ↗</a>
     </div>
@@ -504,7 +523,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     </div>
   </section>
 
-    <section class="sec w12" data-card="pos" data-view="trading" aria-labelledby="h-pos">
+    <section class="sec w12" data-card="pos" data-view="trading" data-sub="kop bots" aria-labelledby="h-pos">
       <div class="sec-h"><h2 id="h-pos">Offene Positionen <span class="tag" id="pos-tag"></span></h2></div>
       <div class="tbl-wrap">
         <table id="pos-table">
@@ -514,17 +533,17 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       </div>
     </section>
 
-    <section class="sec w6" data-card="legs" data-view="trading" aria-labelledby="h-legs">
+    <section class="sec w6" data-card="legs" data-view="trading" data-sub="bots" aria-labelledby="h-legs">
       <div class="sec-h"><h2 id="h-legs">Ertrag je Bein <span class="tag" id="legs-tag">gewählter Bot · geschlossene Trades, netto</span></h2></div>
       <div class="sec-b" id="legs-body"><div class="muted">Wird geladen …</div></div>
     </section>
 
-    <section class="sec w6" data-card="gates" data-view="trading" aria-labelledby="h-gates">
+    <section class="sec w6" data-card="gates" data-view="trading" data-sub="bots" aria-labelledby="h-gates">
       <div class="sec-h"><h2 id="h-gates">Demo-Test <span class="tag" id="gates-tag"></span></h2></div>
       <div class="sec-b" id="gates-body"><div class="muted">Wird geladen …</div></div>
     </section>
 
-    <section class="sec w8" data-card="own" data-view="trading" aria-labelledby="h-own">
+    <section class="sec w8" data-card="own" data-view="trading" data-sub="own" aria-labelledby="h-own">
       <div class="sec-h"><h2 id="h-own">Eigenes Trading <span class="tag" id="own-stand"></span></h2><a class="link" href="journal.html">Journal ↗</a></div>
       <div class="sec-b">
         <div class="kpis" id="own-kpis"></div>
@@ -534,7 +553,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     </section>
 
 
-    <section class="sec w4" data-card="jour" data-view="trading" aria-labelledby="h-jour">
+    <section class="sec w4" data-card="jour" data-view="trading" data-sub="own" aria-labelledby="h-jour">
       <div class="sec-h"><h2 id="h-jour">Trading-Journal</h2><a class="link" href="journal.html">Öffnen ↗</a></div>
       <div class="sec-b"><div class="lbl" style="margin-bottom:4px">Letzte Trades</div><ul class="list" id="jour-list"><li class="muted">Wird geladen …</li></ul></div>
     </section>
@@ -681,7 +700,8 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
 
   function renderPositions(){
     const body = document.getElementById("pos-body");
-    const fresh = POSITIONS.filter(p => hoursSince(p.aktualisiert) < 0.25);   // nur Zeilen der letzten 15 Min.
+    const kop = document.getElementById("app").dataset.sub === "kop";   // Kopierer und Bots zeigen je ihre eigenen Positionen
+    const fresh = POSITIONS.filter(p => hoursSince(p.aktualisiert) < 0.25 && (p.bot_id === "copier") === kop);   // nur Zeilen der letzten 15 Min.
     document.getElementById("pos-tag").textContent = fresh.length ? `${fresh.length} offen` : "";
     if(!fresh.length){ body.innerHTML = `<tr><td colspan="10" class="muted">Keine offenen Positionen (oder letzte Meldung älter als 15 Min.).</td></tr>`; return; }
     const name = id => ([...BOTS, COP].find(b => b && b.bot_id === id) || {}).name || id;
@@ -776,12 +796,29 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     return b ? b.startkapital : null;
   }
 
+  // Kopierer lebt: Melde-Skript meldet sich und der Listener schreibt seinen Herzschlag
+  function copLive(){
+    const h = healthOf("copier");
+    return !!COP && !!h && !!h.herzschlag && hoursSince(h.herzschlag) * 60 < 10 && botState(COP)[0] === "run";
+  }
+  const netSince = (T, from) => T.filter(t => new Date(t.geschlossen) >= from).reduce((a, t) => a + (t.gv || 0), 0);
+  const today0 = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+  function renderCopSummary(){
+    const big = document.getElementById("s-cop"), sub = document.getElementById("s-cop-sub");
+    if(!COP){ big.textContent = "–"; sub.textContent = "noch keine Meldung"; spark("sp-cop", [], "line"); return; }
+    const cur = COP.waehrung;
+    big.textContent = money(COP.kontostand, cur);
+    sub.textContent = `Heute ${money(netSince(COP_TR, today0()), cur, true)} · Woche ${money(netSince(COP_TR, wkMonday(0)), cur, true)} · ${COP.offene_positionen ?? 0} offen`;
+    let run = COP.startkapital || 0;
+    spark("sp-cop", [run, ...[...COP_TR].sort(byClose).map(t => run += t.gv)], "line");
+  }
+
   function renderCopier(){
     const body = document.getElementById("cop-body");
     if(!COP){ body.innerHTML = `<div class="sec-b muted">Noch keine Meldung vom Kopierer (das Melde-Skript läuft jede Minute).</div>`; return; }
     const cur = COP.waehrung, T = [...COP_TR].sort(byClose), st = stats(T);
     const h = healthOf("copier"), hbMin = h && h.herzschlag ? hoursSince(h.herzschlag) * 60 : null;
-    const live = hbMin != null && hbMin < 10 && botState(COP)[0] === "run";
+    const live = copLive();
     const rendite = COP.startkapital ? (COP.kontostand - COP.startkapital) / COP.startkapital * 100 : null;
     const seit = T.length ? new Date(T[0].eroeffnet || T[0].geschlossen) : null;
     document.getElementById("cop-tag").textContent = `${COP.broker || ""} · ${COP.is_demo ? "Demo" : "Echtgeld"}${seit ? " · seit " + seit.toLocaleDateString("de-DE") : ""}`;
@@ -927,7 +964,8 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       <td class="num ${r.p == null ? "" : cls(r.p)}" data-label="% vom Konto"><span>${n && r.p != null ? sgn(r.p, 2) + " %" : "–"}</span></td>
       <td class="num ${s.avgR == null ? "" : cls(s.avgR)}" data-label="Ø R"><span>${fmtR(s.avgR)}</span></td>
       <td class="num" data-label="Bester / Schlechtester"><span>${n ? tb(s.best, r.s.cur) + " / " + tb(s.worst, r.s.cur) : "–"}</span></td>
-      <td class="num" data-label="Verlustserie"><span>${n ? s.serie : "–"}</span></td></tr>`; }).join("") || `<tr><td colspan="9" class="muted">Keine Daten.</td></tr>`;
+      <td class="num" data-label="Verlustserie"><span>${n ? s.serie : "–"}</span></td>
+      <td class="wk-m">${n ? `${n} ${n === 1 ? "Trade" : "Trades"} · ${s.w}/${s.l}/${s.be} · Winrate ${s.wr == null ? "–" : pct(s.wr)} · Ø ${fmtR(s.avgR)} · Serie ${s.serie}` : "keine Trades"}</td></tr>`; }).join("") || `<tr><td colspan="9" class="muted">Keine Daten.</td></tr>`;
     // Diagramme: Tage der Woche und die letzten 8 Wochen, je Konto in % vom Kontostand zu Wochenbeginn
     const groups = main.map(r => ({name: r.s.name, color: r.s.color, src: r.s}));
     const legend = groups.map(g => `<span><span class="sw" style="background:var(${g.color})"></span>${esc(g.name)}</span>`).join("");
@@ -1053,6 +1091,10 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     const set = (id, txt, c) => { const el = document.getElementById(id); el.textContent = txt; if(c !== undefined) el.className = "big num " + c; };
     if(BOTS.length){
       const cur = BOTS[0].waehrung, gv = BOTS.reduce((a,b) => a + (b.gv_gesamt || 0), 0), op = BOTS.reduce((a,b) => a + (gvOffen(b) || 0), 0);
+      if(COP){
+        set("s2-cop", money(COP.kontostand, COP.waehrung), "");
+        document.getElementById("s2-cop-sub").textContent = `Woche ${money(netSince(COP_TR, wkMonday(0)), COP.waehrung, true)} · ${copLive() ? "läuft" : "kein Lebenszeichen"}`;
+      }
       set("s2-gv", money(gv, cur, true), cls(gv)); document.getElementById("s2-gv-sub").textContent = `${BOTS.length} Bots · abgeschlossene Trades`;
       set("s2-open", money(op, cur, true), cls(op)); document.getElementById("s2-open-sub").textContent = `${BOTS.reduce((a,b) => a + (b.offene_positionen || 0), 0)} offene Positionen`;
     }
@@ -1068,7 +1110,9 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     const bal = BOTS.reduce((a,b) => a + (b.kontostand || 0), 0), eqv = BOTS.reduce((a,b) => a + (b.equity || 0), 0);
     document.getElementById("s-bots").textContent = BOTS.length ? money(bal, cur) : "–";
     const open = BOTS.reduce((a,b) => a + (gvOffen(b) || 0), 0);
-    document.getElementById("s-bots-sub").textContent = BOTS.length ? `${BOTS.length} Bots · offen ${money(open, cur, true)}` : "noch keine Meldung";
+    const botTr = WK_TR.filter(t => t.bot_id !== "copier");
+    document.getElementById("s-bots-sub").textContent = BOTS.length ? `Heute ${money(netSince(botTr, today0()), cur, true)} · Woche ${money(netSince(botTr, wkMonday(0)), cur, true)} · offen ${money(open, cur, true)}` : "noch keine Meldung";
+    renderCopSummary();
     // Mini-Kurve: Summe der Kontostände je Tag, letzte 30 Tage
     const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10), byDay = {};
     EQUITY.filter(r => r.tag >= from).forEach(r => { byDay[r.tag] = (byDay[r.tag] || 0) + (r.kontostand || 0); });
@@ -1369,6 +1413,11 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       chip("st-bots", bad.length ? "bad" : "ok", bad.length ? `Bots · ${bad.length} ohne Meldung` : `Bots · ${BOTS.length}/${BOTS.length} melden sich`,
         BOTS.map(b => `${b.name}: letzte Meldung ${ago(b.zuletzt_gemeldet)}`).join("\n"));
     } else chip("st-bots", "", "Bots · keine Meldung");
+    if(COP){
+      const h = healthOf("copier"), live = copLive();
+      chip("st-cop", live ? "ok" : "bad", live ? "Kopierer · läuft" : "Kopierer · kein Lebenszeichen",
+        `Letzte Meldung ${ago(COP.zuletzt_gemeldet)}${h && h.herzschlag ? ", Herzschlag " + ago(h.herzschlag) : ""}`);
+    } else chip("st-cop", "", "Kopierer · keine Meldung");
     const pipesOn = PIPES.filter(p => p.zustand !== "aus");
     document.getElementById("st-pipe").hidden = !pipesOn.length;
     if(pipesOn.length){
@@ -1424,7 +1473,9 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     return [...saved, ...DEFAULT_ORDER.filter(id => !saved.includes(id))];
   }
   const viewOf = id => (board.querySelector(`[data-card="${id}"]`) || {}).dataset?.view;
-  const sameView = (order, id) => order.filter(x => viewOf(x) === viewOf(id));
+  // Im Trading-Bereich verschieben die Pfeile nur innerhalb des gerade sichtbaren Unterbereichs
+  const inSub = id => (board.querySelector(`[data-card="${id}"]`).dataset.sub || "").split(" ").includes(document.getElementById("app").dataset.sub);
+  const sameView = (order, id) => order.filter(x => viewOf(x) === viewOf(id) && (viewOf(id) !== "trading" || inSub(x)));
   function applyOrder(){
     const order = cardOrder();
     cards().forEach(c => { c.style.order = order.indexOf(c.dataset.card); });
@@ -1434,7 +1485,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       c.querySelector(".move.down").disabled = i === same.length - 1;
     });
   }
-  function redrawCharts(){ requestAnimationFrame(() => { renderChart(); renderOwn(); }); }
+  function redrawCharts(){ requestAnimationFrame(() => { renderChart(); renderOwn(); renderCopChart(); renderWeek(); renderBotSummary(); }); }
   cards().forEach(c => {
     const id = c.dataset.card, name = c.querySelector("h2").textContent.trim();
     c.querySelector(".sec-h").insertAdjacentHTML("beforeend",
@@ -1471,6 +1522,18 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     if(push) history.replaceState(null, "", v === "start" ? location.pathname : "#" + v);
     redrawCharts();
   }
+  // Unterbereiche im Trading (pro Gerät gemerkt); versteckte Diagramme haben keine Breite, daher neu zeichnen
+  const SUBS = ["kop","week","bots","own"];
+  function setSub(v){
+    if(!SUBS.includes(v)) v = "kop";
+    document.getElementById("app").dataset.sub = v;
+    document.querySelectorAll("#subnav button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === v)));
+    lsSet("cockpit_sub", v);
+    applyOrder(); renderPositions(); redrawCharts();
+  }
+  document.querySelectorAll("#subnav button").forEach(b => b.addEventListener("click", () => setSub(b.dataset.s)));
+  document.querySelectorAll(".strip [data-sub-go]").forEach(d => d.addEventListener("click", () => setSub(d.dataset.subGo)));
+  setSub(lsGet("cockpit_sub", "kop"));
   document.querySelectorAll("#views button").forEach(b => b.addEventListener("click", () => { setView(b.dataset.v, true); window.scrollTo(0, 0); }));
   document.querySelectorAll(".strip [data-go]").forEach(d => d.addEventListener("click", () => { setView(d.dataset.go, true); window.scrollTo(0, 0); }));
   window.addEventListener("hashchange", () => setView(location.hash.slice(1) || "start"));
