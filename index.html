@@ -120,6 +120,7 @@ tbody tr:last-child td{border-bottom:0}
 .chart-grid{display:grid;grid-template-columns:1fr 260px;gap:0;border-top:1px solid var(--line-2)}
 .chart-box{padding:14px 18px 10px;position:relative;min-width:0}
 .chart-box svg{display:block;width:100%;height:240px;overflow:visible}
+.chart-box svg#cop-eq{height:340px}
 .side{border-left:1px solid var(--line-2);padding:14px 18px;display:grid;gap:12px;align-content:start}
 .kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
 .kv span:first-child{color:var(--ink-2)}
@@ -380,6 +381,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   .strip{grid-template-columns:1fr 1fr}
   .strip>div:nth-child(3),.strip>div:nth-child(5){border-left:0}
   .strip>div:nth-child(n+3){border-top:1px solid var(--line-2)}
+  .strip>div:nth-child(3):last-child{grid-column:1/-1}
   .big{font-size:20px}
   .kpis{grid-template-columns:1fr 1fr}
   .logo small{display:none}
@@ -462,11 +464,10 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     <div data-go="youtube"><div class="lbl">YouTube · Abos</div><div class="big num" id="s2-abos">…</div><div class="sub" id="s2-abos-sub"></div></div>
   </section>
 
-  <section class="strip" data-view="trading" aria-label="Überblick Trading" style="--c:4">
+  <section class="strip" data-view="trading" aria-label="Überblick Trading" style="--c:3">
     <div data-sub-go="kop"><div class="lbl">Echtgeld · Kopierer</div><div class="big num" id="s-cop">…</div><div class="sub" id="s-cop-sub"></div><svg class="spark" id="sp-cop" aria-hidden="true"></svg></div>
-    <div data-sub-go="bots"><div class="lbl">Demo-Bots · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
-    <div data-sub-go="bots"><div class="lbl">Demo-Bots · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
-    <div data-sub-go="own"><div class="lbl">Eigenes Trading · 30 T</div><div class="big num" id="s-own">…</div><div class="sub" id="s-own-sub"></div><svg class="spark" id="sp-own" aria-hidden="true"></svg></div>
+    <div data-sub-go="bots"><div class="lbl">Eigenkapital-Bot · Kontostand</div><div class="big num" id="s-bots">…</div><div class="sub" id="s-bots-sub"></div><svg class="spark" id="sp-bots" aria-hidden="true"></svg></div>
+    <div data-sub-go="bots"><div class="lbl">Eigenkapital-Bot · G/V 30 Tage</div><div class="big num" id="s-pnl">…</div><div class="sub" id="s-pnl-sub"></div><svg class="spark" id="sp-pnl" aria-hidden="true"></svg></div>
   </section>
 
   <nav class="seg subnav" id="subnav" data-view="trading" aria-label="Unterbereiche Trading">
@@ -842,8 +843,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       <div class="sec-b"><div class="kpis cop-kpis" style="margin-bottom:0">${k.map(([l, v, c, s]) => `<div><div class="lbl">${l}</div><div class="big num ${c}">${v}</div><div class="sub">${esc(s)}</div></div>`).join("")}</div></div>
       <div class="chart-grid">
         <div class="chart-box" id="cop-box">
-          <div class="legend" style="margin:0 0 8px"><span style="color:var(--ink-3)">Kontostand nach jedem Trade</span><span><span class="sw" style="background:var(--good)"></span>Gewinn</span><span><span class="sw" style="background:var(--bad)"></span>Verlust</span><span><span class="sw" style="background:var(--ink-3)"></span>Break-even</span></div>
-          <svg id="cop-eq" role="img" aria-label="Kontostand des Kopierers nach jedem Trade"></svg>
+          <svg id="cop-eq" role="img" aria-label="Kontostand des Kopierers und Gewinn oder Verlust je Tag"></svg>
           <div class="tip" id="cop-tip" hidden></div>
         </div>
         <aside class="side"><div><div class="lbl">Nach Kanal</div>
@@ -864,57 +864,86 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     renderCopChart();
   }
 
-  // Kontostand als Treppenkurve über die Zeit, Punkt je abgeschlossenem Trade
+  // Oben Kontostand zum Tagesende als Linie, darunter G/V je Tag auf denselben Tagesspalten
   function renderCopChart(){
     const svg = document.getElementById("cop-eq"); if(!svg) return; svg.innerHTML = "";
-    const W = svg.clientWidth || 700, H = 240, m = {l:62, r:14, t:8, b:24};
+    const W = svg.clientWidth || 700, H = 340, m = {l:62, r:14};
+    const eq = {t:24, b:216}, day = {t:250, b:316};
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     if(!COP || !COP_TR.length){
       const tx = el("text",{x:W/2,y:H/2,"text-anchor":"middle","font-size":13,fill:cssVar("--ink-3")}); tx.textContent = "Noch keine abgeschlossenen Trades"; svg.appendChild(tx); return;
     }
-    const cur = COP.waehrung, T = [...COP_TR].sort(byClose), start = COP.startkapital || 0;
-    const t0 = new Date(T[0].eroeffnet || T[0].geschlossen).getTime();
-    let run = start; const pts = [{t: t0, v: start, tr: null}];
-    T.forEach(t => { run += t.gv; pts.push({t: new Date(t.geschlossen).getTime(), v: run, tr: t}); });
-    const t1 = Math.max(Date.now(), pts[pts.length-1].t);
-    let lo = Math.min(start, ...pts.map(p => p.v)), hi = Math.max(start, ...pts.map(p => p.v));
-    const pad = (hi - lo) * 0.08 || 10; lo -= pad; hi += pad;
-    const x = t => m.l + (t - t0) / ((t1 - t0) || 1) * (W - m.l - m.r), y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+    const cur = COP.waehrung, sym = CUR[cur] || cur || "", T = [...COP_TR].sort(byClose), start = COP.startkapital || 0;
+    const ink = cssVar("--ink-3"), label = (x, y, txt, anchor, size) => { const t = el("text",{x,y,"text-anchor":anchor,"font-size":size || 11,fill:ink}); t.textContent = txt; svg.appendChild(t); return t; };
+    const num = (x, y, txt) => label(x, y, txt, "end").setAttribute("font-family","JetBrains Mono, monospace");
+    const t0 = new Date(T[0].eroeffnet || T[0].geschlossen).getTime(), now = Math.max(Date.now(), new Date(T[T.length-1].geschlossen).getTime());
+    // Kalendertage als gleich breite Spalten, auch ohne Trades
+    const days = [], c = new Date(t0); c.setHours(0,0,0,0);
+    while(c.getTime() <= now){ const a = c.getTime(); c.setDate(c.getDate() + 1); days.push({a, b: c.getTime(), T: []}); }
+    T.forEach(t => { const g = new Date(t.geschlossen).getTime(), d = days.find(d => g >= d.a && g < d.b); if(d) d.T.push(t); });
+    let run = start;
+    days.forEach(d => { const open = run; let low = run; d.T.forEach(t => { run += t.gv; low = Math.min(low, run); }); d.net = run - open; d.open = open; d.end = run; d.low = low; });
+    const tA = days[0].a, tB = days[days.length-1].b, x = t => m.l + (t - tA) / (tB - tA) * (W - m.l - m.r), mid = d => (x(d.a) + x(d.b)) / 2;
+
+    // Kontostand
+    label(m.l, 12, "Kontostand", "start", 12);
+    let lo = Math.min(start, ...days.map(d => d.end)), hi = Math.max(start, ...days.map(d => d.end));
+    const range = (hi - lo) || 10; lo -= range * 0.14; hi += range * 0.14;
+    const y = v => eq.t + (hi - v) / (hi - lo) * (eq.b - eq.t);
     const step = niceStep((hi - lo) / 4);
     for(let v = Math.ceil(lo / step) * step; v <= hi; v += step){
       svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:cssVar("--grid")}));
-      const tx = el("text",{x:m.l-8,y:y(v)+4,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3"),"font-family":"JetBrains Mono, monospace"});
-      tx.textContent = Math.round(v).toLocaleString("de-DE") + " " + (CUR[cur] || cur || ""); svg.appendChild(tx);
+      num(m.l-8, y(v)+4, Math.round(v).toLocaleString("de-DE") + " " + sym);
     }
-    svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(start),y2:y(start),stroke:cssVar("--ink-3"),"stroke-dasharray":"4 4"}));
-    const st = el("text",{x:W-m.r,y:y(start)-5,"text-anchor":"end","font-size":11,fill:cssVar("--ink-3")}); st.textContent = "Start"; svg.appendChild(st);
-    for(let i = 0; i < 5; i++){
-      const tt = t0 + (t1 - t0) * i / 4, tx = el("text",{x:x(tt),y:H-6,"text-anchor":i===0?"start":i===4?"end":"middle","font-size":11,fill:cssVar("--ink-3")});
-      tx.textContent = fdm(new Date(tt)); svg.appendChild(tx);
-    }
-    let d = `M ${x(pts[0].t).toFixed(1)} ${y(pts[0].v).toFixed(1)}`;
-    for(let i = 1; i < pts.length; i++) d += ` L ${x(pts[i].t).toFixed(1)} ${y(pts[i-1].v).toFixed(1)} L ${x(pts[i].t).toFixed(1)} ${y(pts[i].v).toFixed(1)}`;
-    d += ` L ${x(t1).toFixed(1)} ${y(pts[pts.length-1].v).toFixed(1)}`;
-    svg.appendChild(el("path",{d: d + ` L ${x(t1).toFixed(1)} ${y(start).toFixed(1)} L ${x(t0).toFixed(1)} ${y(start).toFixed(1)} Z`, fill:cssVar(COP_COLOR), opacity:.08}));
-    svg.appendChild(el("path",{d, fill:"none", stroke:cssVar(COP_COLOR), "stroke-width":2, "stroke-linejoin":"round"}));
-    pts.slice(1).forEach(p => svg.appendChild(el("circle",{cx:x(p.t),cy:y(p.v),r:3,fill:cssVar(p.tr.gv > 0 ? "--good" : p.tr.gv < 0 ? "--bad" : "--ink-3"),stroke:cssVar("--panel"),"stroke-width":1})));
-    const cross = el("line",{y1:m.t,y2:H-m.b,stroke:cssVar("--ink-3"),"stroke-dasharray":"3 3",visibility:"hidden"}); svg.appendChild(cross);
-    const hit = el("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:"transparent"}); svg.appendChild(hit);
+    const band = el("rect",{y:eq.t,height:day.b-eq.t,fill:ink,opacity:.1,visibility:"hidden"}); svg.appendChild(band);
+    svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y(start),y2:y(start),stroke:ink,"stroke-dasharray":"4 4"}));
+    label(W-m.r, y(start)-5, "Start " + money(start, cur), "end");
+    const last = days[days.length-1], lx = mid(last), ly = y(last.end);
+    const line = `M ${x(tA).toFixed(1)} ${y(start).toFixed(1)} ` + days.map(d => `L ${mid(d).toFixed(1)} ${y(d.end).toFixed(1)}`).join(" ");
+    svg.appendChild(el("path",{d: line, fill:"none", stroke:cssVar(COP_COLOR), "stroke-width":2, "stroke-linejoin":"round"}));
+    svg.appendChild(el("circle",{cx:lx,cy:ly,r:4,fill:cssVar(COP_COLOR),stroke:cssVar("--panel"),"stroke-width":2}));
+    // Wert dort, wo die Linie nicht herkommt: steigend darüber, fallend darunter
+    const endTx = el("text",{x:W-m.r,y:ly + (last.net >= 0 ? -10 : 19),"text-anchor":"end","font-size":12,"font-weight":600,fill:cssVar("--ink")});
+    endTx.textContent = money(last.end, cur); svg.appendChild(endTx);
+
+    // G/V je Tag
+    label(m.l, day.t-10, "Gewinn / Verlust je Tag", "start", 12);
+    const dHi = Math.max(0, ...days.map(d => d.net)), dLo = Math.min(0, ...days.map(d => d.net));
+    const yd = v => day.t + (dHi - v) / ((dHi - dLo) || 1) * (day.b - day.t);
+    if(dHi > 0) num(m.l-8, yd(dHi)+8, money(dHi, cur, true).replace(/,\d+/, ""));
+    if(dLo < 0) num(m.l-8, yd(dLo), money(dLo, cur, true).replace(/,\d+/, ""));
+    days.forEach(d => {
+      if(!d.net) return;
+      const slot = x(d.b) - x(d.a), w = Math.min(slot * 0.62, 30), bx = x(d.a) + (slot - w) / 2, up = d.net > 0, base = yd(0), top = yd(d.net);
+      const r = Math.min(4, w / 2, Math.abs(base - top)), s = up ? 1 : -1;
+      svg.appendChild(el("path",{d:`M ${bx} ${base} L ${bx} ${top+s*r} Q ${bx} ${top} ${bx+r} ${top} L ${bx+w-r} ${top} Q ${bx+w} ${top} ${bx+w} ${top+s*r} L ${bx+w} ${base} Z`, fill:cssVar(up ? "--good" : "--bad")}));
+    });
+    svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:yd(0),y2:yd(0),stroke:ink}));
+    const every = Math.max(1, Math.ceil(days.length / Math.max(2, Math.floor((W - m.l - m.r) / 56))));
+    days.forEach((d, i) => { if(i % every === 0) label(mid(d), H-6, fdm(new Date(d.a)), "middle"); });
+
+    // Hover: ganzer Tag
+    const mark = el("circle",{r:4,fill:cssVar(COP_COLOR),stroke:cssVar("--panel"),"stroke-width":2,visibility:"hidden"}); svg.appendChild(mark);
+    const hit = el("rect",{x:m.l,y:eq.t,width:W-m.l-m.r,height:day.b-eq.t,fill:"transparent"}); svg.appendChild(hit);
     const tip = document.getElementById("cop-tip"), box = document.getElementById("cop-box");
     hit.addEventListener("pointermove", ev => {
       const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
-      let best = pts[1]; pts.slice(1).forEach(p => { if(Math.abs(x(p.t) - px) < Math.abs(x(best.t) - px)) best = p; });
-      cross.setAttribute("x1", x(best.t)); cross.setAttribute("x2", x(best.t)); cross.setAttribute("visibility","visible");
-      const t = best.tr;
-      tip.innerHTML = `<b>${new Date(t.geschlossen).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</b>
-        <div><span>${esc((t.symbol || "").replace(/\.s$/, ""))} ${t.richtung === "long" ? "▲" : "▼"} · ${esc(KANAL[kanalOf(t)])}</span><span class="num ${cls(t.gv)}">${money(t.gv, cur, true)}</span></div>
-        <div><span>Kontostand</span><span class="num">${money(best.v, cur)}</span></div>`;
+      const dd = days.find(d => px < x(d.b)) || days[days.length-1], st = stats(dd.T);
+      band.setAttribute("x", x(dd.a)); band.setAttribute("width", x(dd.b) - x(dd.a)); band.setAttribute("visibility","visible");
+      mark.setAttribute("cx", mid(dd)); mark.setAttribute("cy", y(dd.end)); mark.setAttribute("visibility","visible");
+      const kan = Object.keys(KANAL).map(k => [k, dd.T.filter(t => kanalOf(t) === k)]).filter(([, l]) => l.length);
+      tip.innerHTML = `<b>${new Date(dd.a).toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})}</b>
+        <div><span>G/V am Tag</span><span class="num ${cls(dd.net)}">${money(dd.net, cur, true)}</span></div>
+        <div><span>Trades</span><span class="num">${dd.T.length ? `${dd.T.length} (${st.w} G · ${st.l} V)` : "keine"}</span></div>
+        ${kan.map(([k, l]) => { const v = l.reduce((a, t) => a + t.gv, 0); return `<div><span>${esc(KANAL[k])}</span><span class="num ${cls(v)}">${money(v, cur, true)}</span></div>`; }).join("")}
+        <div><span>Kontostand Tagesende</span><span class="num">${money(dd.end, cur)}</span></div>
+        ${dd.low < Math.min(dd.open, dd.end) - 0.005 ? `<div><span>Tief am Tag</span><span class="num">${money(dd.low, cur)}</span></div>` : ""}`;
       tip.hidden = false;
       const br = box.getBoundingClientRect(); let left = ev.clientX - br.left + 14;
       if(left + tip.offsetWidth > br.width - 8) left = ev.clientX - br.left - tip.offsetWidth - 14;
       tip.style.left = left + "px"; tip.style.top = (ev.clientY - br.top - 20) + "px";
     });
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility","hidden"); });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; band.setAttribute("visibility","hidden"); mark.setAttribute("visibility","hidden"); });
   }
 
   // Quellen des Wochenrückblicks: Kopierer je Kanal + gesamt, danach jeder Bot
@@ -1106,27 +1135,25 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     }
   }
   function renderBotSummary(){
-    const cur = BOTS[0] && BOTS[0].waehrung;
-    const bal = BOTS.reduce((a,b) => a + (b.kontostand || 0), 0), eqv = BOTS.reduce((a,b) => a + (b.equity || 0), 0);
-    document.getElementById("s-bots").textContent = BOTS.length ? money(bal, cur) : "–";
-    const open = BOTS.reduce((a,b) => a + (gvOffen(b) || 0), 0);
-    const botTr = WK_TR.filter(t => t.bot_id !== "copier");
-    document.getElementById("s-bots-sub").textContent = BOTS.length ? `Heute ${money(netSince(botTr, today0()), cur, true)} · Woche ${money(netSince(botTr, wkMonday(0)), cur, true)} · offen ${money(open, cur, true)}` : "noch keine Meldung";
+    // Trading-Kacheln zeigen nur den Eigenkapital-Bot
+    const e = BOTS.find(b => b.bot_id === "equity"), cur = e && e.waehrung;
+    document.getElementById("s-bots").textContent = e ? money(e.kontostand, cur) : "–";
+    const botTr = WK_TR.filter(t => t.bot_id === "equity");
+    document.getElementById("s-bots-sub").textContent = e ? `Heute ${money(netSince(botTr, today0()), cur, true)} · Woche ${money(netSince(botTr, wkMonday(0)), cur, true)} · offen ${money(gvOffen(e) || 0, cur, true)}` : "noch keine Meldung";
     renderCopSummary();
-    // Mini-Kurve: Summe der Kontostände je Tag, letzte 30 Tage
-    const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10), byDay = {};
-    EQUITY.filter(r => r.tag >= from).forEach(r => { byDay[r.tag] = (byDay[r.tag] || 0) + (r.kontostand || 0); });
-    spark("sp-bots", Object.keys(byDay).sort().map(d => byDay[d]), "line");
-    const pnl = BOTS.reduce((a,b) => a + (b.gv_30t || 0), 0);
-    const el = document.getElementById("s-pnl"); el.textContent = money(pnl, cur, true); el.className = "big num " + cls(pnl);
-    const since = Date.now() - 30*864e5;
-    const n = TRADES.filter(t => new Date(t.geschlossen) >= since).length;
-    document.getElementById("s-pnl-sub").textContent = `${n} Trades über alle Bots`;
+    // Mini-Kurve: Kontostand je Tag, letzte 30 Tage
+    const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10);
+    spark("sp-bots", EQUITY.filter(r => r.bot_id === "equity" && r.tag >= from).sort((a,b) => a.tag < b.tag ? -1 : 1).map(r => r.kontostand || 0), "line");
+    const pnl = e ? e.gv_30t || 0 : 0;
+    const el = document.getElementById("s-pnl"); el.textContent = e ? money(pnl, cur, true) : "–"; el.className = "big num " + cls(pnl);
+    const since = Date.now() - 30*864e5, eqTr = TRADES.filter(t => t.bot_id === "equity");
+    const n = eqTr.filter(t => new Date(t.geschlossen) >= since).length;
+    document.getElementById("s-pnl-sub").textContent = `${n} Trades`;
     // Mini-Kurve: kumulierter G/V der letzten 30 Tage (Tagesschritte)
     const cum = []; let run = 0;
     for(let i = 29; i >= 0; i--){
       const d0 = new Date(Date.now() - i*864e5).toISOString().slice(0,10);
-      run += TRADES.filter(t => String(t.geschlossen).slice(0,10) === d0).reduce((a,t) => a + (t.gv || 0), 0);
+      run += eqTr.filter(t => String(t.geschlossen).slice(0,10) === d0).reduce((a,t) => a + (t.gv || 0), 0);
       cum.push(run);
     }
     spark("sp-pnl", n ? cum : [], "line");
@@ -1238,15 +1265,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
       const rows = await sb("journal_data?select=value&key=eq.cockpitSummary");
       OWN = rows.length ? rows[0].value : null;
     }catch(e){ OWN = null; document.getElementById("own-kpis").innerHTML = `<div class="err">Journal-Zahlen konnten nicht geladen werden (${esc(e.message)}).</div>`; }
-    renderOwnSummary(); renderOwn(); renderJournal(); renderStatus();
-  }
-  function renderOwnSummary(){
-    const own = document.getElementById("s-own"), sub = document.getElementById("s-own-sub");
-    if(!OWN){ own.textContent = "–"; sub.textContent = "Journal einmal öffnen"; spark("sp-own", [], "bars"); return; }
-    const d = OWN.d30;
-    own.textContent = usd(d.net, true); own.className = "big num " + cls(d.net);
-    sub.textContent = `${d.trades} Trades · Winrate ${pct(d.winRate)}`;
-    spark("sp-own", (OWN.weeks || []).map(w => w.net), "bars");
+    renderOwn(); renderJournal(); renderStatus();
   }
   function renderOwn(){
     const kp = document.getElementById("own-kpis"), svg = document.getElementById("own-bars");
@@ -1549,9 +1568,9 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   const pick = tr => { if(!tr || !tr.dataset.id) return; selected = tr.dataset.id; renderTable(); renderDetail(); renderChart(); };
   tbody.addEventListener("click", e => pick(e.target.closest("tr")));
   tbody.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(e.target.closest("tr")); }});
-  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); renderCopChart(); renderWeek(); }, 120); });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderChart(); renderOwn(); renderBotSummary(); renderCopChart(); renderWeek(); }, 120); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { renderChart(); renderOwn(); });
-  new MutationObserver(() => { renderChart(); renderOwn(); renderBotSummary(); renderOwnSummary(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+  new MutationObserver(() => { renderChart(); renderOwn(); renderBotSummary(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
 
   // ---------- Farbschema: System / Hell / Dunkel (pro Gerät gemerkt) ----------
   const THEMES = ["system","light","dark"];
