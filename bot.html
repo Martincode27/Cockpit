@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Bot-Cockpit · Cockpit</title>
+<meta name="theme-color" content="#f4f5f7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<script>try{var t=localStorage.getItem("cockpit_theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel-2:#f8f9fb; --line:#e3e5ea; --line-2:#eceef2;
+  --ink:#14161b; --ink-2:#4a4f5c; --ink-3:#7c8190;
+  --brand:#c2272d; --acc:#2a78d6;
+  --good:#0f8a4f; --good-soft:#e3f4ea; --bad:#d23b3b; --bad-soft:#fbe7e7; --warn:#b77700; --warn-soft:#fbf1dc;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+    --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98; --brand:#ef5a5f; --acc:#3987e5;
+    --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1115; --panel:#171a20; --panel-2:#1c2027; --line:#2a2f38; --line-2:#232730;
+  --ink:#f1f2f5; --ink-2:#b4b8c3; --ink-3:#848a98; --brand:#ef5a5f; --acc:#3987e5;
+  --good:#3cc47e; --good-soft:#15301f; --bad:#f0625f; --bad-soft:#3a1c1c; --warn:#e2a63a; --warn-soft:#352a14;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:18px 60px;display:grid;gap:14px}
+.wrap > *{min-width:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.logo i{width:12px;height:12px;border-radius:3px;background:var(--brand);display:block;transform:rotate(45deg)}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border:1px solid var(--line);background:var(--panel);border-radius:8px;text-decoration:none;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.link:hover,.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.btn.big{padding:14px;font-size:16px;border-radius:12px;width:100%}
+.muted{color:var(--ink-3)} .pos{color:var(--good)} .neg{color:var(--bad)} .warnc{color:var(--warn)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.card h2{margin:0 0 4px;font-size:15px;font-weight:650;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card .sub{margin:0 0 12px;font-size:12.5px;color:var(--ink-3)}
+.hint{font-size:12px;color:var(--ink-3)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13px;padding:7px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:9px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--brand);background:var(--panel-2);font-weight:600}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile span{display:block;color:var(--ink-3);font-size:12px}
+.tile b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.tile small{display:block;color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.tile.hero{grid-column:span 2;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tile.hero span,.tile.hero small{color:var(--bg);opacity:.7}
+.tile.hero b{font-size:40px}
+@media(max-width:520px){.tile.hero{grid-column:span 2}.tile b{font-size:22px}.tile.hero b{font-size:34px}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--ink-3);font-size:11px;font-family:var(--sans)}
+svg .grid{stroke:var(--line-2);stroke-width:1}
+svg .zero{stroke:var(--line);stroke-dasharray:4 4}
+svg path.ln{fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.hbars{display:grid;gap:5px}
+.hb{display:grid;grid-template-columns:78px 1fr 64px;gap:8px;align-items:center;font-size:12.5px}
+.hb .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+.hb .bar{height:14px;border-radius:4px;background:var(--line-2);position:relative}
+.hb .bar i{position:absolute;top:0;bottom:0;border-radius:4px}
+.hb .vl{text-align:right;font-family:var(--mono);font-size:12px}
+.hb.wide{grid-template-columns:minmax(120px,1.3fr) 2.2fr 74px}
+.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+.mx th{font-weight:500;color:var(--ink-3);font-size:10.5px;padding:0 0 6px;text-align:center;white-space:nowrap}
+.mx th.l{text-align:left}
+.mx td{padding:4px 0;border-top:1px solid var(--line-2);text-align:center}
+.mx td.l{text-align:left;padding-right:8px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.mx tr.sel td{background:var(--panel-2)}
+.dot{display:inline-block;width:17px;height:17px;border-radius:50%;vertical-align:middle}
+.dot.ok{background:var(--good)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.na{background:var(--line)}
+.leg-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.chk{display:grid;grid-template-columns:20px minmax(110px,1fr) auto;gap:4px 10px;align-items:start;padding:9px 0;border-top:1px solid var(--line-2)}
+.chk .dot{width:13px;height:13px;margin-top:3px}
+.chk .nm{font-weight:600;font-size:13px}
+.chk .dt{grid-column:2/4;font-size:12px;color:var(--ink-3)}
+.chk .vl{font-family:var(--mono);font-size:13px;text-align:right;white-space:nowrap}
+.chk .ex{grid-column:2/4;font-size:12px;color:var(--ink-2);background:var(--panel-2);border-radius:8px;padding:8px 10px;margin-top:2px}
+.chk .ex b{font-weight:600}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--panel-2);color:var(--ink-2)}
+.chip.ok{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin:8px 0 12px}
+.kv div{background:var(--panel-2);border-radius:10px;padding:8px 11px}.kv span{display:block;color:var(--ink-3);font-size:11.5px}.kv b{font-size:17px}
+.spark{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.spark .sp{background:var(--panel-2);border-radius:10px;padding:8px 10px;cursor:pointer;border:1px solid transparent}
+.spark .sp:hover{border-color:var(--line)}
+.spark .sp b{display:block;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:8px}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:9px 12px;font-size:12.5px}
+.raus{display:grid;gap:8px}
+.raus div{display:grid;grid-template-columns:minmax(130px,1.2fr) 56px 2.4fr;gap:8px;font-size:12.5px;padding:7px 0;border-top:1px solid var(--line-2)}
+@media(max-width:620px){.raus div{grid-template-columns:1fr}}
+.login{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);padding:16px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+.f{display:grid;gap:5px;font-size:12.5px;color:var(--ink-2)}
+.f input{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.err{color:var(--bad);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <form id="login-form" autocomplete="on">
+    <div class="logo"><i></i>Bot-Cockpit</div>
+    <div class="hint">Gleiche Anmeldung wie im Cockpit.</div>
+    <label class="f">E-Mail<input id="login-email" type="email" autocomplete="username" required></label>
+    <label class="f">Passwort<input id="login-pass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="login-err" role="alert" hidden></div>
+    <button type="submit" class="btn primary big" id="login-btn">Anmelden</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="logo"><i></i>Bot-Cockpit <span class="muted" style="font-size:13px;font-weight:500" id="stand"></span></div>
+    <nav class="links">
+      <a class="link" href="index.html">◆ Cockpit</a>
+      <a class="link" href="labor.html">Labor</a>
+      <button type="button" class="link" id="theme-btn" aria-label="Farbschema wechseln"></button>
+    </nav>
+  </header>
+
+  <div class="tabs" role="tablist" id="main-tabs"></div>
+  <div id="msg" class="card muted">Wird geladen …</div>
+
+  <!-- Überblick -->
+  <section data-v="ueber" hidden>
+    <div class="grid4" id="tiles"></div>
+    <div class="two" style="margin-top:14px">
+      <div class="card"><h2>Live-Konto · Eigenkapital-Bot</h2><p class="sub">Kontostand am Tagesende (Demo-Konto, echte Marktdaten)</p><div id="live-kpi" class="kv"></div><svg id="live-eq" viewBox="0 0 600 220" role="img" aria-label="Kontostand je Tag"></svg></div>
+      <div class="card"><h2>Backtest · letzte Jahre</h2><p class="sub">Alle aktuellen Beine zusammen, mit realen Kosten. Rückblick, keine Garantie.</p><div class="kv" id="bt-kv"></div><div id="bt-cum" class="hbars"></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h2>Ampel aller Beine</h2><p class="sub">Eine Zeile je Bein, eine Spalte je Tiefenprüfung. Zeile antippen = Details.</p><div id="mx-ueber"></div></div>
+  </section>
+
+  <!-- Beine & Prüfungen -->
+  <section data-v="beine" hidden>
+    <div class="card"><h2>Beine und Tiefenprüfungen</h2><p class="sub">Grün = bestanden, gelb = Hinweis, rot = durchgefallen, grau = nicht prüfbar. Bein antippen für alle Werte mit Erklärung.</p><div id="mx"></div><div class="legend" id="mx-legend"></div></div>
+    <div class="card" id="leg-detail" style="margin-top:14px"></div>
+  </section>
+
+  <!-- Grafiken -->
+  <section data-v="graf" hidden>
+    <div class="card"><h2>Jahr für Jahr</h2><p class="sub">Je ein Abschnitt von 12 Monaten, rückwärts ab heute. Backtest des heutigen Portfolios (so viele Beine, wie damals schon Daten hatten).</p>
+      <div class="two"><div><div class="hint" style="margin-bottom:6px">Rendite (%)</div><div class="hbars" id="g-ret"></div></div><div><div class="hint" style="margin-bottom:6px">Max-Drawdown (%)</div><div class="hbars" id="g-dd"></div></div></div>
+      <div style="margin-top:14px"><div class="hint" style="margin-bottom:6px">Calmar (Rendite ÷ Max-Drawdown)</div><div class="hbars" id="g-cal"></div></div>
+      <div class="hint" style="margin-top:10px" id="g-note"></div></div>
+    <div class="card" style="margin-top:14px"><h2>Frühe gegen späte Hälfte</h2><p class="sub">Ø R je Trade in der ersten und zweiten Hälfte der Historie. Beine, die später schlechter werden, fallen sofort auf.</p><div class="hbars" id="g-es"></div><div class="legend"><span><b style="background:var(--ink-3)"></b>frühe Hälfte</span><span><b style="background:var(--acc)"></b>späte Hälfte</span></div></div>
+    <div class="card" style="margin-top:14px"><h2>R-Kurven je Bein</h2><p class="sub">Kumulierte Gewinne und Verluste in R (1 R = das Risiko eines Trades). Antippen öffnet das Bein.</p><div class="spark" id="g-spark"></div></div>
+  </section>
+
+  <!-- Suchraum -->
+  <section data-v="such" hidden>
+    <div class="card"><h2>Wie viel wurde getestet?</h2><p class="sub">Jede Zeile in den Ergebnis-Dateien der Forschungsrunden ist eine getestete Variante (Strategie × Markt × Zeitrahmen × Parameter). Die Zahl ist eine <b>Untergrenze</b>: Zufalls-Kontrolläufe, Folds und Bootstrap kommen je Variante noch dazu.</p>
+      <div class="grid4" id="s-tiles"></div><div class="hbars" id="s-bars" style="margin-top:14px"></div>
+      <div class="warnbox" style="margin-top:14px" id="s-warn"></div></div>
+    <div class="card" style="margin-top:14px"><h2>Ausgeschiedene Beine</h2><p class="sub">Was die Prüfungen aussortiert haben, und warum.</p><div class="raus" id="raus"></div></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  // ---------- Grundlagen (wie die anderen Cockpit-Seiten) ----------
+  const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT"; // öffentlich gedacht, Schutz über Login + RLS
+  const SESSION_KEY = "cockpit_session";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmt = (v, d = 1) => v == null || isNaN(v) ? "–" : (+v).toLocaleString("de-DE", {minimumFractionDigits: d, maximumFractionDigits: d});
+  const fint = v => v == null ? "–" : Math.round(v).toLocaleString("de-DE");
+  const sgn = (v, d = 2) => v == null ? "–" : (v > 0 ? "+" : "") + fmt(v, d);
+  const cls = v => v > 0 ? "pos" : v < 0 ? "neg" : "";
+  const COL = {ok:"var(--good)", warn:"var(--warn)", bad:"var(--bad)", na:"var(--line)"};
+
+  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function saveSession(s){ try{ s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); }catch(e){} }
+  async function authRequest(grant, body){
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {method:"POST", headers:{apikey:SUPABASE_KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const d = await res.json().catch(() => ({}));
+    if(!res.ok) throw Object.assign(new Error(d.error_description || d.msg || d.message || ("HTTP " + res.status)), {status:res.status});
+    const s = {access_token:d.access_token, refresh_token:d.refresh_token, expires_at:d.expires_at || Math.floor(Date.now()/1000) + (d.expires_in || 3600), email:d.user && d.user.email};
+    saveSession(s); return s;
+  }
+  async function validSession(){
+    const s = loadSession();
+    if(!s || !s.refresh_token) return null;
+    if(s.expires_at - 60 > Date.now()/1000) return s;
+    try{ return await authRequest("refresh_token", {refresh_token:s.refresh_token}); }
+    catch(e){ if(e.status >= 400 && e.status < 500) saveSession(null); return null; }
+  }
+  async function sb(path){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token}});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }
+  function showLogin(){ $("#app").hidden = true; $("#login").hidden = false; }
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault(); const err = $("#login-err"); err.hidden = true; $("#login-btn").disabled = true;
+    try{ await authRequest("password", {email:$("#login-email").value.trim(), password:$("#login-pass").value}); $("#login").hidden = true; start(); }
+    catch(x){ err.textContent = x.status === 400 ? "E-Mail oder Passwort stimmt nicht." : ("Anmeldung nicht möglich: " + x.message); err.hidden = false; }
+    finally{ $("#login-btn").disabled = false; }
+  });
+  function themeBtn(){
+    const b = $("#theme-btn"), cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    b.textContent = cur === "dark" ? "☀ Hell" : "☾ Dunkel";
+    b.onclick = () => { const n = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = n; try{ localStorage.setItem("cockpit_theme", n); }catch(e){} themeBtn(); if(D) show(view); };
+  }
+
+  // ---------- Daten ----------
+  let D = null, LIVE = null, view = "ueber", sel = null;
+  const TABS = [["ueber", "Überblick"], ["beine", "Beine & Prüfungen"], ["graf", "Grafiken"], ["such", "Suchraum"]];
+  const short = l => { const [s, tf, st] = l.split(":"); return `${s} ${tf} ${st.replace(/_/g, " ")}`; };
+  const CK = {kosten:"Kosten", folds:"Folds", nachbar:"Nachb.", boot:"Boot.", zufall:"Zufall", rollover:"Roll.", placebo:"Plac.", jung:"3 J.", seite:"L/S", beitrag:"Beitr.", live:"Live"};
+
+  async function start(){
+    $("#login").hidden = true; $("#app").hidden = false; themeBtn();
+    try{
+      let payload = null;
+      if(window.__DEV_PAYLOAD) payload = window.__DEV_PAYLOAD;                            // nur lokale Vorschau (Testseite setzt die Daten selbst)
+      if(!payload){
+        const [rows, st, eq] = await Promise.all([sb("lab_snapshot?id=eq.bot_cockpit&select=payload,aktualisiert"), sb("bot_status?bot_id=eq.equity&select=*"), sb("bot_equity?bot_id=eq.equity&select=tag,kontostand,equity&order=tag")]);
+        if(!rows.length){ $("#msg").textContent = "Noch keine Daten. Auf dem PC export_bot_cockpit.py ausführen."; return; }
+        payload = rows[0].payload; LIVE = {status:st[0] || null, equity:eq};
+      }
+      D = payload; $("#msg").hidden = true;
+      $("#stand").textContent = "Daten: " + D.stand.replace("T", " ").slice(0, 16) + " UTC";
+      sel = D.beine[0] && D.beine[0].label; show(view);
+    }catch(e){ if(e.message !== "nicht angemeldet") $("#msg").textContent = "Daten konnten nicht geladen werden (" + e.message + ")."; }
+  }
+
+  function tabs(){
+    $("#main-tabs").innerHTML = TABS.map(([k, n]) => `<button type="button" class="tab" role="tab" aria-selected="${k === view}" data-k="${k}">${n}</button>`).join("");
+    $("#main-tabs").querySelectorAll(".tab").forEach(t => t.onclick = () => show(t.dataset.k));
+  }
+  function show(v){
+    view = v; tabs(); document.querySelectorAll("[data-v]").forEach(s => s.hidden = s.dataset.v !== v || !D);
+    if(!D) return;
+    ({ueber:drawUeber, beine:drawBeine, graf:drawGraf, such:drawSuch})[v]();
+  }
+
+  // ---------- Bausteine ----------
+  function hbars(el, items, o = {}){
+    // items: [{nm, v, txt, color}], Balken ab Mitte wenn negative Werte vorkommen
+    const vals = items.map(i => i.v), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals), span = (hi - lo) || 1;
+    const zero = (0 - lo) / span * 100;
+    el.innerHTML = items.map(i => {
+      const a = Math.min(i.v, 0), b = Math.max(i.v, 0), l = (a - lo) / span * 100, w = Math.max(.6, (b - a) / span * 100);
+      return `<div class="hb ${o.wide ? "wide" : ""}"><span class="nm" title="${esc(i.title || i.nm)}">${esc(i.nm)}</span><div class="bar"><i style="left:${l}%;width:${w}%;background:${i.color || (i.v >= 0 ? "var(--good)" : "var(--bad)")}"></i>${lo < 0 ? `<u style="position:absolute;left:${zero}%;top:-2px;bottom:-2px;width:1px;background:var(--ink-3)"></u>` : ""}</div><span class="vl ${o.cls ? cls(i.v) : ""}">${i.txt}</span></div>`;
+    }).join("");
+  }
+  function lineChart(svg, ys, o = {}){
+    const W = 600, H = o.h || 220, L = 44, R = 10, T = 10, B = 22, n = ys.length;
+    if(n < 2){ svg.innerHTML = `<text x="10" y="30">Noch zu wenig Daten</text>`; return; }
+    let y0 = Math.min(...ys, o.zero ? 0 : Infinity), y1 = Math.max(...ys, o.zero ? 0 : -Infinity); const pd = (y1 - y0) * .08 || 1; y0 -= pd; y1 += pd;
+    const X = i => L + i / (n - 1) * (W - L - R), Y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+    const ticks = [0, 1, 2, 3, 4].map(k => y0 + (y1 - y0) * k / 4);
+    let s = ticks.map(t => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end">${o.fmt ? o.fmt(t) : fint(t)}</text>`).join("");
+    if(o.zero && y0 < 0 && y1 > 0) s += `<line class="zero" x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+    s += `<path class="ln" stroke="${o.color || "var(--acc)"}" d="${ys.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join("")}"/>`;
+    if(o.x0) s += `<text x="${L}" y="${H - 5}">${esc(o.x0)}</text><text x="${W - R}" y="${H - 5}" text-anchor="end">${esc(o.x1 || "heute")}</text>`;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = s;
+  }
+  function sparkSvg(cum, color){
+    const W = 200, H = 54, n = cum.length; if(n < 2) return "";
+    const y0 = Math.min(0, ...cum), y1 = Math.max(0, ...cum), X = i => 2 + i / (n - 1) * (W - 4), Y = v => 3 + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - 6);
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:54px"><line class="zero" x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}"/><path class="ln" stroke="${color}" d="${cum.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join("")}"/></svg>`;
+  }
+  function matrix(el, onClick){
+    const keys = D.pruefungen.map(p => p.k);
+    el.innerHTML = `<div style="overflow-x:auto"><table class="mx"><thead><tr><th class="l">Bein</th>${keys.map(k => `<th title="${esc(D.pruefungen.find(p => p.k === k).name)}">${CK[k] || k}</th>`).join("")}</tr></thead><tbody>${D.beine.map(b =>
+      `<tr data-l="${esc(b.label)}" class="${b.label === sel ? "sel" : ""}"><td class="l" title="${esc(b.label)}">${esc(short(b.label))}</td>${keys.map(k => { const c = b.checks.find(x => x.k === k); return `<td><span class="dot ${c ? c.s : "na"}"></span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+    el.querySelectorAll("tr[data-l]").forEach(tr => tr.onclick = () => onClick(tr.dataset.l));
+  }
+
+  // ---------- Überblick ----------
+  function drawUeber(){
+    const v = D.varianten, act = D.beine.length;
+    $("#tiles").innerHTML = `<div class="tile hero"><span>Varianten getestet</span><b class="num">${fint(v.gesamt)}</b><small>Untergrenze · ${v.runden} Forschungsrunden · ${v.strategien} Strategien in der Bibliothek</small></div>
+      <div class="tile"><span>Live-Beine</span><b class="num">${act}</b><small>${D.raus.length} Beine bzw. Gruppen wieder ausgeschieden</small></div>
+      <div class="tile"><span>Trefferquote der Suche</span><b class="num">${fmt(act / v.gesamt * 100, 4)} %</b><small>${act} Beine aus ${fint(v.gesamt)} Varianten</small></div>`;
+    const st = LIVE && LIVE.status, eq = (LIVE && LIVE.equity) || [];
+    $("#live-kpi").innerHTML = st ? `<div><span>Kontostand</span><b class="num">${fint(st.kontostand)} ${esc(st.waehrung || "")}</b></div><div><span>Equity</span><b class="num">${fint(st.equity)}</b></div><div><span>Trades</span><b class="num">${fint(st.trades)}</b></div>` : `<div class="muted">keine Live-Daten</div>`;
+    lineChart($("#live-eq"), eq.map(r => +r.kontostand), {x0: eq.length ? eq[0].tag : "", x1: eq.length ? eq[eq.length - 1].tag : ""});
+    const cum = D.segmente.kumuliert, pick = [1, 3, 5, 10, 16].map(j => cum.find(c => c.jahre_n === j)).filter(Boolean);
+    $("#bt-kv").innerHTML = (pick.find(p => p.jahre_n === 3) ? [pick.find(p => p.jahre_n === 3)] : []).map(c => `<div><span>Letzte 3 Jahre</span><b class="num">${fint(c.cagr)} %/J</b></div><div><span>Max-DD</span><b class="num neg">${fmt(c.dd, 1)} %</b></div><div><span>Calmar</span><b class="num">${fmt(c.calmar, 1)}</b></div>`).join("");
+    hbars($("#bt-cum"), pick.map(c => ({nm: `${c.jahre_n} J.`, v: c.cagr, txt: fint(c.cagr) + " %/J", color: "var(--acc)"})));
+    matrix($("#mx-ueber"), l => { sel = l; show("beine"); window.scrollTo(0, 0); });
+  }
+
+  // ---------- Beine ----------
+  function drawBeine(){
+    $("#mx-legend").innerHTML = ["ok:bestanden", "warn:Hinweis", "bad:durchgefallen", "na:nicht prüfbar"].map(s => { const [k, t] = s.split(":"); return `<span><b style="background:${COL[k]}"></b>${t}</span>`; }).join("");
+    const b = D.beine.find(x => x.label === sel) || D.beine[0]; if(!b) return;
+    const z = b.zaehl, P = Object.fromEntries(D.pruefungen.map(p => [p.k, p]));
+    $("#leg-detail").innerHTML = `<div class="leg-h"><div><h2 style="margin:0">${esc(short(b.label))}</h2><div class="hint">${esc(b.label)}</div></div><div><span class="chip ok">${z.ok} bestanden</span> <span class="chip warn">${z.warn} Hinweis</span> <span class="chip bad">${z.bad} durchgefallen</span> <span class="chip">${z.na} offen</span></div></div>
+      <div class="kv"><div><span>Trades (Backtest)</span><b class="num">${fint(b.n)}</b></div><div><span>Ø R je Trade</span><b class="num ${cls(b.er)}">${sgn(b.er)}</b></div><div><span>Letzte 3 Jahre</span><b class="num ${cls(b.er3)}">${sgn(b.er3)}</b></div><div><span>Historie</span><b class="num">${b.jahre ? fmt(b.jahre, 1) + " J." : "–"}</b></div><div><span>Frühe / späte Hälfte</span><b class="num">${b.early != null ? sgn(b.early) + " / " + sgn(b.late) : "–"}</b></div></div>
+      ${b.cum && b.cum.length ? `<div class="hint" style="margin-bottom:4px">Kumulierte R seit ${esc(b.first || "Start")}</div><svg id="leg-line" viewBox="0 0 600 150"></svg>` : ""}
+      <div style="margin-top:6px">${b.checks.map(c => { const p = P[c.k]; return `<div class="chk"><span class="dot ${c.s}"></span><span class="nm">${esc(p.name)}</span><span class="vl">${esc(c.v)}</span><span class="dt">${esc(c.d || "")}</span><div class="ex"><b>Was wird getestet:</b> ${esc(p.was)}<br><b>Kriterium:</b> ${esc(p.regel)}</div></div>`; }).join("")}</div>`;
+    if(b.cum && b.cum.length) lineChart($("#leg-line"), b.cum, {h: 150, zero: true, fmt: v => fmt(v, 0) + " R", color: "var(--acc)"});
+    matrix($("#mx"), l => { sel = l; drawBeine(); $("#leg-detail").scrollIntoView({behavior: "smooth", block: "start"}); });
+  }
+
+  // ---------- Grafiken ----------
+  function drawGraf(){
+    const seg = D.segmente.jahre, lab = s => `${s.von.slice(2, 4)}/${s.bis.slice(2, 4)}`;
+    hbars($("#g-ret"), seg.map(s => ({nm: `${s.von.slice(0, 4)}–${s.bis.slice(2, 4)}`, v: s.ret, txt: fint(s.ret) + " %", color: "var(--good)"})), {cls: true});
+    hbars($("#g-dd"), seg.map(s => ({nm: `${s.von.slice(0, 4)}–${s.bis.slice(2, 4)}`, v: s.dd, txt: fmt(s.dd, 1) + " %", color: "var(--bad)"})));
+    hbars($("#g-cal"), seg.map(s => ({nm: `${s.von.slice(0, 4)}–${s.bis.slice(2, 4)}`, v: s.calmar, txt: fmt(s.calmar, 1), color: s.calmar >= 3 ? "var(--good)" : s.calmar >= 1 ? "var(--warn)" : "var(--bad)"})));
+    const w = seg.filter(s => s.ret < 0); $("#g-note").textContent = `Schlechtester 12-Monats-Abschnitt: ${fmt(Math.min(...seg.map(s => s.ret)), 1)} % (${w.length ? "" : "alle im Plus"}). Tiefster Max-DD eines Abschnitts: ${fmt(Math.min(...seg.map(s => s.dd)), 1)} %. Die frühen Jahre hatten nur 2–6 Beine, daher kleinere Renditen.`;
+    hbars($("#g-es"), D.beine.filter(b => b.early != null).flatMap(b => [{nm: short(b.label), title: b.label, v: b.early, txt: sgn(b.early), color: "var(--ink-3)"}, {nm: "", v: b.late, txt: sgn(b.late), color: b.late >= b.early - 0.05 ? "var(--acc)" : "var(--warn)"}]), {wide: true});
+    $("#g-spark").innerHTML = D.beine.map(b => { const e = b.cum && b.cum.length ? b.cum[b.cum.length - 1] : 0; return `<div class="sp" data-l="${esc(b.label)}"><b title="${esc(b.label)}">${esc(short(b.label))}</b>${sparkSvg(b.cum || [], e >= 0 ? "var(--good)" : "var(--bad)")}<span class="hint">${fmt(e, 0)} R · ${fint(b.n)} Trades</span></div>`; }).join("");
+    $("#g-spark").querySelectorAll(".sp").forEach(e => e.onclick = () => { sel = e.dataset.l; show("beine"); window.scrollTo(0, 0); });
+  }
+
+  // ---------- Suchraum ----------
+  function drawSuch(){
+    const v = D.varianten;
+    $("#s-tiles").innerHTML = `<div class="tile hero"><span>Varianten mit gespeichertem Ergebnis</span><b class="num">${fint(v.gesamt)}</b><small>aus ${v.dateien} Ergebnis-Dateien + ${fint(v.zusatz)} Zusatz</small></div><div class="tile"><span>Forschungsrunden</span><b class="num">${v.runden}</b><small>${v.skripte} Skripte</small></div><div class="tile"><span>Strategien (Bibliothek)</span><b class="num">${v.strategien}</b></div><div class="tile"><span>Live-Beine heute</span><b class="num">${D.beine.length}</b></div>`;
+    hbars($("#s-bars"), v.phasen.map(p => ({nm: p.name.split(" · ")[0], title: p.name, v: p.n, txt: fint(p.n), color: "var(--acc)"})), {wide: true});
+    $("#s-warn").innerHTML = `<b>Einordnung:</b> Bei ${fint(v.gesamt)} Tests entstehen durch Zufall allein tausende scheinbare Treffer. Darum gilt für jedes Bein die Batterie aus 11 Tiefenprüfungen (Reiter „Beine & Prüfungen“), und Zufalls-Treffer werden mit Placebo-Tests aussortiert. Aus ${fint(v.gesamt)} Varianten sind ${D.beine.length} Beine übrig geblieben.`;
+    $("#raus").innerHTML = D.raus.map(r => `<div><b>${esc(r.bein)}</b><span class="muted">${esc(r.datum)}</span><span>${esc(r.grund)}</span></div>`).join("");
+  }
+
+  // Start
+  (async function init(){
+    if(window.__DEV_PAYLOAD){ start(); return; }
+    (await validSession()) ? start() : showLogin();
+  })();
+})();
+</script>
+</body>
+</html>
