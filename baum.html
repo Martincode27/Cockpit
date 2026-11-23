@@ -36,12 +36,13 @@ a{color:inherit}
 .link:hover,.btn:hover{border-color:rgba(255,255,255,.35)}
 .btn.primary{background:var(--ink);color:#0b0e14;border-color:var(--ink);font-weight:600}
 .btn.big{padding:14px;font-size:16px;border-radius:12px;width:100%}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{font:inherit;font-size:13px;padding:7px 14px;border:1px solid var(--line);background:var(--glass);color:var(--ink-2);border-radius:999px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.tab[aria-selected="true"]{color:#0b0e14;background:var(--ink);border-color:var(--ink);font-weight:600}
+.tab[aria-selected="true"],.tab[aria-pressed="true"]{color:#0b0e14;background:var(--ink);border-color:var(--ink);font-weight:600}
 .stage{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;background:#0a0f1f}
 canvas{display:block;width:100%;touch-action:manipulation}
-.tip{position:absolute;pointer-events:none;background:rgba(10,14,24,.88);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12.5px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transform:translate(-50%,-110%);white-space:nowrap;z-index:3;opacity:0;transition:opacity .15s}
+.tip{position:absolute;pointer-events:none;background:rgba(10,14,24,.9);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12.5px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transform:translate(-50%,-110%);white-space:nowrap;z-index:3;opacity:0;transition:opacity .15s}
 .tip.on{opacity:1}
 .tip b{display:block;font-size:14px;margin-bottom:1px}
 .tip .num{font-family:var(--mono)}
@@ -83,14 +84,17 @@ canvas{display:block;width:100%;touch-action:manipulation}
     <div class="logo"><i></i>Apfelbaum <span style="font-size:13px;font-weight:500;color:var(--ink-3)" id="stand"></span></div>
     <nav class="links"><a class="link" href="bot.html">Bot-Cockpit</a><a class="link" href="index.html">◆ Cockpit</a></nav>
   </header>
-  <div class="tabs" role="tablist" id="range"></div>
+  <div class="bar">
+    <div class="tabs" role="tablist" id="range"></div>
+    <div class="tabs"><button type="button" class="tab" id="b-replay">↻ Alles von vorn</button><button type="button" class="tab" id="b-harvest">🪜 Ernte erneut</button><button type="button" class="tab" id="b-legs" aria-pressed="false">🏷 Beine</button></div>
+  </div>
   <div class="stage" id="stage">
-    <canvas id="cv" role="img" aria-label="Apfelbaum: Jeder Trade des Eigenkapital-Bots ist ein Apfel. Gewinne landen im Korb, Verluste faulen am Boden."></canvas>
+    <canvas id="cv" role="img" aria-label="Apfelbaum: Jedes Bein des Bots ist ein Ast, jeder Trade ein Apfel. Ein Männchen pflückt die reifen Äpfel."></canvas>
     <div class="hud"><span class="pill" id="hud-l"></span><span class="pill" id="hud-r"></span></div>
     <div class="tip" id="tip"></div>
   </div>
   <div class="kpis" id="kpis"></div>
-  <div class="legend"><span><i style="background:#d8352e"></i>reifer Apfel = Gewinn (je größer, desto mehr R)</span><span><i style="background:#8a6a3a"></i>faulender Apfel = Verlust</span><span><i style="background:#9fb07a"></i>verschrumpelt = Break-even</span><span><i style="background:#f6e3ea"></i>Blüten = gerade nichts offen</span></div>
+  <div class="legend"><span><i style="background:#d8352e"></i>reifer Apfel = Gewinn (größer = mehr R)</span><span><i style="background:#8a6a3a"></i>fauler Apfel = Verlust</span><span><i style="background:#9fb07a"></i>verschrumpelt = Break-even</span><span><i style="background:#2f8f46"></i>jeder Ast = ein Bein</span></div>
   <div class="msg" id="msg">Wird geladen …</div>
 </div>
 
@@ -99,7 +103,7 @@ canvas{display:block;width:100%;touch-action:manipulation}
   // ---------- Grundlagen (wie die anderen Cockpit-Seiten) ----------
   const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
   const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT"; // öffentlich gedacht, Schutz über Login + RLS
-  const SESSION_KEY = "cockpit_session";
+  const SESSION_KEY = "cockpit_session", SEEN_KEY = "baum_zuletzt_gesehen";
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const fmt = (v, d = 0) => v == null || isNaN(v) ? "–" : (+v).toLocaleString("de-DE", {minimumFractionDigits: d, maximumFractionDigits: d});
@@ -141,118 +145,145 @@ canvas{display:block;width:100%;touch-action:manipulation}
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  const mix = (A, B, t) => A.map((v, i) => lerp(v, B[i], t));
   const mix3 = (d, w, n, wd, ww, wn) => d.map((v, i) => v * wd + w[i] * ww + n[i] * wn);
   const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
   const PAL = {
     skyT: [[58, 146, 255], [52, 58, 120], [6, 10, 32]], skyB: [[196, 232, 255], [255, 168, 120], [24, 34, 78]],
     hillF: [[112, 168, 128], [86, 92, 116], [22, 42, 54]], hillN: [[70, 142, 84], [62, 82, 84], [14, 34, 38]], ground: [[88, 164, 72], [80, 112, 72], [20, 50, 34]]
   };
+  const MONO = '"JetBrains Mono",ui-monospace,Menlo,monospace';
 
   const cv = $("#cv"), ctx = cv.getContext("2d"), stage = $("#stage"), tipEl = $("#tip");
-  let W = 0, H = 0, K = 1, groundY = 0, treeX = 0, basketX = 0, bw = 0, bh = 0, rotL = 0, rotR = 0, beL = 0, beR = 0;
-  let DATA = null, rangeDays = 0, fruits = [], hanging = [], tips = [], root = null, ends = [], flies = [], floaters = [], leaves = [], clouds = [], stars = [], fireflies = [], grass = [];
-  let t0 = performance.now(), last = t0, wobble = 0, hover = null, stats = {};
+  let W = 0, H = 0, K = 1, groundY = 0, treeX = 0, crateX = 0, cw = 0, ch = 0, rotL = 0, rotR = 0, beL = 0, beR = 0;
+  let DATA = null, rangeDays = 0, fruits = [], hangs = [], tips = [], tipsByLeg = [], legEnd = [], root = null, ends = [], floaters = [], sparks = [], petals = [], leaves = [], clouds = [], stars = [], fireflies = [], grass = [];
+  let blossoms = [], legCount = 13, legs = [], showLegs = false, wobble = 0, stats = {}, simT = 0, hourOverride = null, instant = false, forcePose = null, pointer = null;
   const view = {};
 
-  // ---------- Baum (Struktur einmalig, Bewegung je Bild) ----------
-  const MAXD = 6;
-  function build(){
-    const r = rng(11);
-    function mk(d, len, wid, ang){
-      const n = {d, len, wid, ang, kids: [], ph: r() * TAU, leaves: null, tip: false};
-      if(d < MAXD){
-        const c = d === 0 ? 3 : (r() < .22 ? 3 : 2);
-        for(let k = 0; k < c; k++) n.kids.push(mk(d + 1, len * (.7 + r() * .1), wid * .66, (k / (c - 1) - .5) * (d === 0 ? 1.15 : 1.2) + (r() - .5) * .38));
-      } else n.tip = true;
-      if(d >= MAXD - 2) n.leaves = Array.from({length: d === MAXD ? 6 : d === MAXD - 1 ? 4 : 3},() => ({dx: (r() - .5) * 36, dy: (r() - .5) * 30 - 4, rx: 7 + r() * 7, ry: 4 + r() * 5, rot: r() * TAU, l: r(), ph: r() * TAU}));
-      return n;
-    }
-    root = mk(0, 122, 22, 0);
+  // ---------- Baum: Stamm -> 3 Gabeln -> 1 Ast je Bein -> Zweige -> dichte Krone ----------
+  function build(n){
+    const r = rng(11); legCount = Math.max(3, n); legEnd = [];
+    const groups = [0, 0, 0]; for(let i = 0; i < legCount; i++) groups[i % 3]++;
+    root = {d: 0, len: 100, wid: 28, ang: 0, kids: [], ph: 0, leg: -1};
+    let li = 0;
+    groups.forEach((m, gi) => {
+      const fork = {d: 1, len: 70, wid: 15, ang: (gi - 1) * .6 + (r() - .5) * .1, kids: [], ph: r() * TAU, leg: -1}; root.kids.push(fork);
+      for(let i = 0; i < m; i++){
+        const leg = li++, rel = (m === 1 ? 0 : (i / (m - 1) - .5)) * 1.5 + (r() - .5) * .1;
+        const br = {d: 2, len: 98 + r() * 24, wid: 8.5, ang: rel, kids: [], ph: r() * TAU, leg, isLeg: true, hue: r() * 14 - 7,
+          leaves: Array.from({length: 5}, () => lf(r, 30))};
+        fork.kids.push(br); twig(br, 3, br.len, br.wid, leg, r);
+      }
+    });
   }
-  function wind(t){ return calm ? 0.1 : Math.sin(t * .35) * .55 + Math.sin(t * .93 + 1.3) * .3 + Math.sin(t * 2.1) * .1; }
+  const lf = (r, s) => ({dx: (r() - .5) * s * 1.6, dy: (r() - .5) * s - 4, rx: 8 + r() * 8, ry: 5 + r() * 5, rot: r() * TAU, l: r(), ph: r() * TAU});
+  function twig(parent, d, len, wid, leg, r){
+    for(let k = 0; k < 2; k++){
+      const n = {d, len: len * (.6 + r() * .1), wid: Math.max(1.5, wid * .6), ang: (k ? 1 : -1) * (.3 + r() * .4) + (r() - .5) * .2, kids: [], ph: r() * TAU, leg};
+      n.leaves = Array.from({length: d === 5 ? 9 : d === 4 ? 5 : 4}, () => lf(r, d === 5 ? 34 : 26));
+      parent.kids.push(n);
+      if(d < 5) twig(n, d + 1, n.len, n.wid, leg, r); else n.tip = true;
+    }
+  }
+  function wind(t){ return calm ? .1 : Math.sin(t * .35) * .55 + Math.sin(t * .93 + 1.3) * .3 + Math.sin(t * 2.1) * .1; }
   function drawNode(n, x, y, pa, t, w){
     const a = pa + n.ang + (w * .024 + Math.sin(t * 1.1 + n.ph) * .01 * (calm ? .2 : 1)) * (.4 + n.d * .35);
     const L = n.len * K, x2 = x + Math.sin(a) * L, y2 = y - Math.cos(a) * L, mx = (x + x2) / 2 + Math.cos(a) * L * .06, my = (y + y2) / 2 + Math.sin(a) * L * .06;
-    ctx.lineWidth = Math.max(1.2, n.wid * K); ctx.strokeStyle = `rgb(${86 - n.d * 4},${58 - n.d * 3},${38 - n.d * 2})`;
+    ctx.lineWidth = Math.max(1.2, n.wid * K); ctx.strokeStyle = `rgb(${88 - n.d * 5},${60 - n.d * 4},${40 - n.d * 3})`;
     ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(mx, my, x2, y2); ctx.stroke();
-    if(n.d === 0){ ctx.lineWidth = Math.max(1, n.wid * K * .35); ctx.strokeStyle = "rgba(255,220,170,.10)"; ctx.beginPath(); ctx.moveTo(x - n.wid * K * .2, y); ctx.quadraticCurveTo(mx - n.wid * K * .2, my, x2 - n.wid * K * .2, y2); ctx.stroke(); }
-    if(n.leaves) ends.push([n, x2, y2, a]);
-    if(n.tip) tips.push({x: x2, y: y2, a});
+    if(n.d <= 2){ ctx.lineWidth = Math.max(1, n.wid * K * .3); ctx.strokeStyle = "rgba(255,225,175,.11)"; ctx.beginPath(); ctx.moveTo(x - n.wid * K * .2, y); ctx.quadraticCurveTo(mx - n.wid * K * .2, my, x2 - n.wid * K * .2, y2); ctx.stroke(); }
+    if(n.leaves) ends.push([n, x2, y2]);
+    if(n.isLeg) legEnd[n.leg] = {x: x2, y: y2};
+    if(n.tip){ const tp = {x: x2, y: y2, leg: n.leg}; tips.push(tp); if(n.leg >= 0) (tipsByLeg[n.leg] = tipsByLeg[n.leg] || []).push(tp); }
     for(const k of n.kids) drawNode(k, x2, y2, a, t, w);
   }
 
   // ---------- Layout ----------
   function resize(){
-    const bw0 = stage.parentElement.clientWidth; W = bw0;
+    W = stage.parentElement.clientWidth;
     H = W < 640 ? clamp(Math.min(innerHeight * .74, W * 1.5), 440, 760) : clamp(Math.min(W * .6, innerHeight * .82), 460, 760);
     const dpr = Math.min(devicePixelRatio || 1, 2); cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    K = Math.min(H / 600, W / 640); groundY = H * .84; treeX = W * (W < 640 ? .42 : .45); basketX = W * (W < 640 ? .82 : .83);
-    bw = Math.min(150 * K, W * .3); bh = 52 * K; rotL = W * .04; rotR = Math.max(rotL + 40, treeX - 70 * K); beL = treeX + 60 * K; beR = Math.max(beL + 20, basketX - bw / 2 - 14 * K);
+    K = Math.min(H / 600, W / 640); groundY = H * .84; treeX = W * (W < 640 ? .40 : .43); crateX = W * (W < 640 ? .83 : .84);
+    cw = Math.min(150 * K, W * .3); ch = 54 * K; rotL = W * .04; rotR = Math.max(rotL + 40, treeX - 80 * K); beL = treeX + 110 * K; beR = Math.max(beL + 20, crateX - cw / 2 - 16 * K);
     const r = rng(5);
-    clouds = Array.from({length: 6}, () => ({x: r() * W, y: H * (.08 + r() * .28), s: (.6 + r() * .8) * K, v: 3 + r() * 6}));
+    clouds = Array.from({length: 6}, () => ({x: r() * W, y: H * (.06 + r() * .26), s: (.6 + r() * .8) * K, v: 3 + r() * 6}));
     stars = Array.from({length: 150}, () => ({x: r() * W, y: r() * groundY * .8, a: .5 + r() * .5, p: r() * TAU, s: 1 + r() * 1.6}));
     fireflies = Array.from({length: 26}, () => ({x: r() * W, y: groundY - r() * H * .4, p: r() * TAU, v: .3 + r() * .5}));
     grass = Array.from({length: Math.round(W / 4)}, () => ({x: r() * W, h: (7 + r() * 16) * K, p: r() * TAU, c: r()}));
-    leaves = Array.from({length: 14}, () => ({x: r() * W, y: r() * groundY, p: r() * TAU, v: 14 + r() * 18, rot: r() * TAU}));
+    leaves = Array.from({length: 12}, () => ({x: r() * W, y: r() * groundY, p: r() * TAU, v: 14 + r() * 18, rot: r() * TAU}));
+    petals = Array.from({length: 16}, () => ({x: r() * W, y: r() * groundY, p: r() * TAU, v: 10 + r() * 12, rot: r() * TAU}));
     layoutFruits();
   }
 
   // ---------- Daten -> Früchte ----------
   const bday = ts => (Date.now() - new Date(ts).getTime()) / 864e5;
-  function rOf(t){ return t.risiko > 0 ? t.gv / t.risiko : (t.gv > 0 ? 1 : -1); }
-  function kindOf(t){ const R = rOf(t); return Math.abs(R) < .1 ? "be" : t.gv > 0 ? "win" : "loss"; }
-  function setup(animate){
-    const all = DATA.trades.slice().filter(t => rangeDays === 0 || bday(t.geschlossen) <= rangeDays).sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
-    let wins = all.filter(t => kindOf(t) === "win"), loss = all.filter(t => kindOf(t) === "loss"), bes = all.filter(t => kindOf(t) === "be");
-    stats = {n: all.length, win: wins.length, loss: loss.length, be: bes.length, ernte: wins.reduce((s, t) => s + t.gv, 0), faul: loss.reduce((s, t) => s + t.gv, 0),
-             best: all.reduce((m, t) => rOf(t) > m ? rOf(t) : m, -9), bestT: all.reduce((m, t) => !m || rOf(t) > rOf(m) ? t : m, null)};
-    const show = [...wins.slice(-30), ...loss.slice(-30), ...bes.slice(-12)].sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
-    const per = {win: 0, loss: 0, be: 0};
-    fruits = show.map((t, i) => {
-      const k = kindOf(t), R = rOf(t), sz = (k === "be" ? 7 : 9 + Math.min(Math.abs(R), 3) * (k === "win" ? 2.3 : 1.8));
-      return {t, k, R, sz, slot: per[k]++, state: animate ? "wait" : "rest", delay: i * Math.min(.17, 3 / Math.max(1, show.length)) + .4, p: 0, dur: 1.1 + Math.random() * .5, fx: 0, fy: 0, x: 0, y: 0, sq: 1, seed: (i * 7919) % 97 / 97};
-    });
-    layoutFruits();
-    const st = DATA.status || {}, nOpen = clamp(st.offene_positionen || 0, 0, 14), fl = (st.equity || 0) - (st.kontostand || 0), base = (st.kontostand || 10000) * .01;
-    const ripe = .5 + .5 * Math.tanh(fl / base), order = Array.from({length: 130}, (_, i) => i).sort((a, b) => ((a * 37) % 101) - ((b * 37) % 101));
-    hanging = Array.from({length: nOpen}, (_, i) => ({tip: order[i * 3 % 130], ripe: clamp(ripe + (((i * 53) % 17) - 8) / 60, 0, 1), sz: 11 + (i % 3) * 2}));
-    blossoms = nOpen ? [] : order.slice(0, 22);
-    $("#hud-l").textContent = nOpen ? `${nOpen} offene Trades am Baum` : "Nichts offen · der Baum blüht";
-    $("#hud-r").textContent = rangeDays === 0 ? `alle ${stats.n} Trades` : `letzte ${rangeDays} Tage · ${stats.n} Trades`;
-    kpis(fl, nOpen);
+  const rOf = t => t.risiko > 0 ? t.gv / t.risiko : (t.gv > 0 ? 1 : -1);
+  const kindOf = t => Math.abs(rOf(t)) < .1 ? "be" : t.gv > 0 ? "win" : "loss";
+  const legOf = t => (t.kommentar || "").split("|")[0];
+  const legIdx = c => { if(!c) return -1; const i = legs.findIndex(l => l.startsWith(c) || c.startsWith(l)); return i; };
+  const shortLeg = l => { const [s, tf, st] = l.split(":"); return `${s} ${tf} ${(st || "").replace(/_/g, " ")}`; };
+  function mkFruit(t, i, animate, delay){
+    const k = kindOf(t), R = rOf(t);
+    return {t, k, R, sz: k === "be" ? 7 : 9 + Math.min(Math.abs(R), 3) * (k === "win" ? 2.3 : 1.8), leg: legIdx(legOf(t)), slot: 0, state: animate ? "wait" : "rest", delay, p: 0, dur: 1.1 + Math.random() * .5, fx: 0, fy: 0, x: 0, y: 0, sq: 1, seed: (i * 7919) % 97 / 97};
   }
-  let blossoms = [];
+  function setup(mode){            // mode: "rest" (alles liegt), "replay" (alles fällt neu), "visit" (neue Trades hängen am Ast, Männchen pflückt)
+    const all = DATA.trades.slice().filter(t => rangeDays === 0 || bday(t.geschlossen) <= rangeDays).sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
+    stats = {n: all.length, win: 0, loss: 0, be: 0, ernte: 0, faul: 0, best: -9, bestT: null};
+    for(const t of all){ const k = kindOf(t); stats[k]++; if(k === "win") stats.ernte += t.gv; if(k === "loss") stats.faul += t.gv; if(rOf(t) > stats.best){ stats.best = rOf(t); stats.bestT = t; } }
+    let pend = [];
+    if(mode === "visit"){
+      const q = new URLSearchParams(location.search); let seen = null; try{ seen = localStorage.getItem(SEEN_KEY); }catch(e){}
+      if(q.get("harvest")) pend = all.slice(-(+q.get("harvest")));
+      else if(seen) pend = all.filter(t => new Date(t.geschlossen) > new Date(seen)).slice(-8);
+    }
+    const rest = all.filter(t => !pend.includes(t)), pick = a => a.slice(-30);
+    const show = [...pick(rest.filter(t => kindOf(t) === "win")), ...pick(rest.filter(t => kindOf(t) === "loss")), ...rest.filter(t => kindOf(t) === "be").slice(-12)].sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
+    const step = Math.min(.17, 3 / Math.max(1, show.length));
+    fruits = show.map((t, i) => mkFruit(t, i, mode === "replay", i * step + .4));
+    renumberSlots(); layoutFruits();
+    const st = DATA.status || {}, base = (st.kontostand || 10000) * .01;
+    hangs = [];
+    for(const p of (DATA.positions || [])) hangs.push({open: true, pos: p, leg: legIdx(p.bein), ripe: clamp(.5 + .5 * Math.tanh((p.gv || 0) / base), 0, 1), sz: 12});
+    for(const t of pend) hangs.push({pend: true, t, k: kindOf(t), R: rOf(t), leg: legIdx(legOf(t)), ripe: kindOf(t) === "win" ? 1 : 0, sz: 11 + Math.min(Math.abs(rOf(t)), 3) * 1.2});
+    hangs.forEach((h, i) => h.si = i);
+    man.tasks = hangs.filter(h => h.pend).map(h => ({h})); man.cur = null; man.ladder = null; man.carry = null; if(man.st !== "sit") man.st = "return";
+    blossoms = Array.from({length: 150}, (_, i) => i).sort((a, b) => ((a * 37) % 101) - ((b * 37) % 101)).slice(0, 56);
+    const nOpen = hangs.filter(h => h.open).length, nPend = hangs.filter(h => h.pend).length;
+    $("#hud-l").textContent = nPend ? (nPend === 1 ? "1 neuer Apfel seit deinem letzten Besuch" : `${nPend} neue Äpfel seit deinem letzten Besuch`) : nOpen ? `${nOpen} offene Trades am Baum` : "Nichts offen · der Baum blüht";
+    $("#hud-r").textContent = rangeDays === 0 ? `alle ${stats.n} Trades` : `letzte ${rangeDays} Tage · ${stats.n} Trades`;
+    kpis(nOpen);
+    if(!nPend){ markSeen(); }
+  }
+  function markSeen(){ try{ localStorage.setItem(SEEN_KEY, new Date().toISOString()); }catch(e){} }
+  function renumberSlots(){ const c = {win: 0, loss: 0, be: 0}; for(const f of fruits) f.slot = c[f.k]++; }
   function layoutFruits(){
     for(const f of fruits){
-      if(f.k === "win"){ const cols = 6, c = f.slot % cols, r = Math.floor(f.slot / cols); f.tx = basketX - bw * .34 + c * (bw * .68 / (cols - 1)) + (r % 2) * bw * .05 + (f.seed - .5) * 4 * K; f.ty = groundY - bh * .9 - r * 11 * K; }
+      if(f.k === "win"){ const cols = 6, c = f.slot % cols, r = Math.floor(f.slot / cols); f.tx = crateX - cw * .36 + c * (cw * .72 / (cols - 1)) + (r % 2) * cw * .05 + (f.seed - .5) * 4 * K; f.ty = groundY - ch * .9 - r * 11 * K; }
       else if(f.k === "loss"){ f.tx = rotL + ((f.slot * .618034 + f.seed * .3) % 1) * (rotR - rotL); f.ty = groundY + (6 + ((f.slot * 37) % 23)) * K; }
       else { f.tx = beL + ((f.slot * .618034) % 1) * (beR - beL); f.ty = groundY + (8 + ((f.slot * 29) % 17)) * K; }
       if(f.state === "rest"){ f.x = f.tx; f.y = f.ty; }
     }
   }
-  function kpis(fl, nOpen){
-    const el = $("#kpis"), net = stats.ernte + stats.faul, hit = stats.n ? stats.win / stats.n * 100 : 0;
-    const items = [["g", "Ernte im Korb", stats.ernte, v => "+" + fmt(v) + " €", `${stats.win} reife Äpfel`], ["r", "Verfault am Boden", stats.faul, v => fmt(v) + " €", `${stats.loss} faule Äpfel`],
+  function kpis(nOpen){
+    const el = $("#kpis"), net = stats.ernte + stats.faul, hit = stats.n ? stats.win / stats.n * 100 : 0, fl = ((DATA.status || {}).equity || 0) - ((DATA.status || {}).kontostand || 0);
+    const items = [["g", "Ernte in der Kiste", stats.ernte, v => "+" + fmt(v) + " €", `${stats.win} reife Äpfel`], ["r", "Verfault am Boden", stats.faul, v => fmt(v) + " €", `${stats.loss} faule Äpfel`],
       [net >= 0 ? "g" : "r", "Netto", net, v => (v > 0 ? "+" : "") + fmt(v) + " €", `${fmt(hit, 0)} % reife Äpfel`], ["y", "Bester Apfel", stats.best > -9 ? stats.best : null, v => v == null ? "–" : "+" + fmt(v, 1) + " R", stats.bestT ? stats.bestT.symbol : ""],
       ["", "Am Baum", fl, v => nOpen ? (v > 0 ? "+" : "") + fmt(v) + " €" : "–", nOpen ? nOpen + " offene Trades" : "keine offenen Trades"]];
-    el.innerHTML = items.map(([c, l, v, f, s], i) => `<div class="kpi ${c}"><span>${l}</span><b data-i="${i}">0</b><small>${esc(s)}</small></div>`).join("");
+    el.innerHTML = items.map(([c, l, v, f, s]) => `<div class="kpi ${c}"><span>${l}</span><b>0</b><small>${esc(s)}</small></div>`).join("");
     const t1 = performance.now();
     (function tick(){ const p = ease(clamp((performance.now() - t1) / 1600, 0, 1)); el.querySelectorAll("b").forEach((b, i) => { const it = items[i]; b.textContent = it[3](it[2] == null ? null : it[2] * p); }); if(p < 1) requestAnimationFrame(tick); })();
   }
 
-  // ---------- Zeichnen ----------
-  function sky(w){
+  // ---------- Himmel, Boden ----------
+  function hourNow(){ if(hourOverride != null) return hourOverride; const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+  function sky(){
     const sunEl = Math.sin(((hourNow() - 6) / 24) * TAU), wd = smooth(.12, .5, sunEl), wn = smooth(.05, -.25, sunEl), ww = Math.max(0, 1 - wd - wn);
     const top = mix3(PAL.skyT[0], PAL.skyT[1], PAL.skyT[2], wd, ww, wn), bot = mix3(PAL.skyB[0], PAL.skyB[1], PAL.skyB[2], wd, ww, wn);
-    view.wd = wd; view.wn = wn; view.ww = ww; view.sunEl = sunEl;
+    Object.assign(view, {wd, wn, ww, sunEl});
     const g = ctx.createLinearGradient(0, 0, 0, groundY); g.addColorStop(0, rgb(top)); g.addColorStop(1, rgb(bot)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  let hourOverride = null, instant = false;
-  function hourNow(){ if(hourOverride != null) return hourOverride; const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
   function celestial(t){
     const h = hourNow(), day = view.sunEl > -.1;
-    if(view.wn > .02){ for(const s of stars){ ctx.fillStyle = `rgba(255,255,255,${view.wn * s.a * (.55 + .45 * Math.sin(t * 1.5 + s.p))})`; ctx.fillRect(s.x, s.y, s.s, s.s); } }
+    if(view.wn > .02) for(const s of stars){ ctx.fillStyle = `rgba(255,255,255,${view.wn * s.a * (.55 + .45 * Math.sin(t * 1.5 + s.p))})`; ctx.fillRect(s.x, s.y, s.s, s.s); }
     const hh = day ? h : (h + 12) % 24, fr = clamp((hh - 6) / 12, 0, 1);
     const px = day ? W * (.1 + .8 * fr) : W * (.82 - .22 * fr), py = day ? groundY - Math.sin(fr * Math.PI) * H * .6 - 10 * K : H * (.12 + .1 * (1 - Math.sin(fr * Math.PI)));
     const R = (day ? 30 : 22) * K, g = ctx.createRadialGradient(px, py, R * .2, px, py, R * 5);
@@ -265,10 +296,10 @@ canvas{display:block;width:100%;touch-action:manipulation}
   }
   function cloud(c, dt, w){
     c.x += (c.v + w * 8) * dt * (calm ? .2 : 1); if(c.x > W + 140 * c.s) c.x = -140 * c.s; if(c.x < -160 * c.s) c.x = W + 130 * c.s;
-    const a = lerp(.12, .85, view.wd) * .8; ctx.fillStyle = `rgba(255,255,255,${a})`;
+    ctx.fillStyle = `rgba(255,255,255,${(.12 + .73 * view.wd) * .8})`;
     for(const [dx, dy, r] of [[0, 0, 26], [28, -8, 32], [60, 0, 26], [30, 8, 28], [-22, 8, 20]]){ ctx.beginPath(); ctx.arc(c.x + dx * c.s, c.y + dy * c.s, r * c.s, 0, TAU); ctx.fill(); }
   }
-  function hill(y0, amp, f, ph, col, par){
+  function hill(y0, amp, f, ph, col){
     ctx.fillStyle = rgb(col); ctx.beginPath(); ctx.moveTo(0, H);
     for(let x = 0; x <= W + 12; x += 12) ctx.lineTo(x, y0 - (Math.sin(x * f + ph) * .55 + Math.sin(x * f * 2.3 + ph * 1.7) * .3 + 1) * amp);
     ctx.lineTo(W, H); ctx.fill();
@@ -277,8 +308,10 @@ canvas{display:block;width:100%;touch-action:manipulation}
     const c = mix3(PAL.ground[0], PAL.ground[1], PAL.ground[2], view.wd, view.ww, view.wn);
     const g = ctx.createLinearGradient(0, groundY - 10, 0, H); g.addColorStop(0, rgb(c.map(v => v * 1.1))); g.addColorStop(1, rgb(c.map(v => v * .55))); ctx.fillStyle = g; ctx.fillRect(0, groundY - 6 * K, W, H - groundY + 6 * K);
     ctx.lineCap = "round";
-    for(const b of grass){ const sw = Math.sin(t * 1.6 + b.p) * 2 * K + w * 7 * K * (calm ? .2 : 1), y = groundY + (b.c * (H - groundY - 6)) ; ctx.strokeStyle = rgb(c.map(v => v * (.8 + b.c * .5))); ctx.lineWidth = 1.4 * K + 0.2; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.quadraticCurveTo(b.x + sw * .4, y - b.h * .5, b.x + sw, y - b.h); ctx.stroke(); }
+    for(const b of grass){ const sw = Math.sin(t * 1.6 + b.p) * 2 * K + w * 7 * K * (calm ? .2 : 1), y = groundY + b.c * (H - groundY - 6); ctx.strokeStyle = rgb(c.map(v => v * (.8 + b.c * .5))); ctx.lineWidth = 1.4 * K + .2; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.quadraticCurveTo(b.x + sw * .4, y - b.h * .5, b.x + sw, y - b.h); ctx.stroke(); }
   }
+
+  // ---------- Äpfel ----------
   function drawAppleShape(x, y, r, o){
     ctx.save(); ctx.translate(x, y); if(o.rot) ctx.rotate(o.rot); ctx.scale(1, o.sq || 1);
     const [h, s, l] = o.hsl, g = ctx.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * 1.25);
@@ -293,125 +326,308 @@ canvas{display:block;width:100%;touch-action:manipulation}
     ctx.restore();
   }
   const hslWin = R => { const n = clamp(R / 2.2, 0, 1); return [95 - 95 * n, 64, 47 - 6 * n]; };
-  function drawFruit(f, t){
+  const rotOf = f => clamp(.35 + bday(f.t.geschlossen) / 8, .35, 1);
+  function drawFruit(f){
     if(f.state === "wait") return;
     const rad = f.sz * K;
-    if(f.state === "rest" || f.p >= 1){ ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(f.x, f.y + rad * .85, rad * .9, rad * .26, 0, 0, TAU); if(f.k !== "win") ctx.fill(); }
+    if(f.state === "rest" && f.k !== "win"){ ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(f.x, f.y + rad * .85, rad * .9, rad * .26, 0, 0, TAU); ctx.fill(); }
     if(f.k === "win") drawAppleShape(f.x, f.y, rad, {hsl: hslWin(f.R), sq: f.sq, seed: f.seed, rot: f.state === "fall" ? f.p * 5 : 0});
-    else if(f.k === "loss"){ const rot = clamp(.35 + bday(f.t.geschlossen) / 8, .35, 1); drawAppleShape(f.x, f.y, rad, {hsl: [28 - rot * 8, 38 - rot * 14, 34 - rot * 12], sq: (f.state === "rest" ? .82 - rot * .12 : f.sq), spots: rot, seed: f.seed, rot: f.state === "fall" ? f.p * 4 : (f.seed - .5) * .9, shine: false}); f.rot = rot; }
+    else if(f.k === "loss"){ const rot = rotOf(f); f.rot = rot; drawAppleShape(f.x, f.y, rad, {hsl: [28 - rot * 8, 38 - rot * 14, 34 - rot * 12], sq: f.state === "rest" ? .82 - rot * .12 : f.sq, spots: rot, seed: f.seed, rot: f.state === "fall" ? f.p * 4 : (f.seed - .5) * .9, shine: false}); }
     else drawAppleShape(f.x, f.y, rad, {hsl: [72, 22, 52], sq: .8, spots: .15, seed: f.seed, rot: (f.seed - .5) * 1.2, dry: true, shine: false});
   }
-  function updateFruit(f, dt, t){
-    if(f.state === "wait"){ f.delay -= dt; if(f.delay <= 0 && tips.length){ const tp = tips[(Math.random() * tips.length) | 0]; f.fx = tp.x; f.fy = tp.y + 14 * K; f.x = f.fx; f.y = f.fy; f.state = "fall"; f.p = 0; } return; }
+  function tipFor(leg, si){ const a = tipsByLeg[leg]; if(a && a.length) return a[si % a.length]; return tips.length ? tips[(si * 7 + 3) % tips.length] : null; }
+  function updateFruit(f, dt){
+    if(f.state === "wait"){ f.delay -= dt; if(f.delay <= 0 && tips.length){ const tp = tipFor(f.leg, Math.floor(f.seed * 100)); f.fx = tp.x; f.fy = tp.y + 14 * K; f.x = f.fx; f.y = f.fy; f.state = "fall"; f.p = 0; } return; }
     if(f.state === "fall"){
       f.p = Math.min(1, f.p + dt / f.dur); const p = f.p; f.x = lerp(f.fx, f.tx, ease(p) * .9 + p * .1); f.y = lerp(f.fy, f.ty, p * p); f.sq = 1;
-      if(p >= 1){ f.state = "land"; f.lt = 0; if(f.k === "win"){ wobble = 1; } floaters.push({x: f.tx, y: f.ty - 20 * K, txt: (f.t.gv > 0 ? "+" : "") + fmt(f.t.gv) + " €", col: f.k === "win" ? "#7dffb0" : f.k === "loss" ? "#ff8d80" : "#cfd8a8", a: 1}); }
+      if(p >= 1){ f.state = "land"; f.lt = 0; if(f.k === "win") wobble = 1; if(!f.quiet) floaters.push({x: f.tx, y: f.ty - 20 * K, txt: (f.t.gv > 0 ? "+" : "") + fmt(f.t.gv) + " €", col: f.k === "win" ? "#7dffb0" : f.k === "loss" ? "#ff8d80" : "#cfd8a8", a: 1, size: 13}); }
     } else if(f.state === "land"){ f.lt += dt; const q = f.lt / .45; f.y = f.ty - Math.abs(Math.sin(q * Math.PI * 1.5)) * (1 - q) * 14 * K; f.sq = 1 - Math.sin(clamp(q * 2, 0, 1) * Math.PI) * .18; if(q >= 1){ f.state = "rest"; f.y = f.ty; f.sq = 1; } }
   }
-  function basket(front, t){
-    const x = basketX, top = groundY - bh, wob = Math.sin(t * 24) * wobble * 2.2 * K;
+
+  // ---------- Holzkiste ----------
+  function crate(front, t){
+    const x = crateX, top = groundY - ch, wob = Math.sin(t * 24) * wobble * 2.2 * K;
     ctx.save(); ctx.translate(wob, 0);
-    if(!front){ ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, top, bw / 2, 9 * K, 0, 0, TAU); ctx.fill(); ctx.restore(); return; }
-    ctx.beginPath(); ctx.moveTo(x - bw / 2, top); ctx.lineTo(x + bw / 2, top); ctx.lineTo(x + bw * .42, groundY); ctx.quadraticCurveTo(x, groundY + 8 * K, x - bw * .42, groundY); ctx.closePath();
-    const g = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); g.addColorStop(0, "#8a5a2c"); g.addColorStop(.5, "#c18a4a"); g.addColorStop(1, "#7b4d24"); ctx.fillStyle = g; ctx.fill();
-    ctx.save(); ctx.clip(); ctx.strokeStyle = "rgba(60,34,14,.45)"; ctx.lineWidth = 1.5 * K;
-    for(let i = -8; i < 16; i++){ ctx.beginPath(); ctx.moveTo(x - bw / 2 + i * bw / 8, top); ctx.lineTo(x - bw / 2 + i * bw / 8 + bh * .6, groundY + 6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + bw / 2 - i * bw / 8, top); ctx.lineTo(x + bw / 2 - i * bw / 8 - bh * .6, groundY + 6); ctx.stroke(); }
-    for(let j = 1; j < 4; j++){ ctx.beginPath(); ctx.moveTo(x - bw, top + j * bh / 4); ctx.lineTo(x + bw, top + j * bh / 4); ctx.stroke(); }
-    ctx.restore();
-    ctx.lineWidth = 6 * K; ctx.strokeStyle = "#6e4420"; ctx.lineCap = "round"; ctx.beginPath(); ctx.ellipse(x, top, bw / 2, 9 * K, 0, 0, Math.PI); ctx.stroke();
+    if(!front){ ctx.fillStyle = "#3b2512"; ctx.fillRect(x - cw / 2, top, cw, ch); ctx.restore(); return; }
+    const y0 = top + 8 * K, ph = (groundY - y0) / 3;
+    for(let i = 0; i < 3; i++){
+      const y = y0 + i * ph, g = ctx.createLinearGradient(0, y, 0, y + ph); g.addColorStop(0, i % 2 ? "#b27a3c" : "#c58a48"); g.addColorStop(1, i % 2 ? "#8f5f2c" : "#a2713a");
+      ctx.fillStyle = g; ctx.fillRect(x - cw / 2, y, cw, ph - 1.5 * K);
+      ctx.strokeStyle = "rgba(60,34,14,.28)"; ctx.lineWidth = 1 * K; for(let j = 0; j < 5; j++){ const gy = y + ph * (.2 + j * .15), a = (i * 31 + j * 17) % 40; ctx.beginPath(); ctx.moveTo(x - cw / 2 + a, gy); ctx.bezierCurveTo(x - cw * .2, gy - 2 * K, x + cw * .1, gy + 2 * K, x + cw / 2 - a * .5, gy); ctx.stroke(); }
+    }
+    ctx.fillStyle = "#7a4b21"; ctx.fillRect(x - cw / 2, top + 2 * K, 9 * K, ch + 2 * K); ctx.fillRect(x + cw / 2 - 9 * K, top + 2 * K, 9 * K, ch + 2 * K);
+    ctx.fillStyle = "#e6c88e"; for(const nx of [x - cw / 2 + 4.5 * K, x + cw / 2 - 4.5 * K]) for(const ny of [top + 10 * K, groundY - 8 * K]){ ctx.beginPath(); ctx.arc(nx, ny, 1.6 * K, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = "#6e4420"; ctx.fillRect(x - cw / 2 - 2 * K, top + 1 * K, cw + 4 * K, 7 * K);
+    ctx.fillStyle = "rgba(255,230,180,.25)"; ctx.fillRect(x - cw / 2 - 2 * K, top + 1 * K, cw + 4 * K, 1.6 * K);
     ctx.restore();
   }
+
+  // ---------- Das Männchen ----------
+  const man = {x: 0, fy: 0, face: 1, st: "sit", t: 0, tasks: [], cur: null, carry: null, ladder: null, emote: null, ph: 0, did: false, blink: 0};
+  const MS = 1.3, sitX = () => treeX + 40 * K;
+  function limb(x1, y1, x2, y2, w, col){ ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+  function limb2(x1, y1, x2, y2, x3, y3, w, col){ ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke(); }
+  function drawMan(x, fy, face, mode, t, o = {}){
+    // Einheiten: 1 = 1 K-Pixel, Figur ~52 hoch, blickt nach rechts, Füße bei y=0
+    const SK = "#f1c7a0", SH = "#3f7ed6", PA = "#34425e", HA = "#5a3820", SO = "#2b2b2b", ph = man.ph;
+    ctx.save(); ctx.translate(x, fy); ctx.scale(face * K * MS, K * MS);
+    let hx = 0, hy = -46, tilt = 0, eyes = "open", mouth = "flat", brows = 0;
+    const night = o.sleep;
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(mode === "sit" || mode === "sleep" ? 10 : 0, 1, mode === "sit" || mode === "sleep" ? 24 : 12, 3, 0, 0, TAU); ctx.fill();
+    if(mode === "sit" || mode === "sleep"){
+      const br = Math.sin(t * 1.6) * .6;
+      limb2(2, -6, 20, -14, 26, -2, 6, PA); limb2(0, -6, 15, -9, 21, -1, 6, "#2c384f");
+      ctx.fillStyle = SO; ctx.beginPath(); ctx.ellipse(28, -1.5, 4.5, 2.6, 0, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(23, -1, 4.2, 2.4, 0, 0, TAU); ctx.fill();
+      limb(-1, -5, -2.5, -25 + br, 12, SH);                                  // Oberkörper lehnt am Stamm (links)
+      limb2(-1, -22, 7, -15, 15, -17, 4, SK);                                // Arm auf dem Knie
+      hx = mode === "sleep" ? 3 : -1.5; hy = (mode === "sleep" ? -32 : -35) + br * .4; tilt = mode === "sleep" ? .38 : 0; eyes = mode === "sleep" ? "closed" : "open"; mouth = mode === "sleep" ? "snore" : "flat";
+      if(mode === "sit"){ const lk = Math.sin(t * .45); hx += lk * 1.2; }
+    } else if(mode === "climb"){
+      const s = Math.sin(ph) * 5;
+      limb2(0, -22, 3, -12 + s, 4, -1 + s * .3, 5, PA); limb2(0, -22, 3, -12 - s, 4, -1 - s * .3, 5, "#2c384f");
+      limb(0, -22, 0, -40, 11, SH);
+      limb(0, -38, 6, -52 + s, 3.6, SK); limb(0, -38, 6, -52 - s, 3.6, SK);
+      hx = 2; hy = -47; mouth = "flat";
+    } else {
+      const walking = mode === "walk", sw = walking ? Math.sin(ph) * 7 : 0;
+      limb(0, -22, sw, -1, 6, PA); limb(0, -22, -sw, -1, 6, "#2c384f");
+      ctx.fillStyle = SO; ctx.beginPath(); ctx.ellipse(sw + 3, -1, 5, 2.6, 0, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(-sw + 3, -1, 5, 2.6, 0, 0, TAU); ctx.fill();
+      const bob = walking ? Math.abs(Math.sin(ph)) * 1.2 : 0; ctx.translate(0, -bob);
+      limb(0, -22, 0, -41, 12, SH);
+      if(mode === "cheer"){ const j = Math.abs(Math.sin(t * 11)) * 3; ctx.translate(0, -j); limb2(-5, -38, -11, -50, -9, -62, 3.8, SK); limb2(5, -38, 12, -50, 11, -62, 3.8, SK); mouth = "smile"; eyes = "happy"; hy = -47; }
+      else if(mode === "angry"){ const sh = Math.sin(t * 40) * 1.2; ctx.translate(sh, 0); limb2(-5, -38, -9, -30, -4, -25, 3.8, SK); limb2(5, -38, 10, -32, 14, -38, 3.8, SK); mouth = "frown"; eyes = "angry"; brows = 1; hy = -47; }
+      else { const as = walking ? Math.sin(ph) * 9 : 0; limb(-4, -38, -4 + as, -26, 3.8, SK); limb(4, -38, 4 - as, -26, 3.8, SK); hy = -47; if(o.carry){ limb2(4, -38, 12, -34, 12, -42, 3.8, SK); } }
+    }
+    // Kopf
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(tilt);
+    ctx.fillStyle = SK; ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill();
+    if(o.angry) { ctx.fillStyle = "rgba(255,70,50,.28)"; ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = HA; ctx.beginPath(); ctx.arc(0, -.5, 9.6, Math.PI * 1.02, Math.PI * 2.02); ctx.lineTo(8.6, -1); ctx.quadraticCurveTo(4, -4.5, -3, -3.2); ctx.quadraticCurveTo(-6, -2, -9.4, 1.4); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-7.4, 1.5, 3, 4.5, .1, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.moveTo(-3, -9.4); ctx.lineTo(1, -13.2); ctx.lineTo(4.5, -9.3); ctx.fill();
+    ctx.fillStyle = "#1b1b1b"; ctx.strokeStyle = "#1b1b1b"; ctx.lineWidth = 1.3;
+    if(eyes === "closed"){ ctx.beginPath(); ctx.moveTo(1.5, 1.2); ctx.quadraticCurveTo(3.5, 2.8, 5.5, 1.2); ctx.stroke(); }
+    else if(eyes === "happy"){ ctx.beginPath(); ctx.arc(3.6, 1.8, 2, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); ctx.beginPath(); ctx.arc(-1.4, 1.8, 1.6, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+    else { const bl = (Math.sin(t * .9) > .985) ? .2 : 1; ctx.beginPath(); ctx.ellipse(3.8, .8, 1.5, 1.8 * bl, 0, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(-1.2, .8, 1.3, 1.6 * bl, 0, 0, TAU); ctx.fill(); }
+    if(brows){ ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(1, -2.6); ctx.lineTo(6, -.4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-4, -.8); ctx.lineTo(-.2, -2.8); ctx.stroke(); }
+    ctx.lineWidth = 1.3;
+    if(mouth === "smile"){ ctx.fillStyle = "#7a1f1f"; ctx.beginPath(); ctx.moveTo(.5, 4.2); ctx.quadraticCurveTo(3.2, 8.5, 6.2, 4.2); ctx.closePath(); ctx.fill(); }
+    else if(mouth === "frown"){ ctx.beginPath(); ctx.moveTo(.8, 6.4); ctx.quadraticCurveTo(3.2, 3.6, 5.8, 6.4); ctx.stroke(); }
+    else if(mouth === "snore"){ ctx.beginPath(); ctx.ellipse(3.2, 5.4, 1.5, 1.1 + Math.sin(t * 1.6) * .5, 0, 0, TAU); ctx.fill(); }
+    else { ctx.beginPath(); ctx.moveTo(1.2, 5.4); ctx.lineTo(5.4, 5.4); ctx.stroke(); }
+    ctx.restore();
+    if(o.carry){ ctx.restore(); ctx.save(); ctx.translate(x, fy); ctx.scale(face * K * MS, K * MS); drawAppleShape(13, -45, 5.2, o.carry); }
+    ctx.restore();
+  }
+  function manDraw(t){
+    const m = man, night = view.wn > .55;
+    let mode = "stand", extra = {};
+    if(forcePose){ drawMan(sitX() + (forcePose === "sit" || forcePose === "sleep" ? 0 : 70 * K), m.fy, 1, forcePose, t, {angry: forcePose === "angry"}); return; }
+    switch(m.st){
+      case "sit": mode = night ? "sleep" : "sit"; break;
+      case "stand": mode = "stand"; break;
+      case "toLadder": case "toDest": case "return": mode = "walk"; break;
+      case "climb": case "down": mode = "climb"; break;
+      case "pick": mode = m.cur && m.cur.h.k === "win" ? "cheer" : "angry"; extra.angry = mode === "angry"; break;
+      case "drop": mode = "stand"; break;
+    }
+    if(m.carry && (m.st === "toDest" || m.st === "drop")) extra.carry = m.carry.style;
+    drawMan(m.x, m.fy, m.face, mode, t, extra);
+    if(mode === "sleep"){ for(let i = 0; i < 3; i++){ const q = ((t * .5 + i / 3) % 1), zx = m.x + (28 + q * 20) * K * m.face, zy = m.fy - (64 + q * 44) * K; ctx.globalAlpha = (1 - q) * .9; ctx.fillStyle = "#dfe8ff"; ctx.font = `700 ${(11 + i * 3) * K}px ${MONO}`; ctx.textAlign = "center"; ctx.fillText("z", zx, zy); } ctx.globalAlpha = 1; }
+    if(mode === "angry"){ ctx.fillStyle = "#ff6b5e"; ctx.font = `800 ${22 * K}px ${MONO}`; ctx.textAlign = "center"; ctx.fillText("!", m.x + 18 * K * m.face, m.fy - 88 * K - Math.abs(Math.sin(t * 14)) * 4 * K); }
+  }
+  function hangPos(h){ return h.x != null ? {x: h.x, y: h.y} : null; }
+  function updateMan(dt){
+    const m = man; m.t += dt; m.ph += dt * 9; m.fy = groundY + 12 * K;
+    const walkTo = (tx, sp) => { const d = tx - m.x; if(Math.abs(d) < 3 * K){ m.x = tx; return true; } m.x += Math.sign(d) * Math.min(Math.abs(d), sp * K * dt); m.face = Math.sign(d); return false; };
+    switch(m.st){
+      case "sit":
+        m.x = sitX(); m.face = 1;
+        if(m.tasks.length && tips.length && m.cur == null){ m.cur = m.tasks.shift(); m.st = "stand"; m.t = 0; }
+        break;
+      case "stand":
+        if(m.t > .6){
+          const p = hangPos(m.cur.h); if(!p){ m.cur = null; m.st = "return"; break; }
+          const top = {x: p.x, y: p.y + 20 * K}, hh = groundY + 6 * K - top.y, dir = p.x < treeX ? 1 : -1;
+          m.ladder = {bx: clamp(p.x + dir * hh * .26, 24, W - 24), by: groundY + 8 * K, tx: p.x, ty: top.y, a: 0}; m.st = "toLadder"; m.t = 0; m.did = false;
+        }
+        break;
+      case "toLadder":
+        m.ladder.a = Math.min(1, m.ladder.a + dt * 2);
+        if(walkTo(m.ladder.bx, 190)){ m.st = "climb"; m.t = 0; m.dur = .9 + (m.ladder.by - m.ladder.ty) / 320 / K; m.face = m.ladder.tx > m.ladder.bx ? 1 : -1; }
+        break;
+      case "climb": case "down": {
+        const L = m.ladder, q = ease(clamp(m.t / m.dur, 0, 1)), u = m.st === "climb" ? q : 1 - q;
+        m.x = lerp(L.bx, L.tx, u) - m.face * 2 * K; m.fy = lerp(L.by + 4 * K, L.ty + 62 * K, u);
+        if(m.t >= m.dur){ if(m.st === "climb"){ m.st = "pick"; m.t = 0; } else { m.ladder = null; m.fy = groundY + 12 * K; m.st = "toDest"; m.t = 0; } }
+        break; }
+      case "pick": {
+        const L = m.ladder; m.x = L.tx - m.face * 2 * K; m.fy = L.ty + 62 * K;
+        if(m.t > .4 && !m.did){
+          m.did = true; const h = m.cur.h, win = h.k === "win", px = m.x, py = m.fy - 98 * K;
+          m.carry = {h, style: win ? {hsl: hslWin(h.R), seed: .3} : {hsl: [22, 24, 26], spots: .8, seed: .5, shine: false}};
+          hangs.splice(hangs.indexOf(h), 1);
+          floaters.push({x: px, y: py, txt: (h.t.gv > 0 ? "+" : "") + fmt(h.t.gv) + " €", col: win ? "#7dffb0" : "#ff8d80", a: 1.6, size: 22, big: true});
+          if(win) for(let i = 0; i < 16; i++) sparks.push({x: px, y: py + 10 * K, vx: (Math.random() - .5) * 140 * K, vy: -Math.random() * 120 * K - 30 * K, a: 1, c: ["#ffd34a", "#7dffb0", "#ff8aa0", "#8ec5ff"][i % 4]});
+          if(win) wobble = Math.max(wobble, .5);
+        }
+        if(m.t > 1.7){ m.st = "down"; m.t = 0; m.dur = .8 + (L.by - L.ty) / 380 / K; }
+        break; }
+      case "toDest": {
+        const win = m.carry && m.carry.h.k === "win", tx = win ? crateX - cw / 2 - 22 * K : rotR + 14 * K;
+        if(walkTo(tx, 190)){ m.st = "drop"; m.t = 0; m.face = win ? 1 : -1; }
+        break; }
+      case "drop":
+        if(m.t > .35 && m.carry){
+          const h = m.carry.h, f = mkFruit(h.t, fruits.length + 5, true, 0); f.quiet = true; f.state = "fall"; f.p = 0; f.dur = .55; f.fx = m.x + m.face * 16 * K; f.fy = m.fy - 52 * K; f.x = f.fx; f.y = f.fy;
+          fruits.push(f); renumberSlots(); layoutFruits(); m.carry = null;
+        }
+        if(m.t > .9){ m.cur = null; if(m.tasks.length){ m.cur = m.tasks.shift(); m.st = "stand"; m.t = 0; } else { m.st = "return"; m.t = 0; markSeen(); if(!hangs.some(h => h.open)) $("#hud-l").textContent = "Ernte erledigt · der Baum blüht"; } }
+        break;
+      case "return":
+        if(walkTo(sitX(), 150)){ m.st = "sit"; m.face = 1; }
+        break;
+    }
+  }
+  function drawLadder(){
+    const L = man.ladder; if(!L) return;
+    ctx.save(); ctx.globalAlpha = L.a; const dx = L.tx - L.bx, dy = L.ty - L.by, len = Math.hypot(dx, dy), nx = -dy / len * 6 * K, ny = dx / len * 6 * K;
+    ctx.lineCap = "round"; ctx.strokeStyle = "#8a5a2c"; ctx.lineWidth = 3.4 * K;
+    for(const s of [-1, 1]){ ctx.beginPath(); ctx.moveTo(L.bx + nx * s, L.by + ny * s); ctx.lineTo(L.tx + nx * s * .8, L.ty + ny * s * .8); ctx.stroke(); }
+    ctx.strokeStyle = "#b07a40"; ctx.lineWidth = 2.4 * K; const n = Math.floor(len / (15 * K));
+    for(let i = 1; i < n; i++){ const q = i / n, cx = L.bx + dx * q, cy = L.by + dy * q, k = 1 - q * .2; ctx.beginPath(); ctx.moveTo(cx - nx * k, cy - ny * k); ctx.lineTo(cx + nx * k, cy + ny * k); ctx.stroke(); }
+    ctx.restore();
+  }
+
+  // ---------- Baum zeichnen ----------
   function drawTree(t, w){
-    tips.length = 0; ends.length = 0;
+    tips.length = 0; ends.length = 0; tipsByLeg = [];
     ctx.lineCap = "round"; ctx.lineJoin = "round";
-    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(treeX, groundY + 6 * K, 90 * K, 14 * K, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(treeX, groundY + 6 * K, 100 * K, 15 * K, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "#4e3320"; ctx.lineWidth = 9 * K; for(const s of [-1, 1]){ ctx.beginPath(); ctx.moveTo(treeX + s * 6 * K, groundY - 4 * K); ctx.quadraticCurveTo(treeX + s * 22 * K, groundY + 2 * K, treeX + s * 40 * K, groundY + 8 * K); ctx.stroke(); }
     drawNode(root, treeX, groundY, 0, t, w);
-    for(const [n, x, y, a] of ends){
-      for(const lf of n.leaves){
-        const sw = Math.sin(t * 2 + lf.ph) * 2.2 * K * (calm ? .2 : 1) + w * 4 * K, lx = x + lf.dx * K + sw, ly = y + lf.dy * K + Math.cos(t * 1.7 + lf.ph) * 1.2 * K;
-        ctx.fillStyle = `hsla(${96 + lf.l * 30},${48 + lf.l * 16}%,${24 + lf.l * 16}%,.9)`; ctx.beginPath(); ctx.ellipse(lx, ly, lf.rx * K, lf.ry * K, lf.rot + w * .3, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(25,14,6,.55)"; ctx.beginPath(); ctx.ellipse(treeX - 2 * K, groundY - 52 * K, 4.5 * K, 7 * K, 0, 0, TAU); ctx.fill();
+    for(const [n, x, y] of ends){
+      const hue = n.hue || 0;
+      for(const lfd of n.leaves){
+        const sw = Math.sin(t * 2 + lfd.ph) * 2.2 * K * (calm ? .2 : 1) + w * 4 * K, lx = x + lfd.dx * K + sw, ly = y + lfd.dy * K + Math.cos(t * 1.7 + lfd.ph) * 1.2 * K;
+        ctx.fillStyle = `hsla(${98 + hue + lfd.l * 28},${46 + lfd.l * 18}%,${17 + lfd.l * 24}%,.95)`; ctx.beginPath(); ctx.ellipse(lx, ly, lfd.rx * K, lfd.ry * K, lfd.rot + w * .3, 0, TAU); ctx.fill();
       }
     }
   }
-  function drawHanging(t, w){
-    for(const [i, h] of hanging.entries()){
-      const tp = tips[h.tip % Math.max(1, tips.length)]; if(!tp) continue;
-      const swing = w * .22 + Math.sin(t * 1.7 + i * 1.3) * .07 * (calm ? .2 : 1), L = 16 * K, ax = tp.x + Math.sin(swing) * L, ay = tp.y + Math.cos(swing) * L + h.sz * K * .4;
+  function drawHangs(t, w){
+    const used = new Set(), cnt = {};
+    for(const h of hangs){
+      const key = h.leg; cnt[key] = (cnt[key] || 0) + 1; const tp = tipFor(h.leg, (cnt[key] - 1) * 3 + 1 + (h.leg < 0 ? h.si * 5 : 0)); if(!tp) continue; used.add(tp);
+      const swing = w * .22 + Math.sin(t * 1.7 + h.si * 1.3) * .07 * (calm ? .2 : 1), L = 16 * K, ax = tp.x + Math.sin(swing) * L, ay = tp.y + Math.cos(swing) * L + h.sz * K * .4;
       ctx.strokeStyle = "#4a2f1a"; ctx.lineWidth = 1.6 * K; ctx.beginPath(); ctx.moveTo(tp.x, tp.y); ctx.lineTo(ax, ay - h.sz * K * .6); ctx.stroke();
-      const red = h.ripe > .5, hsl = red ? [95 - (h.ripe - .5) * 190, 62, 46] : [90 - (.5 - h.ripe) * 120, 40 + h.ripe * 20, 40 - (.5 - h.ripe) * 20];
-      drawAppleShape(ax, ay, h.sz * K * (.85 + h.ripe * .3), {hsl, spots: h.ripe < .35 ? (.35 - h.ripe) * 2 : 0, seed: i * .13, noLeaf: false});
+      if(h.pend && h.k === "loss") drawAppleShape(ax, ay, h.sz * K, {hsl: [26, 34, 30], spots: .85, seed: h.si * .17, shine: false, sq: .9});
+      else if(h.pend) drawAppleShape(ax, ay, h.sz * K, {hsl: hslWin(h.R), seed: h.si * .13});
+      else { const red = h.ripe > .5, hsl = red ? [95 - (h.ripe - .5) * 190, 62, 46] : [90 - (.5 - h.ripe) * 120, 40 + h.ripe * 20, 40 - (.5 - h.ripe) * 20]; drawAppleShape(ax, ay, h.sz * K * (.85 + h.ripe * .3), {hsl, spots: h.ripe < .35 ? (.35 - h.ripe) * 2 : 0, seed: h.si * .13}); }
       h.x = ax; h.y = ay; h.r = h.sz * K;
     }
-    for(const [i, b] of blossoms.entries()){
-      const tp = tips[b % Math.max(1, tips.length)]; if(!tp) continue; const pul = .85 + .15 * Math.sin(t * 1.4 + i), r = 5.5 * K * pul;
-      ctx.fillStyle = "rgba(255,236,244,.95)"; for(let k = 0; k < 5; k++){ const a = k * TAU / 5 + i; ctx.beginPath(); ctx.arc(tp.x + Math.cos(a) * r * .9, tp.y + Math.sin(a) * r * .9 - 6 * K, r * .75, 0, TAU); ctx.fill(); }
-      ctx.fillStyle = "#ffd36a"; ctx.beginPath(); ctx.arc(tp.x, tp.y - 6 * K, r * .45, 0, TAU); ctx.fill();
+    for(const [i, b] of blossoms.entries()){                 // Blüten immer
+      const tp = tips[b % Math.max(1, tips.length)]; if(!tp || used.has(tp)) continue;
+      const pul = .88 + .12 * Math.sin(t * 1.4 + i), r = 5 * K * pul, ox = (((i * 53) % 17) - 8) * 1.8 * K, oy = (((i * 29) % 13) - 6) * 1.6 * K;
+      ctx.fillStyle = "rgba(255,238,246,.96)"; for(let k = 0; k < 5; k++){ const a = k * TAU / 5 + i; ctx.beginPath(); ctx.arc(tp.x + ox + Math.cos(a) * r * .9, tp.y + oy + Math.sin(a) * r * .9 - 4 * K, r * .72, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = "#ffd36a"; ctx.beginPath(); ctx.arc(tp.x + ox, tp.y + oy - 4 * K, r * .42, 0, TAU); ctx.fill();
     }
+  }
+  function drawLegLabels(){
+    ctx.font = `600 ${Math.max(9.5, 10.5 * K)}px "Instrument Sans",sans-serif`; ctx.textAlign = "center";
+    legs.forEach((l, i) => { const p = legEnd[i]; if(!p) return; const [s, tf] = l.split(":"), txt = `${s} ${tf}`, tw = ctx.measureText(txt).width + 12;
+      ctx.fillStyle = "rgba(8,12,22,.78)"; ctx.beginPath(); ctx.roundRect(p.x - tw / 2, p.y - 24 * K, tw, 16 * K, 8); ctx.fill(); ctx.fillStyle = "#e8edf8"; ctx.fillText(txt, p.x, p.y - 12.5 * K); });
   }
   function particles(dt, t, w){
     for(const l of leaves){ l.x += (w * 22 + 10) * dt * (calm ? .2 : 1); l.y += l.v * dt * (calm ? .2 : 1); l.rot += dt; if(l.y > groundY + 4 || l.x > W + 20){ l.y = -10; l.x = Math.random() * W * .8; }
-      ctx.fillStyle = "rgba(120,170,70,.65)"; ctx.beginPath(); ctx.ellipse(l.x + Math.sin(t + l.p) * 8 * K, l.y, 5 * K, 2.6 * K, l.rot, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = "rgba(120,170,70,.6)"; ctx.beginPath(); ctx.ellipse(l.x + Math.sin(t + l.p) * 8 * K, l.y, 5 * K, 2.6 * K, l.rot, 0, TAU); ctx.fill(); }
+    for(const l of petals){ l.x += (w * 18 + 6) * dt * (calm ? .2 : 1); l.y += l.v * dt * (calm ? .2 : 1); l.rot += dt * 1.3; if(l.y > groundY + 4 || l.x > W + 20){ l.y = H * .15 + Math.random() * H * .3; l.x = W * .12 + Math.random() * W * .5; }
+      ctx.fillStyle = "rgba(255,230,240,.85)"; ctx.beginPath(); ctx.ellipse(l.x + Math.sin(t * 1.3 + l.p) * 10 * K, l.y, 3.6 * K, 2 * K, l.rot, 0, TAU); ctx.fill(); }
     for(const f of fruits){ if(f.k !== "loss" || f.state !== "rest" || (f.rot || 0) < .5 || f.slot > 14) continue;
       ctx.fillStyle = "rgba(20,20,20,.85)"; for(let i = 0; i < 2; i++){ const a = t * (3 + i) + f.seed * 20 + i * 3; ctx.fillRect(f.x + Math.cos(a) * 14 * K, f.y - f.sz * K - 6 * K + Math.sin(a * 1.3) * 7 * K, 1.8, 1.8); } }
     if(view.wn > .15){ ctx.globalCompositeOperation = "lighter"; for(const ff of fireflies){ ff.x += Math.sin(t * ff.v + ff.p) * .35; ff.y += Math.cos(t * ff.v * 1.3 + ff.p) * .25; const a = view.wn * (.4 + .6 * Math.sin(t * 2 + ff.p) ** 2), g = ctx.createRadialGradient(ff.x, ff.y, 0, ff.x, ff.y, 9 * K); g.addColorStop(0, `rgba(255,240,150,${a})`); g.addColorStop(1, "rgba(255,240,150,0)"); ctx.fillStyle = g; ctx.fillRect(ff.x - 10 * K, ff.y - 10 * K, 20 * K, 20 * K); } ctx.globalCompositeOperation = "source-over"; }
-    for(let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.y -= 26 * dt * K; f.a -= dt * .6; if(f.a <= 0){ floaters.splice(i, 1); continue; }
-      ctx.globalAlpha = f.a; ctx.fillStyle = f.col; ctx.font = `600 ${13 * Math.max(.9, K)}px ${getComputedStyle(document.body).getPropertyValue("--mono")}`; ctx.textAlign = "center"; ctx.fillText(f.txt, f.x, f.y); ctx.globalAlpha = 1; }
+    for(let i = sparks.length - 1; i >= 0; i--){ const s = sparks[i]; s.vy += 260 * K * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.a -= dt * .9; if(s.a <= 0){ sparks.splice(i, 1); continue; } ctx.globalAlpha = s.a; ctx.fillStyle = s.c; ctx.fillRect(s.x, s.y, 4 * K, 4 * K); ctx.globalAlpha = 1; }
+    for(let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.y -= (f.big ? 20 : 26) * dt * K; f.a -= dt * (f.big ? .55 : .6); if(f.a <= 0){ floaters.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.min(1, f.a); ctx.font = `700 ${(f.size || 13) * Math.max(.9, K)}px ${MONO}`; ctx.textAlign = "center"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.strokeText(f.txt, f.x, f.y); ctx.fillStyle = f.col; ctx.fillText(f.txt, f.x, f.y); ctx.globalAlpha = 1; }
   }
-  function frame(now){
-    const dt = Math.min(.05, (now - last) / 1000); last = now; const t = (now - t0) / 1000, w = wind(t);
+
+  // ---------- Schleife ----------
+  let last = performance.now();
+  function tick(dt){
+    simT += dt; const t = simT, w = wind(t);
     wobble = Math.max(0, wobble - dt * 1.8);
-    sky(w); celestial(t); for(const c of clouds) cloud(c, dt, w);
+    sky(); celestial(t); for(const c of clouds) cloud(c, dt, w);
     hill(groundY - 60 * K, 60 * K, .006, 1, mix3(PAL.hillF[0], PAL.hillF[1], PAL.hillF[2], view.wd, view.ww, view.wn));
     hill(groundY - 24 * K, 44 * K, .009, 4, mix3(PAL.hillN[0], PAL.hillN[1], PAL.hillN[2], view.wd, view.ww, view.wn));
     ground(t, w);
-    // Reihenfolge: Boden-Früchte hinter dem Baum-Stamm sind nicht nötig; Baum, Korb hinten, Äpfel, Korb vorn
-    for(const f of fruits) updateFruit(f, dt, t);
-    const ground_f = fruits.filter(f => f.k !== "win" && f.state !== "wait").sort((a, b) => a.y - b.y), win_f = fruits.filter(f => f.k === "win" && f.state !== "wait");
-    drawTree(t, w); drawHanging(t, w);
-    for(const f of ground_f) if(f.state !== "fall") drawFruit(f, t);
-    basket(false, t); for(const f of win_f) if(f.state !== "fall") drawFruit(f, t); basket(true, t);
-    for(const f of fruits) if(f.state === "fall") drawFruit(f, t);
+    for(const f of fruits) updateFruit(f, dt);
+    updateMan(dt);
+    const gf = fruits.filter(f => f.k !== "win" && f.state !== "wait").sort((a, b) => a.y - b.y), wf = fruits.filter(f => f.k === "win" && f.state !== "wait");
+    drawTree(t, w); drawHangs(t, w);
+    for(const f of gf) if(f.state !== "fall") drawFruit(f);
+    crate(false, t); for(const f of wf) if(f.state !== "fall") drawFruit(f); crate(true, t);
+    drawLadder(); manDraw(t);
+    for(const f of fruits) if(f.state === "fall") drawFruit(f);
+    if(showLegs) drawLegLabels();
     particles(dt, t, w);
     const na = view.wn * .42 + view.ww * .1; if(na > .01){ ctx.fillStyle = `rgba(8,16,56,${na})`; ctx.fillRect(0, 0, W, H); }
     const vg = ctx.createRadialGradient(W / 2, H * .55, Math.min(W, H) * .35, W / 2, H * .55, Math.max(W, H) * .8); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
-    requestAnimationFrame(frame);
   }
+  function frame(now){ const dt = Math.min(.05, (now - last) / 1000); last = now; tick(dt); requestAnimationFrame(frame); }
 
   // ---------- Tooltip ----------
+  function legStats(i){ const l = legs[i], ts = DATA.trades.filter(t => legIdx(legOf(t)) === i && (rangeDays === 0 || bday(t.geschlossen) <= rangeDays)); return {l, n: ts.length, sum: ts.reduce((s, t) => s + t.gv, 0), win: ts.filter(t => t.gv > 0).length}; }
   function pick(x, y){
     let best = null, bd = 1e9;
     for(const f of fruits){ if(f.state === "wait" || f.state === "fall") continue; const d = Math.hypot(f.x - x, f.y - y); if(d < f.sz * K * 1.5 && d < bd){ bd = d; best = {f}; } }
-    if(!best) for(const h of hanging){ if(h.x == null) continue; const d = Math.hypot(h.x - x, h.y - y); if(d < (h.r || 12) * 1.6 && d < bd){ bd = d; best = {h}; } }
+    if(!best) for(const h of hangs){ if(h.x == null) continue; const d = Math.hypot(h.x - x, h.y - y); if(d < (h.r || 12) * 1.6 && d < bd){ bd = d; best = {h}; } }
+    if(!best) legEnd.forEach((p, i) => { if(!p) return; const d = Math.hypot(p.x - x, p.y - y); if(d < 34 * K && d < bd){ bd = d; best = {leg: i, p}; } });
     return best;
   }
   function tip(ev){
     const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, p = pick(x, y);
     if(!p){ tipEl.classList.remove("on"); return; }
-    if(p.f){ const t = p.f.t, R = p.f.R, d = new Date(t.geschlossen); tipEl.innerHTML = `<b>${esc(t.symbol)} · ${t.richtung === "long" ? "Long" : "Short"}</b><span class="num" style="color:${t.gv >= 0 ? "var(--good)" : "var(--bad)"}">${t.gv >= 0 ? "+" : ""}${fmt(t.gv, 2)} € (${R >= 0 ? "+" : ""}${fmt(R, 2)} R)</span><br><span style="color:var(--ink-3)">${esc((t.kommentar || "").split("|")[0] || "")}<br>${d.toLocaleDateString("de-DE")} ${d.toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"})}</span>`; tipEl.style.left = clamp(p.f.x, 90, W - 90) + "px"; tipEl.style.top = (p.f.y - p.f.sz * K) + "px"; }
-    else { tipEl.innerHTML = `<b>Offener Trade</b><span style="color:var(--ink-3)">Reife ${fmt(p.h.ripe * 100)} % · Farbe zeigt Gewinn/Verlust der offenen Trades</span>`; tipEl.style.left = clamp(p.h.x, 100, W - 100) + "px"; tipEl.style.top = (p.h.y - p.h.r) + "px"; }
+    if(p.f){ const t = p.f.t, R = p.f.R, d = new Date(t.geschlossen); tipEl.innerHTML = `<b>${esc(t.symbol)} · ${t.richtung === "long" ? "Long" : "Short"}</b><span class="num" style="color:${t.gv >= 0 ? "var(--good)" : "var(--bad)"}">${t.gv >= 0 ? "+" : ""}${fmt(t.gv, 2)} € (${R >= 0 ? "+" : ""}${fmt(R, 2)} R)</span><br><span style="color:var(--ink-3)">${esc(legOf(t))}<br>${d.toLocaleDateString("de-DE")} ${d.toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"})}</span>`; tipEl.style.left = clamp(p.f.x, 90, W - 90) + "px"; tipEl.style.top = (p.f.y - p.f.sz * K) + "px"; }
+    else if(p.h){ const h = p.h; tipEl.innerHTML = h.pend ? `<b>${esc(h.t.symbol)} · fertig</b><span class="num" style="color:${h.t.gv >= 0 ? "var(--good)" : "var(--bad)"}">${h.t.gv >= 0 ? "+" : ""}${fmt(h.t.gv, 2)} €</span>` : `<b>${esc(h.pos.symbol)} · offen</b><span class="num" style="color:${h.pos.gv >= 0 ? "var(--good)" : "var(--bad)"}">${h.pos.gv >= 0 ? "+" : ""}${fmt(h.pos.gv, 2)} €</span><br><span style="color:var(--ink-3)">${esc(h.pos.bein || "")}</span>`; tipEl.style.left = clamp(h.x, 100, W - 100) + "px"; tipEl.style.top = (h.y - h.r) + "px"; }
+    else { const s = legStats(p.leg); tipEl.innerHTML = `<b>${esc(shortLeg(s.l))}</b><span style="color:var(--ink-3)">${s.n} Trades · ${s.win} Gewinner</span><br><span class="num" style="color:${s.sum >= 0 ? "var(--good)" : "var(--bad)"}">${s.sum >= 0 ? "+" : ""}${fmt(s.sum)} €</span>`; tipEl.style.left = clamp(p.p.x, 100, W - 100) + "px"; tipEl.style.top = (p.p.y - 10 * K) + "px"; }
     tipEl.classList.add("on");
   }
   cv.addEventListener("pointermove", tip); cv.addEventListener("pointerdown", tip); cv.addEventListener("pointerleave", () => tipEl.classList.remove("on"));
 
-  // ---------- Start ----------
+  // ---------- Bedienung ----------
   const RANGES = [[7, "7 Tage"], [30, "30 Tage"], [90, "90 Tage"], [0, "Alles"]];
+  const animOn = () => !calm && !instant;
   function drawRange(){
     $("#range").innerHTML = RANGES.map(([d, n]) => `<button type="button" class="tab" role="tab" aria-selected="${d === rangeDays}" data-d="${d}">${n}</button>`).join("");
-    $("#range").querySelectorAll(".tab").forEach(b => b.onclick = () => { rangeDays = +b.dataset.d; drawRange(); setup(!calm && !instant); });
+    $("#range").querySelectorAll(".tab").forEach(b => b.onclick = () => { rangeDays = +b.dataset.d; drawRange(); setup(animOn() ? "replay" : "rest"); });
   }
+  $("#b-replay").onclick = () => setup(animOn() ? "replay" : "rest");
+  $("#b-legs").onclick = e => { showLegs = !showLegs; e.currentTarget.setAttribute("aria-pressed", showLegs); };
+  $("#b-harvest").onclick = () => {
+    if(man.st !== "sit" || man.cur) return;
+    const all = fruits.filter(f => f.state === "rest" && f.k !== "be").sort((a, b) => new Date(a.t.geschlossen) - new Date(b.t.geschlossen)).slice(-3);
+    if(!all.length) return;
+    for(const f of all){ fruits.splice(fruits.indexOf(f), 1); hangs.push({pend: true, t: f.t, k: f.k, R: f.R, leg: f.leg, ripe: f.k === "win" ? 1 : 0, sz: f.sz * .9, si: hangs.length}); }
+    renumberSlots(); layoutFruits(); man.tasks = hangs.filter(h => h.pend).map(h => ({h}));
+  };
+
   async function start(){
     $("#login").hidden = true; $("#app").hidden = false;
     try{
       if(window.__DEV_PAYLOAD) DATA = window.__DEV_PAYLOAD;
       else{
-        const [st, tr] = await Promise.all([sb("bot_status?bot_id=eq.equity&select=*"), sb("bot_trades?select=symbol,richtung,eroeffnet,geschlossen,gv,risiko,kommentar&bot_id=eq.equity&order=geschlossen.desc&limit=400")]);
-        DATA = {status: st[0] || {}, trades: tr};
+        const [st, tr, lg, ps] = await Promise.all([sb("bot_status?bot_id=eq.equity&select=*"), sb("bot_trades?select=symbol,richtung,eroeffnet,geschlossen,gv,risiko,kommentar&bot_id=eq.equity&order=geschlossen.desc&limit=400"),
+          sb("lab_snapshot?id=eq.bot_cockpit&select=payload"), sb("bot_positions?bot_id=eq.equity&select=symbol,richtung,gv,bein,seit,aktualisiert")]);
+        const fresh = ps.filter(p => Date.now() - new Date(p.aktualisiert).getTime() < 15 * 60 * 1000);
+        DATA = {status: st[0] || {}, trades: tr, legs: lg[0] ? lg[0].payload.beine.map(b => b.label) : [], positions: fresh};
       }
+      legs = DATA.legs && DATA.legs.length ? DATA.legs : [];
+      const q = new URLSearchParams(location.search); if(q.get("h")) hourOverride = +q.get("h"); instant = !!q.get("instant"); forcePose = q.get("pose");
+      if(window.__DEV_PAYLOAD && q.get("open")){ const n = +q.get("open"); DATA.positions = Array.from({length: n}, (_, i) => ({symbol: "TEST", gv: (i % 3 - 1) * 90 * (1 + i % 2), bein: legs[(i * 5) % legs.length]})); }
       $("#msg").hidden = true; $("#stand").textContent = "Stand: " + new Date().toLocaleString("de-DE", {dateStyle: "short", timeStyle: "short"});
-      const q = new URLSearchParams(location.search); if(q.get("h")) hourOverride = +q.get("h"); instant = !!q.get("instant");
-      if(window.__DEV_PAYLOAD && q.get("open")){ DATA.status.offene_positionen = +q.get("open"); DATA.status.equity = DATA.status.kontostand + (+q.get("fl") || 0); }   // nur Testseite
-      build(); drawRange(); resize(); setup(!calm && !instant); requestAnimationFrame(frame);
-    }catch(e){ if(e.message !== "nicht angemeldet") $("#msg").textContent = "Daten konnten nicht geladen werden (" + e.message + ")."; }
+      build(legs.length || 13); drawRange(); resize(); setup(window.__DEV_PAYLOAD && !q.get("harvest") ? (animOn() ? "replay" : "rest") : "visit");
+      if(window.__DEV_PAYLOAD){ window.__tick = (dt, n) => { for(let i = 0; i < n; i++) tick(dt); return man.st; }; window.__man = man; }
+      requestAnimationFrame(frame);
+    }catch(e){ if(e.message !== "nicht angemeldet") $("#msg").textContent = "Daten konnten nicht geladen werden (" + e.message + ")."; console.error(e); }
   }
   let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if(DATA) resize(); }, 120); });
   (async function init(){ if(window.__DEV_PAYLOAD){ start(); return; } (await validSession()) ? start() : showLogin(); })();
