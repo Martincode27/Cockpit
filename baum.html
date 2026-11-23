@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Apfelbaum · Cockpit</title>
+<meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0b0e14; --ink:#f3f4f7; --ink-2:#b9bfcc; --ink-3:#7f8696; --line:rgba(255,255,255,.12);
+  --good:#46d38a; --bad:#ff6b5e; --gold:#ffcf5a; --acc:#6aa8ff; --brand:#ef5a5f;
+  --glass:rgba(255,255,255,.07); --glass-2:rgba(255,255,255,.12);
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:dark}
+body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#18233f 0%,var(--bg) 60%);background-attachment:fixed;color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 70px;display:grid;gap:14px}
+a{color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.logo i{width:12px;height:12px;border-radius:3px;background:var(--brand);transform:rotate(45deg);display:block}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link,.btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:10px;text-decoration:none;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.link:hover,.btn:hover{border-color:rgba(255,255,255,.35)}
+.btn.primary{background:var(--ink);color:#0b0e14;border-color:var(--ink);font-weight:600}
+.btn.big{padding:14px;font-size:16px;border-radius:12px;width:100%}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13px;padding:7px 14px;border:1px solid var(--line);background:var(--glass);color:var(--ink-2);border-radius:999px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.tab[aria-selected="true"]{color:#0b0e14;background:var(--ink);border-color:var(--ink);font-weight:600}
+.stage{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;background:#0a0f1f}
+canvas{display:block;width:100%;touch-action:manipulation}
+.tip{position:absolute;pointer-events:none;background:rgba(10,14,24,.88);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12.5px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transform:translate(-50%,-110%);white-space:nowrap;z-index:3;opacity:0;transition:opacity .15s}
+.tip.on{opacity:1}
+.tip b{display:block;font-size:14px;margin-bottom:1px}
+.tip .num{font-family:var(--mono)}
+.hud{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;flex-wrap:wrap}
+.pill{background:var(--glass-2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px 16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.kpi span{display:block;color:var(--ink-3);font-size:12px}
+.kpi b{display:block;font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.kpi small{display:block;color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.kpi.g b{color:var(--good)} .kpi.r b{color:var(--bad)} .kpi.y b{color:var(--gold)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink-3);font-size:12.5px}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.msg{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:14px 16px;color:var(--ink-2)}
+.login{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);padding:16px;z-index:10}
+.login form{width:100%;max-width:360px;background:#141a26;border:1px solid var(--line);border-radius:14px;padding:24px;display:grid;gap:14px}
+.f{display:grid;gap:5px;font-size:12.5px;color:var(--ink-2)}
+.f input{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#0b0e14;color:var(--ink)}
+.err{color:var(--bad);font-size:13px}
+@media (prefers-reduced-motion:reduce){.tip{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <form id="login-form" autocomplete="on">
+    <div class="logo"><i></i>Apfelbaum</div>
+    <div class="f" style="color:var(--ink-3)">Gleiche Anmeldung wie im Cockpit.</div>
+    <label class="f">E-Mail<input id="login-email" type="email" autocomplete="username" required></label>
+    <label class="f">Passwort<input id="login-pass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="login-err" role="alert" hidden></div>
+    <button type="submit" class="btn primary big" id="login-btn">Anmelden</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="logo"><i></i>Apfelbaum <span style="font-size:13px;font-weight:500;color:var(--ink-3)" id="stand"></span></div>
+    <nav class="links"><a class="link" href="bot.html">Bot-Cockpit</a><a class="link" href="index.html">◆ Cockpit</a></nav>
+  </header>
+  <div class="tabs" role="tablist" id="range"></div>
+  <div class="stage" id="stage">
+    <canvas id="cv" role="img" aria-label="Apfelbaum: Jeder Trade des Eigenkapital-Bots ist ein Apfel. Gewinne landen im Korb, Verluste faulen am Boden."></canvas>
+    <div class="hud"><span class="pill" id="hud-l"></span><span class="pill" id="hud-r"></span></div>
+    <div class="tip" id="tip"></div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="legend"><span><i style="background:#d8352e"></i>reifer Apfel = Gewinn (je größer, desto mehr R)</span><span><i style="background:#8a6a3a"></i>faulender Apfel = Verlust</span><span><i style="background:#9fb07a"></i>verschrumpelt = Break-even</span><span><i style="background:#f6e3ea"></i>Blüten = gerade nichts offen</span></div>
+  <div class="msg" id="msg">Wird geladen …</div>
+</div>
+
+<script>
+(function(){
+  // ---------- Grundlagen (wie die anderen Cockpit-Seiten) ----------
+  const SUPABASE_URL = "https://qqsxtzbukkneptegkbkf.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_pOBjg9lbOcJwV-4qz9ilAw_YZwADBCT"; // öffentlich gedacht, Schutz über Login + RLS
+  const SESSION_KEY = "cockpit_session";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmt = (v, d = 0) => v == null || isNaN(v) ? "–" : (+v).toLocaleString("de-DE", {minimumFractionDigits: d, maximumFractionDigits: d});
+  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function saveSession(s){ try{ s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); }catch(e){} }
+  async function authRequest(grant, body){
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {method:"POST", headers:{apikey:SUPABASE_KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const d = await res.json().catch(() => ({}));
+    if(!res.ok) throw Object.assign(new Error(d.error_description || d.msg || d.message || ("HTTP " + res.status)), {status:res.status});
+    const s = {access_token:d.access_token, refresh_token:d.refresh_token, expires_at:d.expires_at || Math.floor(Date.now()/1000) + (d.expires_in || 3600), email:d.user && d.user.email};
+    saveSession(s); return s;
+  }
+  async function validSession(){
+    const s = loadSession();
+    if(!s || !s.refresh_token) return null;
+    if(s.expires_at - 60 > Date.now()/1000) return s;
+    try{ return await authRequest("refresh_token", {refresh_token:s.refresh_token}); }
+    catch(e){ if(e.status >= 400 && e.status < 500) saveSession(null); return null; }
+  }
+  async function sb(path){
+    const s = await validSession();
+    if(!s){ showLogin(); throw new Error("nicht angemeldet"); }
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + s.access_token}});
+    if(res.status === 401){ saveSession(null); showLogin(); throw new Error("Sitzung abgelaufen"); }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }
+  function showLogin(){ $("#app").hidden = true; $("#login").hidden = false; }
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault(); const err = $("#login-err"); err.hidden = true; $("#login-btn").disabled = true;
+    try{ await authRequest("password", {email:$("#login-email").value.trim(), password:$("#login-pass").value}); $("#login").hidden = true; start(); }
+    catch(x){ err.textContent = x.status === 400 ? "E-Mail oder Passwort stimmt nicht." : ("Anmeldung nicht möglich: " + x.message); err.hidden = false; }
+    finally{ $("#login-btn").disabled = false; }
+  });
+
+  // ---------- Szene: Hilfen ----------
+  const TAU = Math.PI * 2, calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const mix = (A, B, t) => A.map((v, i) => lerp(v, B[i], t));
+  const mix3 = (d, w, n, wd, ww, wn) => d.map((v, i) => v * wd + w[i] * ww + n[i] * wn);
+  const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+  const PAL = {
+    skyT: [[58, 146, 255], [52, 58, 120], [6, 10, 32]], skyB: [[196, 232, 255], [255, 168, 120], [24, 34, 78]],
+    hillF: [[112, 168, 128], [86, 92, 116], [22, 42, 54]], hillN: [[70, 142, 84], [62, 82, 84], [14, 34, 38]], ground: [[88, 164, 72], [80, 112, 72], [20, 50, 34]]
+  };
+
+  const cv = $("#cv"), ctx = cv.getContext("2d"), stage = $("#stage"), tipEl = $("#tip");
+  let W = 0, H = 0, K = 1, groundY = 0, treeX = 0, basketX = 0, bw = 0, bh = 0, rotL = 0, rotR = 0, beL = 0, beR = 0;
+  let DATA = null, rangeDays = 0, fruits = [], hanging = [], tips = [], root = null, ends = [], flies = [], floaters = [], leaves = [], clouds = [], stars = [], fireflies = [], grass = [];
+  let t0 = performance.now(), last = t0, wobble = 0, hover = null, stats = {};
+  const view = {};
+
+  // ---------- Baum (Struktur einmalig, Bewegung je Bild) ----------
+  const MAXD = 6;
+  function build(){
+    const r = rng(11);
+    function mk(d, len, wid, ang){
+      const n = {d, len, wid, ang, kids: [], ph: r() * TAU, leaves: null, tip: false};
+      if(d < MAXD){
+        const c = d === 0 ? 3 : (r() < .22 ? 3 : 2);
+        for(let k = 0; k < c; k++) n.kids.push(mk(d + 1, len * (.7 + r() * .1), wid * .66, (k / (c - 1) - .5) * (d === 0 ? 1.15 : 1.2) + (r() - .5) * .38));
+      } else n.tip = true;
+      if(d >= MAXD - 2) n.leaves = Array.from({length: d === MAXD ? 6 : d === MAXD - 1 ? 4 : 3},() => ({dx: (r() - .5) * 36, dy: (r() - .5) * 30 - 4, rx: 7 + r() * 7, ry: 4 + r() * 5, rot: r() * TAU, l: r(), ph: r() * TAU}));
+      return n;
+    }
+    root = mk(0, 122, 22, 0);
+  }
+  function wind(t){ return calm ? 0.1 : Math.sin(t * .35) * .55 + Math.sin(t * .93 + 1.3) * .3 + Math.sin(t * 2.1) * .1; }
+  function drawNode(n, x, y, pa, t, w){
+    const a = pa + n.ang + (w * .024 + Math.sin(t * 1.1 + n.ph) * .01 * (calm ? .2 : 1)) * (.4 + n.d * .35);
+    const L = n.len * K, x2 = x + Math.sin(a) * L, y2 = y - Math.cos(a) * L, mx = (x + x2) / 2 + Math.cos(a) * L * .06, my = (y + y2) / 2 + Math.sin(a) * L * .06;
+    ctx.lineWidth = Math.max(1.2, n.wid * K); ctx.strokeStyle = `rgb(${86 - n.d * 4},${58 - n.d * 3},${38 - n.d * 2})`;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(mx, my, x2, y2); ctx.stroke();
+    if(n.d === 0){ ctx.lineWidth = Math.max(1, n.wid * K * .35); ctx.strokeStyle = "rgba(255,220,170,.10)"; ctx.beginPath(); ctx.moveTo(x - n.wid * K * .2, y); ctx.quadraticCurveTo(mx - n.wid * K * .2, my, x2 - n.wid * K * .2, y2); ctx.stroke(); }
+    if(n.leaves) ends.push([n, x2, y2, a]);
+    if(n.tip) tips.push({x: x2, y: y2, a});
+    for(const k of n.kids) drawNode(k, x2, y2, a, t, w);
+  }
+
+  // ---------- Layout ----------
+  function resize(){
+    const bw0 = stage.parentElement.clientWidth; W = bw0;
+    H = W < 640 ? clamp(Math.min(innerHeight * .74, W * 1.5), 440, 760) : clamp(Math.min(W * .6, innerHeight * .82), 460, 760);
+    const dpr = Math.min(devicePixelRatio || 1, 2); cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    K = Math.min(H / 600, W / 640); groundY = H * .84; treeX = W * (W < 640 ? .42 : .45); basketX = W * (W < 640 ? .82 : .83);
+    bw = Math.min(150 * K, W * .3); bh = 52 * K; rotL = W * .04; rotR = Math.max(rotL + 40, treeX - 70 * K); beL = treeX + 60 * K; beR = Math.max(beL + 20, basketX - bw / 2 - 14 * K);
+    const r = rng(5);
+    clouds = Array.from({length: 6}, () => ({x: r() * W, y: H * (.08 + r() * .28), s: (.6 + r() * .8) * K, v: 3 + r() * 6}));
+    stars = Array.from({length: 150}, () => ({x: r() * W, y: r() * groundY * .8, a: .5 + r() * .5, p: r() * TAU, s: 1 + r() * 1.6}));
+    fireflies = Array.from({length: 26}, () => ({x: r() * W, y: groundY - r() * H * .4, p: r() * TAU, v: .3 + r() * .5}));
+    grass = Array.from({length: Math.round(W / 4)}, () => ({x: r() * W, h: (7 + r() * 16) * K, p: r() * TAU, c: r()}));
+    leaves = Array.from({length: 14}, () => ({x: r() * W, y: r() * groundY, p: r() * TAU, v: 14 + r() * 18, rot: r() * TAU}));
+    layoutFruits();
+  }
+
+  // ---------- Daten -> Früchte ----------
+  const bday = ts => (Date.now() - new Date(ts).getTime()) / 864e5;
+  function rOf(t){ return t.risiko > 0 ? t.gv / t.risiko : (t.gv > 0 ? 1 : -1); }
+  function kindOf(t){ const R = rOf(t); return Math.abs(R) < .1 ? "be" : t.gv > 0 ? "win" : "loss"; }
+  function setup(animate){
+    const all = DATA.trades.slice().filter(t => rangeDays === 0 || bday(t.geschlossen) <= rangeDays).sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
+    let wins = all.filter(t => kindOf(t) === "win"), loss = all.filter(t => kindOf(t) === "loss"), bes = all.filter(t => kindOf(t) === "be");
+    stats = {n: all.length, win: wins.length, loss: loss.length, be: bes.length, ernte: wins.reduce((s, t) => s + t.gv, 0), faul: loss.reduce((s, t) => s + t.gv, 0),
+             best: all.reduce((m, t) => rOf(t) > m ? rOf(t) : m, -9), bestT: all.reduce((m, t) => !m || rOf(t) > rOf(m) ? t : m, null)};
+    const show = [...wins.slice(-30), ...loss.slice(-30), ...bes.slice(-12)].sort((a, b) => new Date(a.geschlossen) - new Date(b.geschlossen));
+    const per = {win: 0, loss: 0, be: 0};
+    fruits = show.map((t, i) => {
+      const k = kindOf(t), R = rOf(t), sz = (k === "be" ? 7 : 9 + Math.min(Math.abs(R), 3) * (k === "win" ? 2.3 : 1.8));
+      return {t, k, R, sz, slot: per[k]++, state: animate ? "wait" : "rest", delay: i * Math.min(.17, 3 / Math.max(1, show.length)) + .4, p: 0, dur: 1.1 + Math.random() * .5, fx: 0, fy: 0, x: 0, y: 0, sq: 1, seed: (i * 7919) % 97 / 97};
+    });
+    layoutFruits();
+    const st = DATA.status || {}, nOpen = clamp(st.offene_positionen || 0, 0, 14), fl = (st.equity || 0) - (st.kontostand || 0), base = (st.kontostand || 10000) * .01;
+    const ripe = .5 + .5 * Math.tanh(fl / base), order = Array.from({length: 130}, (_, i) => i).sort((a, b) => ((a * 37) % 101) - ((b * 37) % 101));
+    hanging = Array.from({length: nOpen}, (_, i) => ({tip: order[i * 3 % 130], ripe: clamp(ripe + (((i * 53) % 17) - 8) / 60, 0, 1), sz: 11 + (i % 3) * 2}));
+    blossoms = nOpen ? [] : order.slice(0, 22);
+    $("#hud-l").textContent = nOpen ? `${nOpen} offene Trades am Baum` : "Nichts offen · der Baum blüht";
+    $("#hud-r").textContent = rangeDays === 0 ? `alle ${stats.n} Trades` : `letzte ${rangeDays} Tage · ${stats.n} Trades`;
+    kpis(fl, nOpen);
+  }
+  let blossoms = [];
+  function layoutFruits(){
+    for(const f of fruits){
+      if(f.k === "win"){ const cols = 6, c = f.slot % cols, r = Math.floor(f.slot / cols); f.tx = basketX - bw * .34 + c * (bw * .68 / (cols - 1)) + (r % 2) * bw * .05 + (f.seed - .5) * 4 * K; f.ty = groundY - bh * .9 - r * 11 * K; }
+      else if(f.k === "loss"){ f.tx = rotL + ((f.slot * .618034 + f.seed * .3) % 1) * (rotR - rotL); f.ty = groundY + (6 + ((f.slot * 37) % 23)) * K; }
+      else { f.tx = beL + ((f.slot * .618034) % 1) * (beR - beL); f.ty = groundY + (8 + ((f.slot * 29) % 17)) * K; }
+      if(f.state === "rest"){ f.x = f.tx; f.y = f.ty; }
+    }
+  }
+  function kpis(fl, nOpen){
+    const el = $("#kpis"), net = stats.ernte + stats.faul, hit = stats.n ? stats.win / stats.n * 100 : 0;
+    const items = [["g", "Ernte im Korb", stats.ernte, v => "+" + fmt(v) + " €", `${stats.win} reife Äpfel`], ["r", "Verfault am Boden", stats.faul, v => fmt(v) + " €", `${stats.loss} faule Äpfel`],
+      [net >= 0 ? "g" : "r", "Netto", net, v => (v > 0 ? "+" : "") + fmt(v) + " €", `${fmt(hit, 0)} % reife Äpfel`], ["y", "Bester Apfel", stats.best > -9 ? stats.best : null, v => v == null ? "–" : "+" + fmt(v, 1) + " R", stats.bestT ? stats.bestT.symbol : ""],
+      ["", "Am Baum", fl, v => nOpen ? (v > 0 ? "+" : "") + fmt(v) + " €" : "–", nOpen ? nOpen + " offene Trades" : "keine offenen Trades"]];
+    el.innerHTML = items.map(([c, l, v, f, s], i) => `<div class="kpi ${c}"><span>${l}</span><b data-i="${i}">0</b><small>${esc(s)}</small></div>`).join("");
+    const t1 = performance.now();
+    (function tick(){ const p = ease(clamp((performance.now() - t1) / 1600, 0, 1)); el.querySelectorAll("b").forEach((b, i) => { const it = items[i]; b.textContent = it[3](it[2] == null ? null : it[2] * p); }); if(p < 1) requestAnimationFrame(tick); })();
+  }
+
+  // ---------- Zeichnen ----------
+  function sky(w){
+    const sunEl = Math.sin(((hourNow() - 6) / 24) * TAU), wd = smooth(.12, .5, sunEl), wn = smooth(.05, -.25, sunEl), ww = Math.max(0, 1 - wd - wn);
+    const top = mix3(PAL.skyT[0], PAL.skyT[1], PAL.skyT[2], wd, ww, wn), bot = mix3(PAL.skyB[0], PAL.skyB[1], PAL.skyB[2], wd, ww, wn);
+    view.wd = wd; view.wn = wn; view.ww = ww; view.sunEl = sunEl;
+    const g = ctx.createLinearGradient(0, 0, 0, groundY); g.addColorStop(0, rgb(top)); g.addColorStop(1, rgb(bot)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  let hourOverride = null, instant = false;
+  function hourNow(){ if(hourOverride != null) return hourOverride; const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+  function celestial(t){
+    const h = hourNow(), day = view.sunEl > -.1;
+    if(view.wn > .02){ for(const s of stars){ ctx.fillStyle = `rgba(255,255,255,${view.wn * s.a * (.55 + .45 * Math.sin(t * 1.5 + s.p))})`; ctx.fillRect(s.x, s.y, s.s, s.s); } }
+    const hh = day ? h : (h + 12) % 24, fr = clamp((hh - 6) / 12, 0, 1);
+    const px = day ? W * (.1 + .8 * fr) : W * (.82 - .22 * fr), py = day ? groundY - Math.sin(fr * Math.PI) * H * .6 - 10 * K : H * (.12 + .1 * (1 - Math.sin(fr * Math.PI)));
+    const R = (day ? 30 : 22) * K, g = ctx.createRadialGradient(px, py, R * .2, px, py, R * 5);
+    g.addColorStop(0, day ? "rgba(255,236,170,.75)" : "rgba(190,210,255,.35)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = g; ctx.fillRect(px - R * 5, py - R * 5, R * 10, R * 10);
+    if(day && view.wd > .05){ ctx.globalAlpha = .05 * view.wd; for(let i = 0; i < 5; i++){ const a = 1.35 + i * .19 + Math.sin(t * .2 + i) * .03; ctx.fillStyle = "#fff6d0"; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(a) * H * 1.3 - 40 * K, py + Math.sin(a) * H * 1.3); ctx.lineTo(px + Math.cos(a) * H * 1.3 + 40 * K, py + Math.sin(a) * H * 1.3); ctx.fill(); } ctx.globalAlpha = 1; }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = day ? "#fff3c4" : "#e9efff"; ctx.beginPath(); ctx.arc(px, py, R * .55, 0, TAU); ctx.fill();
+    if(!day){ ctx.fillStyle = "rgba(10,14,40,.9)"; ctx.beginPath(); ctx.arc(px + R * .25, py - R * .05, R * .5, 0, TAU); ctx.fill(); }
+  }
+  function cloud(c, dt, w){
+    c.x += (c.v + w * 8) * dt * (calm ? .2 : 1); if(c.x > W + 140 * c.s) c.x = -140 * c.s; if(c.x < -160 * c.s) c.x = W + 130 * c.s;
+    const a = lerp(.12, .85, view.wd) * .8; ctx.fillStyle = `rgba(255,255,255,${a})`;
+    for(const [dx, dy, r] of [[0, 0, 26], [28, -8, 32], [60, 0, 26], [30, 8, 28], [-22, 8, 20]]){ ctx.beginPath(); ctx.arc(c.x + dx * c.s, c.y + dy * c.s, r * c.s, 0, TAU); ctx.fill(); }
+  }
+  function hill(y0, amp, f, ph, col, par){
+    ctx.fillStyle = rgb(col); ctx.beginPath(); ctx.moveTo(0, H);
+    for(let x = 0; x <= W + 12; x += 12) ctx.lineTo(x, y0 - (Math.sin(x * f + ph) * .55 + Math.sin(x * f * 2.3 + ph * 1.7) * .3 + 1) * amp);
+    ctx.lineTo(W, H); ctx.fill();
+  }
+  function ground(t, w){
+    const c = mix3(PAL.ground[0], PAL.ground[1], PAL.ground[2], view.wd, view.ww, view.wn);
+    const g = ctx.createLinearGradient(0, groundY - 10, 0, H); g.addColorStop(0, rgb(c.map(v => v * 1.1))); g.addColorStop(1, rgb(c.map(v => v * .55))); ctx.fillStyle = g; ctx.fillRect(0, groundY - 6 * K, W, H - groundY + 6 * K);
+    ctx.lineCap = "round";
+    for(const b of grass){ const sw = Math.sin(t * 1.6 + b.p) * 2 * K + w * 7 * K * (calm ? .2 : 1), y = groundY + (b.c * (H - groundY - 6)) ; ctx.strokeStyle = rgb(c.map(v => v * (.8 + b.c * .5))); ctx.lineWidth = 1.4 * K + 0.2; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.quadraticCurveTo(b.x + sw * .4, y - b.h * .5, b.x + sw, y - b.h); ctx.stroke(); }
+  }
+  function drawAppleShape(x, y, r, o){
+    ctx.save(); ctx.translate(x, y); if(o.rot) ctx.rotate(o.rot); ctx.scale(1, o.sq || 1);
+    const [h, s, l] = o.hsl, g = ctx.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * 1.25);
+    g.addColorStop(0, `hsl(${h} ${s}% ${l + 22}%)`); g.addColorStop(.55, `hsl(${h} ${s}% ${l}%)`); g.addColorStop(1, `hsl(${h} ${s}% ${Math.max(6, l - 16)}%)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -r * .55); ctx.bezierCurveTo(r * .5, -r * 1.05, r * 1.25, -r * .55, r * 1.05, r * .25); ctx.bezierCurveTo(r * .95, r * .95, r * .35, r * 1.15, 0, r * .95);
+    ctx.bezierCurveTo(-r * .35, r * 1.15, -r * .95, r * .95, -r * 1.05, r * .25); ctx.bezierCurveTo(-r * 1.25, -r * .55, -r * .5, -r * 1.05, 0, -r * .55); ctx.fill();
+    if(o.spots){ ctx.fillStyle = `rgba(50,28,12,${.35 + o.spots * .4})`; for(let i = 0; i < 4; i++){ const a = (o.seed * 9 + i * 1.7) % TAU; ctx.beginPath(); ctx.arc(Math.cos(a) * r * .5, Math.sin(a) * r * .45 + r * .1, r * (.14 + .12 * ((i * 3 + o.seed * 10) % 2) / 2 + o.spots * .12), 0, TAU); ctx.fill(); }
+      if(o.spots > .7){ ctx.fillStyle = "rgba(150,170,150,.45)"; ctx.beginPath(); ctx.arc(r * .3, -r * .1, r * .3, 0, TAU); ctx.fill(); } }
+    if(o.shine !== false){ ctx.fillStyle = "rgba(255,255,255,.28)"; ctx.beginPath(); ctx.ellipse(-r * .4, -r * .25, r * .18, r * .3, -.5, 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = "#4a2f1a"; ctx.lineWidth = Math.max(1.2, r * .12); ctx.beginPath(); ctx.moveTo(0, -r * .5); ctx.quadraticCurveTo(r * .1, -r * .95, r * .22, -r * 1.2); ctx.stroke();
+    if(!o.noLeaf){ ctx.fillStyle = o.dry ? "#7a7a4a" : "#3f9c4f"; ctx.beginPath(); ctx.ellipse(r * .5, -r * 1.05, r * .38, r * .17, -.5, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
+  const hslWin = R => { const n = clamp(R / 2.2, 0, 1); return [95 - 95 * n, 64, 47 - 6 * n]; };
+  function drawFruit(f, t){
+    if(f.state === "wait") return;
+    const rad = f.sz * K;
+    if(f.state === "rest" || f.p >= 1){ ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(f.x, f.y + rad * .85, rad * .9, rad * .26, 0, 0, TAU); if(f.k !== "win") ctx.fill(); }
+    if(f.k === "win") drawAppleShape(f.x, f.y, rad, {hsl: hslWin(f.R), sq: f.sq, seed: f.seed, rot: f.state === "fall" ? f.p * 5 : 0});
+    else if(f.k === "loss"){ const rot = clamp(.35 + bday(f.t.geschlossen) / 8, .35, 1); drawAppleShape(f.x, f.y, rad, {hsl: [28 - rot * 8, 38 - rot * 14, 34 - rot * 12], sq: (f.state === "rest" ? .82 - rot * .12 : f.sq), spots: rot, seed: f.seed, rot: f.state === "fall" ? f.p * 4 : (f.seed - .5) * .9, shine: false}); f.rot = rot; }
+    else drawAppleShape(f.x, f.y, rad, {hsl: [72, 22, 52], sq: .8, spots: .15, seed: f.seed, rot: (f.seed - .5) * 1.2, dry: true, shine: false});
+  }
+  function updateFruit(f, dt, t){
+    if(f.state === "wait"){ f.delay -= dt; if(f.delay <= 0 && tips.length){ const tp = tips[(Math.random() * tips.length) | 0]; f.fx = tp.x; f.fy = tp.y + 14 * K; f.x = f.fx; f.y = f.fy; f.state = "fall"; f.p = 0; } return; }
+    if(f.state === "fall"){
+      f.p = Math.min(1, f.p + dt / f.dur); const p = f.p; f.x = lerp(f.fx, f.tx, ease(p) * .9 + p * .1); f.y = lerp(f.fy, f.ty, p * p); f.sq = 1;
+      if(p >= 1){ f.state = "land"; f.lt = 0; if(f.k === "win"){ wobble = 1; } floaters.push({x: f.tx, y: f.ty - 20 * K, txt: (f.t.gv > 0 ? "+" : "") + fmt(f.t.gv) + " €", col: f.k === "win" ? "#7dffb0" : f.k === "loss" ? "#ff8d80" : "#cfd8a8", a: 1}); }
+    } else if(f.state === "land"){ f.lt += dt; const q = f.lt / .45; f.y = f.ty - Math.abs(Math.sin(q * Math.PI * 1.5)) * (1 - q) * 14 * K; f.sq = 1 - Math.sin(clamp(q * 2, 0, 1) * Math.PI) * .18; if(q >= 1){ f.state = "rest"; f.y = f.ty; f.sq = 1; } }
+  }
+  function basket(front, t){
+    const x = basketX, top = groundY - bh, wob = Math.sin(t * 24) * wobble * 2.2 * K;
+    ctx.save(); ctx.translate(wob, 0);
+    if(!front){ ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, top, bw / 2, 9 * K, 0, 0, TAU); ctx.fill(); ctx.restore(); return; }
+    ctx.beginPath(); ctx.moveTo(x - bw / 2, top); ctx.lineTo(x + bw / 2, top); ctx.lineTo(x + bw * .42, groundY); ctx.quadraticCurveTo(x, groundY + 8 * K, x - bw * .42, groundY); ctx.closePath();
+    const g = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); g.addColorStop(0, "#8a5a2c"); g.addColorStop(.5, "#c18a4a"); g.addColorStop(1, "#7b4d24"); ctx.fillStyle = g; ctx.fill();
+    ctx.save(); ctx.clip(); ctx.strokeStyle = "rgba(60,34,14,.45)"; ctx.lineWidth = 1.5 * K;
+    for(let i = -8; i < 16; i++){ ctx.beginPath(); ctx.moveTo(x - bw / 2 + i * bw / 8, top); ctx.lineTo(x - bw / 2 + i * bw / 8 + bh * .6, groundY + 6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + bw / 2 - i * bw / 8, top); ctx.lineTo(x + bw / 2 - i * bw / 8 - bh * .6, groundY + 6); ctx.stroke(); }
+    for(let j = 1; j < 4; j++){ ctx.beginPath(); ctx.moveTo(x - bw, top + j * bh / 4); ctx.lineTo(x + bw, top + j * bh / 4); ctx.stroke(); }
+    ctx.restore();
+    ctx.lineWidth = 6 * K; ctx.strokeStyle = "#6e4420"; ctx.lineCap = "round"; ctx.beginPath(); ctx.ellipse(x, top, bw / 2, 9 * K, 0, 0, Math.PI); ctx.stroke();
+    ctx.restore();
+  }
+  function drawTree(t, w){
+    tips.length = 0; ends.length = 0;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(treeX, groundY + 6 * K, 90 * K, 14 * K, 0, 0, TAU); ctx.fill();
+    drawNode(root, treeX, groundY, 0, t, w);
+    for(const [n, x, y, a] of ends){
+      for(const lf of n.leaves){
+        const sw = Math.sin(t * 2 + lf.ph) * 2.2 * K * (calm ? .2 : 1) + w * 4 * K, lx = x + lf.dx * K + sw, ly = y + lf.dy * K + Math.cos(t * 1.7 + lf.ph) * 1.2 * K;
+        ctx.fillStyle = `hsla(${96 + lf.l * 30},${48 + lf.l * 16}%,${24 + lf.l * 16}%,.9)`; ctx.beginPath(); ctx.ellipse(lx, ly, lf.rx * K, lf.ry * K, lf.rot + w * .3, 0, TAU); ctx.fill();
+      }
+    }
+  }
+  function drawHanging(t, w){
+    for(const [i, h] of hanging.entries()){
+      const tp = tips[h.tip % Math.max(1, tips.length)]; if(!tp) continue;
+      const swing = w * .22 + Math.sin(t * 1.7 + i * 1.3) * .07 * (calm ? .2 : 1), L = 16 * K, ax = tp.x + Math.sin(swing) * L, ay = tp.y + Math.cos(swing) * L + h.sz * K * .4;
+      ctx.strokeStyle = "#4a2f1a"; ctx.lineWidth = 1.6 * K; ctx.beginPath(); ctx.moveTo(tp.x, tp.y); ctx.lineTo(ax, ay - h.sz * K * .6); ctx.stroke();
+      const red = h.ripe > .5, hsl = red ? [95 - (h.ripe - .5) * 190, 62, 46] : [90 - (.5 - h.ripe) * 120, 40 + h.ripe * 20, 40 - (.5 - h.ripe) * 20];
+      drawAppleShape(ax, ay, h.sz * K * (.85 + h.ripe * .3), {hsl, spots: h.ripe < .35 ? (.35 - h.ripe) * 2 : 0, seed: i * .13, noLeaf: false});
+      h.x = ax; h.y = ay; h.r = h.sz * K;
+    }
+    for(const [i, b] of blossoms.entries()){
+      const tp = tips[b % Math.max(1, tips.length)]; if(!tp) continue; const pul = .85 + .15 * Math.sin(t * 1.4 + i), r = 5.5 * K * pul;
+      ctx.fillStyle = "rgba(255,236,244,.95)"; for(let k = 0; k < 5; k++){ const a = k * TAU / 5 + i; ctx.beginPath(); ctx.arc(tp.x + Math.cos(a) * r * .9, tp.y + Math.sin(a) * r * .9 - 6 * K, r * .75, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = "#ffd36a"; ctx.beginPath(); ctx.arc(tp.x, tp.y - 6 * K, r * .45, 0, TAU); ctx.fill();
+    }
+  }
+  function particles(dt, t, w){
+    for(const l of leaves){ l.x += (w * 22 + 10) * dt * (calm ? .2 : 1); l.y += l.v * dt * (calm ? .2 : 1); l.rot += dt; if(l.y > groundY + 4 || l.x > W + 20){ l.y = -10; l.x = Math.random() * W * .8; }
+      ctx.fillStyle = "rgba(120,170,70,.65)"; ctx.beginPath(); ctx.ellipse(l.x + Math.sin(t + l.p) * 8 * K, l.y, 5 * K, 2.6 * K, l.rot, 0, TAU); ctx.fill(); }
+    for(const f of fruits){ if(f.k !== "loss" || f.state !== "rest" || (f.rot || 0) < .5 || f.slot > 14) continue;
+      ctx.fillStyle = "rgba(20,20,20,.85)"; for(let i = 0; i < 2; i++){ const a = t * (3 + i) + f.seed * 20 + i * 3; ctx.fillRect(f.x + Math.cos(a) * 14 * K, f.y - f.sz * K - 6 * K + Math.sin(a * 1.3) * 7 * K, 1.8, 1.8); } }
+    if(view.wn > .15){ ctx.globalCompositeOperation = "lighter"; for(const ff of fireflies){ ff.x += Math.sin(t * ff.v + ff.p) * .35; ff.y += Math.cos(t * ff.v * 1.3 + ff.p) * .25; const a = view.wn * (.4 + .6 * Math.sin(t * 2 + ff.p) ** 2), g = ctx.createRadialGradient(ff.x, ff.y, 0, ff.x, ff.y, 9 * K); g.addColorStop(0, `rgba(255,240,150,${a})`); g.addColorStop(1, "rgba(255,240,150,0)"); ctx.fillStyle = g; ctx.fillRect(ff.x - 10 * K, ff.y - 10 * K, 20 * K, 20 * K); } ctx.globalCompositeOperation = "source-over"; }
+    for(let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.y -= 26 * dt * K; f.a -= dt * .6; if(f.a <= 0){ floaters.splice(i, 1); continue; }
+      ctx.globalAlpha = f.a; ctx.fillStyle = f.col; ctx.font = `600 ${13 * Math.max(.9, K)}px ${getComputedStyle(document.body).getPropertyValue("--mono")}`; ctx.textAlign = "center"; ctx.fillText(f.txt, f.x, f.y); ctx.globalAlpha = 1; }
+  }
+  function frame(now){
+    const dt = Math.min(.05, (now - last) / 1000); last = now; const t = (now - t0) / 1000, w = wind(t);
+    wobble = Math.max(0, wobble - dt * 1.8);
+    sky(w); celestial(t); for(const c of clouds) cloud(c, dt, w);
+    hill(groundY - 60 * K, 60 * K, .006, 1, mix3(PAL.hillF[0], PAL.hillF[1], PAL.hillF[2], view.wd, view.ww, view.wn));
+    hill(groundY - 24 * K, 44 * K, .009, 4, mix3(PAL.hillN[0], PAL.hillN[1], PAL.hillN[2], view.wd, view.ww, view.wn));
+    ground(t, w);
+    // Reihenfolge: Boden-Früchte hinter dem Baum-Stamm sind nicht nötig; Baum, Korb hinten, Äpfel, Korb vorn
+    for(const f of fruits) updateFruit(f, dt, t);
+    const ground_f = fruits.filter(f => f.k !== "win" && f.state !== "wait").sort((a, b) => a.y - b.y), win_f = fruits.filter(f => f.k === "win" && f.state !== "wait");
+    drawTree(t, w); drawHanging(t, w);
+    for(const f of ground_f) if(f.state !== "fall") drawFruit(f, t);
+    basket(false, t); for(const f of win_f) if(f.state !== "fall") drawFruit(f, t); basket(true, t);
+    for(const f of fruits) if(f.state === "fall") drawFruit(f, t);
+    particles(dt, t, w);
+    const na = view.wn * .42 + view.ww * .1; if(na > .01){ ctx.fillStyle = `rgba(8,16,56,${na})`; ctx.fillRect(0, 0, W, H); }
+    const vg = ctx.createRadialGradient(W / 2, H * .55, Math.min(W, H) * .35, W / 2, H * .55, Math.max(W, H) * .8); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Tooltip ----------
+  function pick(x, y){
+    let best = null, bd = 1e9;
+    for(const f of fruits){ if(f.state === "wait" || f.state === "fall") continue; const d = Math.hypot(f.x - x, f.y - y); if(d < f.sz * K * 1.5 && d < bd){ bd = d; best = {f}; } }
+    if(!best) for(const h of hanging){ if(h.x == null) continue; const d = Math.hypot(h.x - x, h.y - y); if(d < (h.r || 12) * 1.6 && d < bd){ bd = d; best = {h}; } }
+    return best;
+  }
+  function tip(ev){
+    const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, p = pick(x, y);
+    if(!p){ tipEl.classList.remove("on"); return; }
+    if(p.f){ const t = p.f.t, R = p.f.R, d = new Date(t.geschlossen); tipEl.innerHTML = `<b>${esc(t.symbol)} · ${t.richtung === "long" ? "Long" : "Short"}</b><span class="num" style="color:${t.gv >= 0 ? "var(--good)" : "var(--bad)"}">${t.gv >= 0 ? "+" : ""}${fmt(t.gv, 2)} € (${R >= 0 ? "+" : ""}${fmt(R, 2)} R)</span><br><span style="color:var(--ink-3)">${esc((t.kommentar || "").split("|")[0] || "")}<br>${d.toLocaleDateString("de-DE")} ${d.toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"})}</span>`; tipEl.style.left = clamp(p.f.x, 90, W - 90) + "px"; tipEl.style.top = (p.f.y - p.f.sz * K) + "px"; }
+    else { tipEl.innerHTML = `<b>Offener Trade</b><span style="color:var(--ink-3)">Reife ${fmt(p.h.ripe * 100)} % · Farbe zeigt Gewinn/Verlust der offenen Trades</span>`; tipEl.style.left = clamp(p.h.x, 100, W - 100) + "px"; tipEl.style.top = (p.h.y - p.h.r) + "px"; }
+    tipEl.classList.add("on");
+  }
+  cv.addEventListener("pointermove", tip); cv.addEventListener("pointerdown", tip); cv.addEventListener("pointerleave", () => tipEl.classList.remove("on"));
+
+  // ---------- Start ----------
+  const RANGES = [[7, "7 Tage"], [30, "30 Tage"], [90, "90 Tage"], [0, "Alles"]];
+  function drawRange(){
+    $("#range").innerHTML = RANGES.map(([d, n]) => `<button type="button" class="tab" role="tab" aria-selected="${d === rangeDays}" data-d="${d}">${n}</button>`).join("");
+    $("#range").querySelectorAll(".tab").forEach(b => b.onclick = () => { rangeDays = +b.dataset.d; drawRange(); setup(!calm && !instant); });
+  }
+  async function start(){
+    $("#login").hidden = true; $("#app").hidden = false;
+    try{
+      if(window.__DEV_PAYLOAD) DATA = window.__DEV_PAYLOAD;
+      else{
+        const [st, tr] = await Promise.all([sb("bot_status?bot_id=eq.equity&select=*"), sb("bot_trades?select=symbol,richtung,eroeffnet,geschlossen,gv,risiko,kommentar&bot_id=eq.equity&order=geschlossen.desc&limit=400")]);
+        DATA = {status: st[0] || {}, trades: tr};
+      }
+      $("#msg").hidden = true; $("#stand").textContent = "Stand: " + new Date().toLocaleString("de-DE", {dateStyle: "short", timeStyle: "short"});
+      const q = new URLSearchParams(location.search); if(q.get("h")) hourOverride = +q.get("h"); instant = !!q.get("instant");
+      if(window.__DEV_PAYLOAD && q.get("open")){ DATA.status.offene_positionen = +q.get("open"); DATA.status.equity = DATA.status.kontostand + (+q.get("fl") || 0); }   // nur Testseite
+      build(); drawRange(); resize(); setup(!calm && !instant); requestAnimationFrame(frame);
+    }catch(e){ if(e.message !== "nicht angemeldet") $("#msg").textContent = "Daten konnten nicht geladen werden (" + e.message + ")."; }
+  }
+  let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if(DATA) resize(); }, 120); });
+  (async function init(){ if(window.__DEV_PAYLOAD){ start(); return; } (await validSession()) ? start() : showLogin(); })();
+})();
+</script>
+</body>
+</html>
