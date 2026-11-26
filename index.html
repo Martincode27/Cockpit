@@ -432,6 +432,7 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
     <nav class="links" aria-label="Meine Seiten">
       <a class="link" href="https://martincode27.github.io/Rezepte/"><span class="dot"></span>Rezeptbuch</a>
       <a class="link" href="bot.html"><span class="dot" style="background:var(--brand)"></span>Bot-Cockpit</a>
+      <a class="link" href="welt.html#vom=pc" id="welt-link"><span class="dot" style="background:#ffcf86"></span>Welt</a>
       <a class="link" href="baum.html"><span class="dot" style="background:#46d38a"></span>Apfelbaum</a>
       <a class="link" href="finanzen.html"><span class="dot" style="background:#06b6d4"></span>Finanzen</a>
       <a class="link" href="journal.html"><span class="dot"></span>Trading-Journal</a>
@@ -1855,6 +1856,24 @@ details.todo-done summary{cursor:pointer;font-size:12.5px;color:var(--ink-3);fon
   });
 
   validSession().then(s => s ? showApp() : showLogin());
+})();
+</script>
+<style>
+/* Uebergang Dashboard <-> Welt: das Dashboard ist der Bildschirm des PCs im Haus */
+html.welt-weg, html.welt-weg body{background:#05070f!important;overflow:hidden}
+html.welt-weg #app{background:var(--bg);transform:scale(.38);filter:brightness(.5);border-radius:18px;box-shadow:0 0 0 12px #15181f;transition:transform .6s cubic-bezier(.6,0,.4,1),filter .6s,border-radius .6s,box-shadow .6s}
+@keyframes welt-her{from{transform:scale(.38);filter:brightness(.5);border-radius:18px;box-shadow:0 0 0 12px #15181f}to{transform:none;filter:none;border-radius:0;box-shadow:none}}
+html.welt-her body{background:#05070f}
+html.welt-her #app{background:var(--bg);animation:welt-her .7s cubic-bezier(.2,.7,.2,1) both}
+</style>
+<script>
+(function(){
+  var ruhig = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, app = document.getElementById("app"), wl = document.getElementById("welt-link");
+  function mitte(){ if(app) app.style.transformOrigin = "50% " + (window.scrollY + innerHeight * .45 - app.getBoundingClientRect().top - window.scrollY) + "px"; }
+  if(wl) wl.addEventListener("click", function(e){ if(ruhig || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); mitte(); document.documentElement.classList.add("welt-weg"); setTimeout(function(){ location.href = wl.href; }, 620); });
+  if(location.hash === "#aus=welt"){ try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if(!ruhig){ document.documentElement.classList.add("welt-her"); var lg = document.getElementById("login"), w = function(){ if(app && !app.hidden){ mitte(); setTimeout(function(){ document.documentElement.classList.remove("welt-her"); }, 800); } else if(lg && !lg.hidden) document.documentElement.classList.remove("welt-her"); else setTimeout(w, 50); }; w(); setTimeout(function(){ document.documentElement.classList.remove("welt-her"); }, 4000); } }
+  addEventListener("pageshow", function(e){ if(e.persisted) document.documentElement.classList.remove("welt-weg"); });
 })();
 </script>
 </body>

@@ -1,0 +1,44 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#12172c"><meta name="robots" content="noindex"><title>Insel · Cockpit</title></head><body><style>
+/* Ein Bild füllt die Fläche, alles andere schwebt als ruhige Nachtglas-Schicht darüber. */
+:root{color-scheme:dark;--nacht:#12172c;--glas:rgba(11,15,31,.9);--ink:#f1eadc;--ink2:#b9b7c0;--linie:rgba(255,226,170,.17);--licht:#ffcf86;--licht2:rgba(255,207,134,.14);--bluete:#f2b3c8;--text:"Segoe UI",system-ui,sans-serif;--zahl:"Segoe UI",system-ui,sans-serif;--li:max(16px,env(safe-area-inset-left,0px));--re:max(16px,env(safe-area-inset-right,0px));--un:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--nacht);overflow:hidden}body{font:15px/1.5 var(--text);color:var(--ink);position:relative}
+#gl,#fx{position:fixed;inset:0;width:100%;height:100%;display:block}#fx{touch-action:none;cursor:grab}
+button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid var(--licht);outline-offset:2px}
+#tip{position:fixed;pointer-events:none;transform:translate(-50%,-100%);padding:5px 12px;border-radius:8px;background:var(--glas);border:1px solid rgba(255,215,150,.4);font-weight:600;white-space:nowrap;opacity:0;transition:opacity .15s}
+#nav{position:fixed;left:50%;bottom:calc(18px + var(--un));transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:2px;justify-content:center;width:max-content;max-width:calc(100vw - var(--li) - var(--re));padding:6px;border-radius:14px;background:rgba(11,15,31,.74);border:1px solid var(--linie)}
+#nav button{border:0;background:transparent;border-radius:9px;padding:7px 12px;color:var(--ink2)}#nav button:hover{background:var(--licht2);color:var(--ink)}#nav button[aria-current]{background:rgba(255,207,134,.2);color:var(--licht)}#nav i{width:1px;background:var(--linie);margin:4px}
+#panel{position:fixed;right:max(28px,var(--re));top:50%;width:372px;max-height:calc(100% - 130px);overflow:auto;transform:translate(24px,-50%);opacity:0;visibility:hidden;transition:opacity .35s,transform .35s,visibility .35s;background:var(--glas);border:1px solid var(--linie);border-radius:18px;padding:24px}
+#panel,#pcI{scrollbar-width:thin;scrollbar-color:rgba(255,226,170,.3) transparent}
+#panel.auf{opacity:1;visibility:visible;transform:translate(0,-50%);transition-delay:.55s}
+#panel h1{font-size:25px;line-height:1.15;margin:0 44px 6px 0;font-weight:650;letter-spacing:-.01em;text-wrap:balance}#panel p{margin:0 0 14px;color:var(--ink2)}#panel h2{font-size:15px;margin:16px 0 6px;font-weight:650;color:var(--licht)}
+.rund{position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:50%;border:1px solid var(--linie);background:transparent;font-size:17px;line-height:1}
+dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto}dt,dd{margin:0;padding:8px 0;border-top:1px solid var(--linie)}dd{text-align:right;color:var(--ink2);padding-left:12px;font-variant-numeric:tabular-nums}
+.beine{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:1px 10px;align-items:center;font-size:13px}.beine i{height:7px;border-radius:4px;background:var(--bluete);min-width:4px}.beine b{font-weight:500;font-variant-numeric:tabular-nums}.beine.gross{gap:9px 14px;font-size:15px;max-width:760px}.beine.gross i{height:11px}
+.tl{list-style:none;margin:0;padding:0}.tl li{border-top:1px solid var(--linie)}.tl label{display:flex;gap:10px;align-items:center;padding:9px 0;cursor:pointer}.tl input{width:17px;height:17px;accent-color:#e2a94f;margin:0}.ab{text-decoration:line-through;color:var(--ink2)}
+.kn{display:flex;flex-wrap:wrap;gap:6px}#knoepfe{margin-top:14px}.kn button{border:1px solid rgba(255,207,134,.38);background:rgba(255,207,134,.09);border-radius:10px;padding:7px 12px}.kn button:hover{background:rgba(255,207,134,.24)}
+#note{margin-top:14px;color:#d9c9aa;font-size:13.5px}
+#ereig,#nach{position:fixed;left:max(24px,var(--li));bottom:calc(86px + var(--un));width:300px;max-width:calc(100vw - var(--li) - var(--re));padding:18px;border-radius:16px;background:var(--glas);border:1px solid var(--linie);opacity:0;visibility:hidden;transform:translateY(10px);transition:.25s}#ereig.an,#nach.an{opacity:1;visibility:visible;transform:none}#ereig h2,#nach h2{font-size:16px;margin:0 40px 4px 0}#ereig p,#nach p{margin:0 0 12px;color:var(--ink2);font-size:14px}#ereig .rund{width:30px;height:30px;top:13px;right:13px;font-size:14px}
+#nach{top:max(24px,env(safe-area-inset-top,0px));bottom:auto}
+#meld{position:fixed;left:50%;top:26px;transform:translate(-50%,-12px);opacity:0;transition:.3s;padding:8px 16px;border-radius:11px;background:var(--glas);border:1px solid rgba(255,215,150,.35);pointer-events:none;max-width:92vw;text-align:center;z-index:6}#meld.an{opacity:1;transform:translate(-50%,0)}
+#pc{position:fixed;inset:0;opacity:0;visibility:hidden;transform:scale(.94);transition:.35s;display:flex;padding:clamp(10px,2.4vw,34px);padding-left:max(clamp(10px,2.4vw,34px),env(safe-area-inset-left,0px));padding-right:max(clamp(10px,2.4vw,34px),env(safe-area-inset-right,0px));background:#05070f;z-index:5}#pc.an{opacity:1;visibility:visible;transform:none}
+#pcB{flex:1;min-width:0;border-radius:20px;border:10px solid #15181f;background:radial-gradient(120% 120% at 30% 0,#18294c,#0c1428 60%);display:flex;flex-direction:column;position:relative;overflow:hidden}
+#pcT{display:flex;flex-wrap:wrap;gap:4px;padding:14px 64px 12px 20px;border-bottom:1px solid var(--linie)}#pcT button{border:0;background:transparent;border-radius:9px;padding:7px 13px;color:var(--ink2)}#pcT button:hover{color:var(--ink)}#pcT button[aria-pressed=true]{background:rgba(255,207,134,.18);color:var(--licht)}
+#pcI{flex:1;overflow:auto;padding:22px clamp(18px,3vw,44px) 40px}#pcI h2{margin:0 0 18px;font-size:26px;font-weight:650;letter-spacing:-.01em}#pcI h3{margin:0 0 10px;font-size:16px;color:var(--licht)}#pcI dl,#pcI .tl{max-width:760px}
+.kas{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:26px 30px;max-width:980px}.ka{display:grid;gap:2px;border-top:2px solid rgba(255,207,134,.4);padding-top:10px}.ka span{color:var(--ink2)}.ka b{font-size:34px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}.ka em{font-style:normal;color:var(--ink2);font-size:13.5px}
+#pcF{padding:9px 20px;border-top:1px solid var(--linie);color:#d9c9aa;font-size:13.5px}
+#lade,#err{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink2)}#err{display:none;background:var(--nacht);z-index:9}
+.leer #nav,.leer #ereig,.leer #nach{display:none}
+@media(max-width:760px){#panel{right:var(--re);left:var(--li);top:auto;bottom:calc(10px + var(--un));width:auto;max-height:50%;transform:translateY(24px);padding:18px}#panel.auf{transform:none}#nav button{padding:6px 8px;font-size:13.5px}body.offen #nav{display:none}#ereig{bottom:calc(120px + var(--un))}#pcB{border-width:5px}}
+@media(prefers-reduced-motion:reduce){#panel,#tip,#meld,#pc,#ereig,#nach{transition:none!important}}
+</style>
+<canvas id="gl" aria-label="Schwebende Insel bei Nacht"></canvas><canvas id="fx" aria-hidden="true"></canvas>
+<div id="lade">Die Insel wird geladen …</div><div id="err"></div><div id="tip" role="status"></div><div id="meld" role="status"></div>
+<aside id="panel" aria-label="Bereich"><button id="zu" class="rund" aria-label="Zurück">✕</button><h1 id="pt"></h1><p id="pp"></p><div id="pb"></div><div id="knoepfe" class="kn"></div><div id="note">Testansicht mit Beispielwerten, keine echten Daten.</div></aside>
+<section id="ereig" aria-label="Ereignisse ausprobieren"><button id="ereigZu" class="rund" aria-label="Schließen">✕</button><h2>Ereignisse ausprobieren</h2><p>Später kommen sie aus deinen echten Daten.</p><div id="ereigL" class="kn"></div></section>
+<section id="nach" aria-label="Seit deinem letzten Besuch"><h2>Seit deinem letzten Besuch</h2><p>Beispiel: 1 Trade gewonnen, 1 verloren, 1 To-do erledigt, 1 Training, Gehalt eingegangen.</p><div class="kn"><button id="nachJa">Abspielen</button><button id="nachNein">Überspringen</button></div></section>
+<nav id="nav" aria-label="Bereiche"></nav>
+<section id="pc" aria-label="Computer"><div id="pcB"><button id="pcZu" class="rund" aria-label="Bildschirm verlassen">✕</button><div id="pcT"></div><div id="pcI"></div><div id="pcF">Beispielwerte, keine echten Daten.</div></div></section>
+<script>window.WELT={modus:"live",bilder:"speicher"}</script>
+<script src="welt/daten.js"></script>
+<script src="welt/insel.js"></script>
+</body></html>
